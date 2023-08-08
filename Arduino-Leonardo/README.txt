@@ -1,5 +1,8 @@
 Code to run several types of colour vision tasks on the Arduino Leonardo device. Code contributions by DJT, DHB, ACH, FXT. 
 
+Note: RLM and HFP tasks modified for Arduino Colour Vision Genetics study. Features have been added and some features have been improved/optimised by DJT.
+Currently the code for BRM, UQY, and CAM have been untouched.
+
 Required Programs:
 - MATLAB (tested for version R2023a)
 - Psychtoolbox-3 (tested for version 3.0.19)
