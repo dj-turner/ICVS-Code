@@ -1,4 +1,4 @@
-function SaveHFPResults(PPcode, trialNumber, matchType, red, green, redInit, greenInit, rDelta, confidenceRating)
+function SaveHFPResults(PPcode, sessionNumber, trialNumber, matchType, red, green, redInit, greenInit, rDelta, confidenceRating)
 %This code creates structure variable "ParticipantMatches"
 
 %'ParticipantCode' is the code of each participant ('rp_001', 'rp_002', etc.)
@@ -11,7 +11,7 @@ function SaveHFPResults(PPcode, trialNumber, matchType, red, green, redInit, gre
 %% record current date and time
 CurrentDateAndTime=round(clock);
 
-varNames = {'ParticipantCode', 'Trial', 'MatchType', 'DateTime', 'RedValue', 'GreenValue', ...
+varNames = {'ParticipantCode', 'Session', 'Trial', 'MatchType', 'DateTime', 'RedValue', 'GreenValue', ...
         'InitialRedSetting', 'InitialGreenSetting', 'RedDelta', 'ConfidenceRating'};
 
 if matchType == 1
@@ -32,7 +32,7 @@ else
 end
 
 %% new participant results
-newResults=table({PPcode}, trialNumber, {matchName}, CurrentDateAndTime, ...
+newResults=table({PPcode}, sessionNumber, trialNumber, {matchName}, CurrentDateAndTime, ...
     red, green, redInit, greenInit, rDelta, confidenceRating,... 
     'VariableNames', varNames);
 

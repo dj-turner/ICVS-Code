@@ -1,4 +1,4 @@
-function SaveRLMResults(ptptID, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating)
+function SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating)
 %This code creates structure variable "ParticipantMatches"
 
 %'ParticipantCode' is the code of each participant ('rp_001', 'rp_002', etc.)
@@ -11,7 +11,7 @@ function SaveRLMResults(ptptID, trialNumber, matchType, red, green, yellow, lamb
 %% record current date and time
 CurrentDateAndTime=round(clock);
 
-varNames = {'ParticipantCode', 'Trial', 'MatchType', 'DateTime', 'Red', 'Green', ...
+varNames = {'ParticipantCode', 'Session', 'Trial', 'MatchType', 'DateTime', 'Red', 'Green', ...
         'Yellow', 'Lambda', 'LambdaDelta', 'YellowDelta', 'ConfidenceRating'};
 
 if matchType == 1
@@ -32,7 +32,7 @@ else
 end
 
 %% new participant results
-newResults=table({ptptID}, trialNumber, {matchName}, CurrentDateAndTime, ... 
+newResults=table({ptptID}, sessionNumber, trialNumber, {matchName}, CurrentDateAndTime, ... 
     red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating,...
     'VariableNames', varNames);
 

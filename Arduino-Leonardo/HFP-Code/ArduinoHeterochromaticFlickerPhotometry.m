@@ -17,6 +17,7 @@ a = FindArduinoPort;
 ListenChar(0);
 % Asks for participant code
 ptptID = input('Participant Code: ', 's');
+sessionNumber = input('Session Number: ');
 disp(" ");
 %Turns on character capture
 ListenChar(2);
@@ -283,7 +284,7 @@ while trialNumber < taskNumber
                     ListenChar(2);
         
                     % Saves the resulte to "ParticipantMatchesHFP.mat"
-                    SaveHFPResults(ptptID, trialNumber, matchType, rVal, gVal, rValinit, gValinit, redDelta, confidenceRating);
+                    SaveHFPResults(ptptID, sessionNumber, trialNumber, matchType, rVal, gVal, rValinit, gValinit, redDelta, confidenceRating);
 
                     % Resets staircase variables
                     currentDir = 0;

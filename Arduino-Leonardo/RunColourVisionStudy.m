@@ -33,19 +33,9 @@ if strcmp(taskType, 'RLM')
 % Heterochromatic Flicker Photometry
 elseif strcmp(taskType, 'HFP')
     ptptID = ArduinoHeterochromaticFlickerPhotometry(taskNumber);
-% Brightness Match
-elseif strcmp(taskType, 'BRM')
-    ptptID = ArduinoBrightnessMatch(taskNumber);
-% Unique Yellow
-elseif strcmp(taskType, 'UQY')
-    ptptID = ArduinoUniqueYellow(taskNumber);
-% Chromatic Adaptation Matching (from ICVS project - adapted from RLM)
-elseif strcmp(taskType, 'CAM')
-    ptptID = ArduinoRayleighMatchEdited(taskNumber);
-
 % Displays an error message and exits the program if any other code is entered
 else
-    disp("ERROR: Please enter 'RLM', 'HFP', 'BRM', 'UQY', or 'CAM' as the task type!");
+    disp("ERROR: Please enter 'RLM' or 'HFP' as the task type!");
     return;
 end
 

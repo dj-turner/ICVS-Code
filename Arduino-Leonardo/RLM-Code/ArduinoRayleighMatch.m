@@ -15,8 +15,9 @@ writeLEDs(a,[0,0,0]);
 
 % Allows console responses
 ListenChar(0);
-% Asks for participant ID
+% Asks for participant ID and session number
 ptptID = input('Participant Code: ', 's');
+sessionNumber = input('Session Number: ');
 disp(" ");
 % Disables console responses
 ListenChar(2);
@@ -250,7 +251,7 @@ while trialNumber < taskNumber
                     disp(" ");
             
                     % Adds the results to "ParticipantMatchesRLM.mat"
-                    SaveRLMResults(ptptID, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating);
+                    SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating);
 
                     %Resets staircase variables
                     currentDirRG = 0;
