@@ -36,12 +36,6 @@ yellowDeltas = [25 15 10 5 1];                  % Set of yellow deltas
 % Accepted confidence ratings
 acceptedConfidenceRatings = 1:4;
 
-% Staircase variables
-currentDirRG = 0;
-lastDirRG = 0;
-currentDirY = 0;
-lastDirY = 0;
-
 % Sets counter of number of completed trials
 trialNumber = 0;
 
@@ -77,6 +71,12 @@ while trialNumber < taskNumber
                 yellowDeltaIndex = 1;                           % Yellow step size
                 yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
                 [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
+
+                %Resets staircase variables
+                currentDirRG = 0;
+                lastDirRG = 0;
+                currentDirY = 0;
+                lastDirY = 0;
 
                 % Displays starting values
                 disp(" ");
@@ -252,12 +252,6 @@ while trialNumber < taskNumber
             
                     % Adds the results to "ParticipantMatchesRLM.mat"
                     SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating);
-
-                    %Resets staircase variables
-                    currentDirRG = 0;
-                    lastDirRG = 0;
-                    currentDirY = 0;
-                    lastDirY = 0;
     
                     % Sets subTrialCompleted to 1 to move on to the next trial
                     matchCompleted = 1;

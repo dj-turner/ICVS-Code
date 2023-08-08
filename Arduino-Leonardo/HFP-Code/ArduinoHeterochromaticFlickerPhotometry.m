@@ -39,10 +39,6 @@ redDelta = rDeltas(deltaIndex);
 % Accepted confidence ratings
 acceptedConfidenceRatings = 1:4;
 
-% Staircase variables
-currentDir = 0;
-lastDir = 0;
-
 % Set trial counter
 trialNumber = 0;
 
@@ -84,17 +80,25 @@ while trialNumber < taskNumber
             case 1
                 % Send character "i" to the device, which randomises the red light
                 fprintf(a, 'i'); 
+
                 % Reads initial red value and converts it
                 rValinit = read(a,6,"char");
                 rValinit = str2num(rValinit) - 100; 
+
                 % Resets the delta value
                 deltaIndex = 1;
                 redDelta = rDeltas(deltaIndex);
+
+                % Resets staircase variables
+                currentDir = 0;
+                lastDir = 0;   
+
                 % Print the initial red and green values
                 disp(" ");
                 fprintf("Initial Red Value = %d, Initial Green Value = %d, Red Delta Value = %d \n", rValinit, gValinit, redDelta);
                 disp(" ");
                 disp("Make your best match!");
+
             % 2 = Most red match
             case 2
                 % Sets delta to smallest value
@@ -103,6 +107,8 @@ while trialNumber < taskNumber
                 % Tells arduino to save the current red value as the best match value
                 fprintf(a, 'g');
                 disp("Now add red until the lights no longer match!");
+
+            % 3 = most green match
             case 3
                 % Tells arduino to reinstate the best match value as the current red value
                 fprintf(a, 'h');
@@ -284,11 +290,7 @@ while trialNumber < taskNumber
                     ListenChar(2);
         
                     % Saves the resulte to "ParticipantMatchesHFP.mat"
-                    SaveHFPResults(ptptID, sessionNumber, trialNumber, matchType, rVal, gVal, rValinit, gValinit, redDelta, confidenceRating);
-
-                    % Resets staircase variables
-                    currentDir = 0;
-                    lastDir = 0;                    
+                    SaveHFPResults(ptptID, sessionNumber, trialNumber, matchType, rVal, gVal, rValinit, gValinit, redDelta, confidenceRating);              
         
                     % Tells MATLAB to go to the next trial
                     subTrialCompleted = 1;
