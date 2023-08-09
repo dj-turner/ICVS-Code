@@ -11,7 +11,7 @@ a = OpenArduinoPort;
 disp(" ");
 
 % Reset all lights to off (in case the arduino previously crashed)
-writeLEDs(a,[0,0,0]);
+WriteLEDs(a,[0,0,0]);
 
 % Allows console responses
 ListenChar(0);
@@ -106,7 +106,7 @@ while trialNumber < taskNumber
             % Sets red and green values based on current lambda
             [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
             % Writes LED values to device
-            writeLEDs(a, [red, green, yellow]);
+            WriteLEDs(a, [red, green, yellow]);
         
             % Waits for a key press
             keyName = FindKeypress;
