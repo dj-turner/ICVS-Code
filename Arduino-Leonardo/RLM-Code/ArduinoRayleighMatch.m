@@ -228,8 +228,8 @@ while trialNumber < taskNumber
                         disp(" ");
                     end
                    
-                % If the "return" or "enter" key is pressed, ends the trial
-                case 'return'
+                % If the "return" or "p" key is pressed, ends the trial
+                case {'return', 'p'}
             
                     % Prints final values of the trial in the console
                     fprintf('Lambda = %0.3f, Red = %d, Green = %d, Yellow = %d\n', lambda, red, green, yellow); 
@@ -261,7 +261,7 @@ while trialNumber < taskNumber
             if matchType == 1
                 % If direction was switched between last change to RG and
                 % current change (1 = increase, 2 = decrease)...
-                if  (lambdaDeltaIndex < length(lambdaDeltas)) && currentDirRG + lastDirRG == 3
+                if  (lambdaDeltaIndex < length(lambdaDeltas)) && (currentDirRG + lastDirRG == 3)
                     % Resets lastDirRG
                     lastDirRG = 0;   
                     % Decreases RG step size

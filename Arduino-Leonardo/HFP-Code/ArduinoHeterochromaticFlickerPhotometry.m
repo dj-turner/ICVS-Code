@@ -252,8 +252,8 @@ while trialNumber < taskNumber
                     % Pauses the program for .5 seconds
                     pause(.5);
         
-                % If the "return" or "enter" key is pressed, ends the trial
-                case 'return'
+                % If the "return" or "p" key is pressed, ends the trial
+                case {'return', 'p'}
                     
                     % Tells the user that the results are being processed
                     disp("Printing final results... please wait");
