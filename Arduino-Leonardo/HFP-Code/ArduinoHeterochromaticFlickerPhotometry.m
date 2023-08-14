@@ -12,6 +12,8 @@ clearvars -except taskNumber;
 % Call arduino object
 % Tries using the value in ConstantsHFP
 [a, connection] = FindArduinoPort;
+
+% If the connection failed, exit the program
 if connection == 0
     return
 end
