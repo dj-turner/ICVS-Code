@@ -11,7 +11,10 @@ clearvars -except taskNumber;
 
 % Call arduino object
 % Tries using the value in ConstantsHFP
-a = FindArduinoPort;
+[a, connection] = FindArduinoPort;
+if connection == 0
+    return
+end
 
 % Turn off character capture
 ListenChar(0);
@@ -124,7 +127,7 @@ while trialNumber < taskNumber
             pause(.1);
 
             % Waits for a key press
-            [keyName, ~] = FindKeypress;
+            keyName = FindKeypress;
         
             % Responds according to key pressed
             switch keyName

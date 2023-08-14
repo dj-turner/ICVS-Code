@@ -1,14 +1,24 @@
 function [serialObj, connection] = FindArduinoPort
 % Sets default port number to try first
-defaultPortCode = 'COM6';
+portCode = 'COM1';
+
+warningCode = NaN;
 
 % First attempts to open arduino using the default port number
 try
     % Tells the user what is happening
-    disp(strcat("Attempting to open arduino using port '", defaultPortCode, "' from default..."))
+    disp(strcat("Attempting to open arduino using port '", portCode, "' from default..."))
 
     % Opens port
-    serialObj=serialport(defaultPortCode, 9600);
+    serialObj=serialport(portCode, 9600);
+
+    % Send character "i" to the device, which randomises the red light
+    fprintf(a, 'i');
+                    
+    % Red the initial red and green values from the device
+    rValinit=read(a, 6, "char");
+
+    % Ch
 
     % Informs the user that the default value is correct
     disp("Port opened successfully using default value!")
@@ -21,16 +31,16 @@ try
 catch
     try
         % Asks user for port number input
-        enteredPortNumber = input("Unable to open port! Please enter the correct port number here to try again: ");
+        enteredPortNumber = input("Unable to open port! Please enter the correct port number here to try again: ", 's');
 
         % Creates port code using inputted number
-        enteredPortCode = strcat('COM', char(string(enteredPortNumber)));
+        portCode = strcat('COM', enteredPortNumber);
 
         % Tells the user what is happening
-        disp(strcat("Attempting to open arduino using port '", enteredPortCode, "' instead..."))
+        disp(strcat("Attempting to open arduino using port '", portCode, "' instead..."))
 
         % Opens port
-        serialObj=serialport(enteredPortCode, 9600);
+        serialObj=serialport(portCode, 9600);
 
         % Informs the user that the entered value is correct
         disp("Port opened successfully using value entered!")
@@ -47,9 +57,6 @@ catch
 
         % Set connection type to 0
         connection = 0;
-
-        % Sets serialObj to NaN
-        serialObj = NaN;
     end
 end
 
