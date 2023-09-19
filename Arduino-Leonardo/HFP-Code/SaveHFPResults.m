@@ -1,14 +1,7 @@
 function SaveHFPResults(PPcode, sessionNumber, trialNumber, matchType, red, green, redInit, greenInit, rDelta, confidenceRating)
-%This code creates structure variable "ParticipantMatches"
 
-%'ParticipantCode' is the code of each participant ('rp_001', 'rp_002', etc.)
-
-%'DateTime' represents date and time of the end of the experiment
-
-%'RedValue', 'GreenValue', 'YellowValue', represent the intensity (in 
-%bytes, 0-255) of Red, Green, and Yellow light
-
-%% record current date and time
+% Define constants
+% record current date and time
 CurrentDateAndTime=round(clock);
 
 varNames = {'ParticipantCode', 'Session', 'Trial', 'MatchType', 'DateTime', 'RedValue', 'GreenValue', ...
@@ -18,6 +11,7 @@ saveFilePath = strcat(pwd, '\Saved-Data\HFP\ParticipantMatchesHFP.mat');
 
 matchTypes = ["Best", "MaxRed", "MinRed"];
 
+%% Load file
 if ~exist(saveFilePath, 'file')
     % create new table if one doesn't exist
     ParticipantMatchesHFP=table.empty(0,length(varNames));
@@ -35,7 +29,7 @@ newResults=table({PPcode}, sessionNumber, trialNumber, {char(matchTypes(matchTyp
 %% new table
 ParticipantMatchesHFP=[ParticipantMatchesHFP; newResults];
 
-%% show and save file
+%% save file
 save(saveFilePath, 'ParticipantMatchesHFP');
 clear;
 
