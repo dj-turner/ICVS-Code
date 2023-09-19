@@ -14,15 +14,11 @@ CurrentDateAndTime=round(clock);
 varNames = {'ParticipantCode', 'Session', 'Trial', 'MatchType', 'DateTime', 'RedValue', 'GreenValue', ...
         'InitialRedSetting', 'InitialGreenSetting', 'RedDelta', 'ConfidenceRating'};
 
-if matchType == 1
-    matchName = 'Best';
-elseif matchType == 2
-    matchName = 'MaxRed';
-elseif matchType == 3
-    matchName = 'MinRed';
-end
+saveFilePath = strcat(pwd, '\Saved-Data\HFP\ParticipantMatchesHFP.mat');
 
-if ~exist("ParticipantMatchesHFP.mat", 'file')
+matchTypes = ["Best", "MaxRed", "MinRed"];
+
+if ~exist(saveFilePath, 'file')
     % create new table if one doesn't exist
     ParticipantMatchesHFP=table.empty(0,length(varNames));
     ParticipantMatchesHFP.Properties.VariableNames = varNames;
@@ -32,7 +28,7 @@ else
 end
 
 %% new participant results
-newResults=table({PPcode}, sessionNumber, trialNumber, {matchName}, CurrentDateAndTime, ...
+newResults=table({PPcode}, sessionNumber, trialNumber, {char(matchTypes(matchType))}, CurrentDateAndTime, ...
     red, green, redInit, greenInit, rDelta, confidenceRating,... 
     'VariableNames', varNames);
 
@@ -40,7 +36,7 @@ newResults=table({PPcode}, sessionNumber, trialNumber, {matchName}, CurrentDateA
 ParticipantMatchesHFP=[ParticipantMatchesHFP; newResults];
 
 %% show and save file
-save(strcat(pwd, '\Saved-Data\HFP\ParticipantMatchesHFP.mat'), 'ParticipantMatchesHFP');
+save(saveFilePath, 'ParticipantMatchesHFP');
 clear;
 
 end

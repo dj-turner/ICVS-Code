@@ -16,7 +16,13 @@ varNames = {'ParticipantCode', 'Session', 'Trial', 'MatchType', 'DateTime', 'Red
 
 saveFilePath = strcat(pwd, '\Saved-Data\RLM\ParticipantMatchesRLM.mat');
 
-matchTypes = ["Best", "MaxLambda", "MinLambda"];
+if matchType == 1
+    matchName = 'Best';
+elseif matchType == 2
+    matchName = 'MaxLambda';
+elseif matchType == 3
+    matchName = 'MinLambda';
+end
 
 if ~exist(saveFilePath, 'file')
     % create new table if one doesn't exist
@@ -28,7 +34,7 @@ else
 end
 
 %% new participant results
-newResults=table({ptptID}, sessionNumber, trialNumber, {char(matchTypes(matchType))}, CurrentDateAndTime, ... 
+newResults=table({ptptID}, sessionNumber, trialNumber, {matchName}, CurrentDateAndTime, ... 
     red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating,...
     'VariableNames', varNames);
 
