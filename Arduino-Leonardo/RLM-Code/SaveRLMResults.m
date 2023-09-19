@@ -1,6 +1,6 @@
 function SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating)
 
-%% Define constants
+% Define constants
 % record current date and time
 CurrentDateAndTime=round(clock);
 
