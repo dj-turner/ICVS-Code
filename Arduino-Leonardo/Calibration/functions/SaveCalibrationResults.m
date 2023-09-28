@@ -1,11 +1,15 @@
-function SaveRLMResults(light, level)
+function SaveCalibrationResults(light, level, lum, spect, peak)
 
 % Define constants
 % record current date and time
-CurrentDateAndTime=round(clock);
+dt = string(datetime);
+date = extractBefore(dt, " ");
+time = extractAfter(dt, " ");
 
-varNames = {'DateTime', 'LED', 'Value'};
+% Define variable names for table
+varNames = {'Date', 'Time', 'LED', 'Value', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
 
+% Defines path to .mat file
 saveFilePath = strcat(pwd, '\CalibrationResults.mat');
 
 %% Load file
@@ -19,13 +23,12 @@ else
 end
 
 %% new participant results
-newResults=table(CurrentDateAndTime, {light}, level, 'VariableNames', varNames);
+newResults=table(date, time, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
 
 %% new table
 CalibrationResults=[CalibrationResults; newResults];
 
 %% save file
 save(saveFilePath, 'CalibrationResults');
-clear;
 
 end
