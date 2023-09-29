@@ -17,14 +17,8 @@ lambdas = (minLambda : lambdaStep : maxLambda)';    % lambda list
 % Opens PR670
 PR670init(port);
 
-% disp
-disp("  Measuring the spectrum now...");
-
 % Measures spectrum
 [spd, ~] = PR670measspd([minLambda lambdaStep stepNum], 'off');
-
-% disp
-disp("  Measuring the luminance now...");
 
 % Measures xyz output
 [xyz, ~] = PR670measxyz_syncMode('off');
