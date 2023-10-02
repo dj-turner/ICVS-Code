@@ -11,7 +11,7 @@ addpath(strcat(pwd, '\functions\'));
 
 % Loading and setting up the arduino device - Do not touch this code!
 arduino = OpenArduinoPort;
-
+  
 % Reset all lights to off (in case the arduino previously crashed)
 WriteLEDs(arduino, [0,0,0]);
 
@@ -27,13 +27,15 @@ LEDs = struct;
 
 % GRAPH SETUP
 % initialise graphs
-figure('WindowState','minimized');
+fig = figure('WindowState', 'minimized');
 tiledGraph = tiledlayout(2, length(lights));
 % calculate date and time
 dt = string(datetime);
 % reformat into valid file name
-dt = strrep(dt, ":", ".");
-dt = strrep(dt, " ", "_");
+charRep = [":", "."; "-", "."; " ", "_"];
+for rep = 1:height(charRep)
+    dt = strrep(dt, charRep(rep,1), charRep(rep,2));
+end
 % set date and time as tiled chart title
 title(tiledGraph, dt, 'Interpreter', 'none');
 
@@ -57,7 +59,7 @@ for light = 1:length(lights)
 
     % Display which light we're currently calibrating
     disp(" ");
-    disp(strjoin(["Current testing light:", lights(light)], ' '));
+    disp(strcat("Current testing light: ", lights(light)));
 
     % If the light is either red or yellow...
     if strcmp(lights(light), "red") || strcmp(lights(light), "yellow")
@@ -86,7 +88,7 @@ for light = 1:length(lights)
         WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
 
         % Tells the user which LED and level we're currently testing
-        disp(strjoin(["Current", lights(light), "value:", num2str(levels(level))], ' '));
+        disp(strcat("Current ", lights(light), " value: ", num2str(levels(level))));
 
         % Pauses to make sure the LEDs have had time to change
         pause(.5);
@@ -150,7 +152,7 @@ for light = 1:length(lights)
         end
     end
 
-    % draws graphs for current test light
+    % DRAWING GRAPHS
     % ROW 1: x = input value, y = luminance
     nexttile(light)
     plot(plotLumData(:,1), plotLumData(:,2), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
@@ -158,7 +160,7 @@ for light = 1:length(lights)
     xlabel("Input value");
     ylim([0, max(plotLumData(:,2))]);
     ylabel("Luminance");
-    title(strjoin(["Luminance:", upper(lights(light))], ' '));
+    title(strcat("Luminance: ", upper(lights(light))));
 
     % ROW 2: x = wavelengths, y = spectral sensitivity at final input value
     nexttile(light + length(lights))
@@ -167,7 +169,7 @@ for light = 1:length(lights)
     xlabel("Lambda (nm)");
     ylim([0, max(spectrum(2,:))]);
     ylabel("Spectral Sensitivity");
-    title(strjoin(["Spectrum:", upper(lights(light))], ' '));
+    title(strcat("Spectrum:", upper(lights(light))));
 
     % Displays message
     if light ~= length(lights)
@@ -179,6 +181,9 @@ end
 
 %--------------------------------------------------------------------------
 % SAVING & EXITING
+
+% maximises figure
+fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
 exportgraphics(tiledGraph,strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
@@ -194,9 +199,7 @@ beep
 %--------------------------------------------------------------------------
 % FUNCTIONS
 
-function PrepareToExit(a)
-% a = arduino device
-
+function PrepareToExit(a)   % a = arduino device
 % Reset all lights to off before closing
 WriteLEDs(a,[0,0,0]);
 % Clear everything before ending program
