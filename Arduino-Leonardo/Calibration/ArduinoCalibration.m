@@ -96,6 +96,7 @@ for light = 1:length(lights)
         % Turns off the monitor
         MonitorPower('off', testMode)
 
+        %------------------------------------------------------------------
         % TAKES PR670 MEASUREMENTS
         % Tries to take PR670 measurements using defined port
         try
@@ -133,7 +134,8 @@ for light = 1:length(lights)
 
         % turns monitor back on
         MonitorPower('on', testMode)
-
+        %------------------------------------------------------------------
+        
         % Saves results to .mat file
         SaveCalibrationResults(testMode, lights(light), levels(level), luminance, spectrum, spectrumPeak);
 
@@ -187,6 +189,9 @@ fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
 exportgraphics(tiledGraph,strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
+
+% displays port used
+disp(strcat("PR670 port used: ", portPR670));
 
 % prepares to exit
 PrepareToExit(arduino)
