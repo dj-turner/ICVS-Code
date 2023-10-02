@@ -3,17 +3,20 @@ warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
 delete(instrfindall)
 clc; clear; close all; 
 
+%--------------------------------------------------------------------------
+% INITIALISATION
+
 % add folder path to required functions
 addpath(strcat(pwd, '\functions\'));
 
 % Loading and setting up the arduino device - Do not touch this code!
 arduino = OpenArduinoPort;
 
-% define PR670 port
-portPR670 = 'COM10';
-
 % Reset all lights to off (in case the arduino previously crashed)
 WriteLEDs(arduino, [0,0,0]);
+
+% define default PR670 port
+portPR670 = 'COM11';
 
 % set constants
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate
@@ -24,7 +27,7 @@ LEDs = struct;
 
 % GRAPH SETUP
 % initialise graphs
-figure;
+figure('WindowState','minimized');
 tiledGraph = tiledlayout(2, length(lights));
 % calculate date and time
 dt = string(datetime);
@@ -35,7 +38,14 @@ dt = strrep(dt, " ", "_");
 title(tiledGraph, dt, 'Interpreter', 'none');
 
 % test mode
-testMode = input("Test mode? 0/1: ");
+testMode = NaN;
+% will only move on if either 0 or 1 is entered for the testMode
+while testMode ~= 0 && testMode ~= 1
+    testMode = input("Test mode? (0 = off, 1 = on): ");
+end
+
+%--------------------------------------------------------------------------
+% TESTING LOOP
 
 % For each of the LEDs...
 for light = 1:length(lights)
@@ -167,6 +177,9 @@ for light = 1:length(lights)
     end
 end
 
+%--------------------------------------------------------------------------
+% SAVING & EXITING
+
 % saves graphs as .JPG file
 exportgraphics(tiledGraph,strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
 
@@ -176,8 +189,14 @@ PrepareToExit(arduino)
 % beeps to let user know the program has finished
 beep
 
+% END OF SCRIPT
+
 %--------------------------------------------------------------------------
+% FUNCTIONS
+
 function PrepareToExit(a)
+% a = arduino device
+
 % Reset all lights to off before closing
 WriteLEDs(a,[0,0,0]);
 % Clear everything before ending program
@@ -186,12 +205,15 @@ clear all; %#ok<CLALL>
 warning('on', 'instrument:instrfindall:FunctionToBeRemoved');
 end
 
-%--------------------------------------------------------------------------
+
 function MonitorPower(dir, tMode)
+% dir = direction of power switch ('on' or 'off')
+% tMode = testing mode (0 = off, 1 = on)
+
 % if not in test mode, turn the monitor on/off
 if tMode == 0
     WinPower('monitor', dir)
-    % if monitor is turned off, pause for 1 second
+    % if monitor is being turned off, pause for 1 second
     if strcmpi(dir, 'off')
         pause(1);
     end
