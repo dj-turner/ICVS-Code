@@ -76,7 +76,7 @@ for light = 1:length(lights)
     end
 
     % creates empty array for current LED for luminance values - to use in figures
-    plotLumData = NaN(length(levels), 2);
+    plotLumData = NaN(length(levels), 1);
 
     % For each input level...
     for level = 1:length(levels)
@@ -93,11 +93,11 @@ for light = 1:length(lights)
         % Pauses to make sure the LEDs have had time to change
         pause(.5);
 
+        %------------------------------------------------------------------
+        % TAKES PR670 MEASUREMENTS
         % Turns off the monitor
         MonitorPower('off', testMode)
 
-        %------------------------------------------------------------------
-        % TAKES PR670 MEASUREMENTS
         % Tries to take PR670 measurements using defined port
         try
             [luminance, spectrum, spectrumPeak] = measurePR670(portPR670);
@@ -133,14 +133,14 @@ for light = 1:length(lights)
         end
 
         % turns monitor back on
-        MonitorPower('on', testMode)
+        MonitorPower('on', testMode);
+
         %------------------------------------------------------------------
-        
         % Saves results to .mat file
         SaveCalibrationResults(testMode, lights(light), levels(level), luminance, spectrum, spectrumPeak);
 
         % saves luminance values for plotting
-        plotLumData(level, :) = [levels(level), luminance];
+        plotLumData(level) = luminance;
 
         % if on test mode, gives option to exit program (otherwise automatically continues)
         if testMode == 1
@@ -157,10 +157,10 @@ for light = 1:length(lights)
     % DRAWING GRAPHS
     % ROW 1: x = input value, y = luminance
     nexttile(light)
-    plot(plotLumData(:,1), plotLumData(:,2), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
-    xlim([0, max(plotLumData(:,1))]);
+    plot(levels, plotLumData, 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+    xlim([0, max(levels)]);
     xlabel("Input value");
-    ylim([0, max(plotLumData(:,2))]);
+    ylim([0, max(plotLumData)]);
     ylabel("Luminance");
     title(strcat("Luminance: ", upper(lights(light))));
 
@@ -188,7 +188,7 @@ end
 fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
-exportgraphics(tiledGraph,strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
 
 % displays port used
 disp(strcat("PR670 port used: ", portPR670));
@@ -203,8 +203,8 @@ beep
 
 %--------------------------------------------------------------------------
 % FUNCTIONS
-
-function PrepareToExit(a)   % a = arduino device
+function PrepareToExit(a)   
+    % a = arduino device
 % Reset all lights to off before closing
 WriteLEDs(a,[0,0,0]);
 % Clear everything before ending program
@@ -215,9 +215,8 @@ end
 
 
 function MonitorPower(dir, tMode)
-% dir = direction of power switch ('on' or 'off')
-% tMode = testing mode (0 = off, 1 = on)
-
+    % dir = direction of power switch ('on' or 'off')
+    % tMode = testing mode (0 = off, 1 = on)
 % if not in test mode, turn the monitor on/off
 if tMode == 0
     WinPower('monitor', dir)
