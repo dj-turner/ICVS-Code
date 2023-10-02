@@ -7,7 +7,7 @@ date = extractBefore(dt, " ");
 time = extractAfter(dt, " ");
 
 % Define variable names for table
-varNames = {'Date', 'Time', 'LED', 'Value', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
+varNames = {'Date', 'Time', 'LED', 'InputValue', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
 
 % testMode
 if testMode == 0

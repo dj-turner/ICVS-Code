@@ -20,7 +20,7 @@ PR670init(port);
 % Measures spectrum
 [spd, ~] = PR670measspd([minLambda lambdaStep stepNum], 'off');
 
-% Measures xyz output
+% Measures xyz output (customised Psychtoolbox function to disable sync mode)
 [xyz, ~] = PR670measxyz_syncMode('off');
 
 % Extracts luminance from xyz values

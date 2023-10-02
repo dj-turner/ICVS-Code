@@ -22,7 +22,6 @@ levels = [0, 32, 64, 96, 128, 160, 192, 224, 255];      % Input values to test
 % Creates empty structure to store LED input values
 LEDs = struct;
 
-% GRAPH SETUP
 % initialise graphs
 figure;
 tiledGraph = tiledlayout(2, length(lights));
@@ -35,12 +34,13 @@ dt = strrep(dt, " ", "_");
 title(tiledGraph, dt, 'Interpreter', 'none');
 
 % test mode
+beep
 testMode = input("Test mode? 0/1: ");
 
 % For each of the LEDs...
 for light = 1:length(lights)
 
-    % Set all light values to 0 in the LED value structure
+    % Set all light values to 0 in the LED structure
     for LED = 1:length(lights)
         LEDs.(lights(LED)) = 0;
     end
@@ -58,7 +58,7 @@ for light = 1:length(lights)
         % Write LED values to the arduino device
         WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
 
-        % Wait for user to press RETURN to continue (for light alignment)
+        % Wait for user to press RETURN to continue 9for light alignment)
         beep
         input("Alignment light on! Please press RETURN when you are ready to start.");
     end
@@ -78,61 +78,44 @@ for light = 1:length(lights)
         % Tells the user which LED and level we're currently testing
         disp(strjoin(["Current", lights(light), "value:", num2str(levels(level))], ' '));
 
-        % Pauses to make sure the LEDs have had time to change
+        % Pauses to make sure the LEDs ahve had time to change
         pause(.5);
 
-        % Turns off the monitor
+        % Turns off the 
         MonitorPower('off', testMode)
+        pause(1);
 
-        % TAKES PR670 MEASUREMENTS
         % Tries to take PR670 measurements using defined port
         try
             [luminance, spectrum, spectrumPeak] = measurePR670(portPR670);
 
-        % if this doesn't work, asks the user to check and enter the correct port number
-        catch
-            %turns on the monitor
-            MonitorPower('on', testMode)
-            % saves number entered
-            newPortNum = input("Potentially wrong port number entered! Please check and enter the port number here: ");
-            % converts entered number to correct format
-            newPortPR670 = char(strcat('COM', num2str(newPortNum)));
-            % turns off monitor
-            MonitorPower('off', testMode)
 
-            % tries to take PR670 measurements with new port number
+        catch
+            WinPower('monitor', 'on')
+            newPortNum = input("Potentially wrong port number entered! Please check and enter the port number here: ");
+            newPortPR670 = char(strcat('COM', num2str(newPortNum)));
+            WinPower('monitor', 'off')
+            pause(1);
             try
                 [luminance, spectrum, spectrumPeak] = measurePR670(newPortPR670);
-                % if successful, sets the new port number as the defined port for future trials
                 portPR670 = newPortPR670;
-
-            % if the new port fails, exits
             catch
-                % turns monitor on
-                MonitorPower('on', testMode)
-                %displays error message
+                WinPower('monitor', 'on')
                 disp("Still not working! Exiting program...");
-                % prepares to exit program
-                PrepareToExit(arduino);
-                % exits program
                 return
             end
         end
-
-        % turns monitor back on
-        MonitorPower('on', testMode)
+        WinPower('monitor', 'on')
 
         % Saves results to .mat file
-        SaveCalibrationResults(testMode, lights(light), levels(level), luminance, spectrum, spectrumPeak);
+        SaveCalibrationResults(lights(light), levels(level), luminance, spectrum, spectrumPeak);
 
         % saves luminance values for plotting
         plotLumData(level, :) = [levels(level), luminance];
 
-        % if on test mode, gives option to exit program (otherwise automatically continues)
         if testMode == 1
-            % asks for input
+            beep
             i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
-            % if exit is typed, exits program
             if strcmpi(i, "exit")
                 PrepareToExit(arduino)
                 return
@@ -140,8 +123,8 @@ for light = 1:length(lights)
         end
     end
 
-    % draws graphs for current test light
-    % ROW 1: x = input value, y = luminance
+    % draws graphs
+    % luminance
     nexttile(light)
     plot(plotLumData(:,1), plotLumData(:,2), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
     xlim([0, max(plotLumData(:,1))]);
@@ -150,7 +133,7 @@ for light = 1:length(lights)
     ylabel("Luminance");
     title(strjoin(["Luminance:", upper(lights(light))], ' '));
 
-    % ROW 2: x = wavelengths, y = spectral sensitivity at final input value
+    % spectral
     nexttile(light + length(lights))
     plot(spectrum(1,:), spectrum(2,:), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
     xlim([min(spectrum(1,:)), max(spectrum(1,:))]);
@@ -159,7 +142,7 @@ for light = 1:length(lights)
     ylabel("Spectral Sensitivity");
     title(strjoin(["Spectrum:", upper(lights(light))], ' '));
 
-    % Displays message
+    % Asks user for input to begin next test light (unless this is the last one!)
     if light ~= length(lights)
         disp("Next light starting!...");
     else
@@ -167,13 +150,8 @@ for light = 1:length(lights)
     end
 end
 
-% saves graphs as .JPG file
 exportgraphics(tiledGraph,strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
-
-% prepares to exit
 PrepareToExit(arduino)
-
-% beeps to let user know the program has finished
 beep
 
 %--------------------------------------------------------------------------
@@ -182,17 +160,15 @@ function PrepareToExit(a)
 WriteLEDs(a,[0,0,0]);
 % Clear everything before ending program
 delete(instrfindall);
-clear all; %#ok<CLALL>
+clear;
 warning('on', 'instrument:instrfindall:FunctionToBeRemoved');
 end
 
 %--------------------------------------------------------------------------
 function MonitorPower(dir, tMode)
-% if not in test mode, turn the monitor on/off
 if tMode == 0
     WinPower('monitor', dir)
-    % if monitor is turned off, pause for 1 second
-    if strcmpi(dir, 'off')
+    if strcmp(dir, 'off')
         pause(1);
     end
 end
