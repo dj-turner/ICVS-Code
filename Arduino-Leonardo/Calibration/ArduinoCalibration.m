@@ -16,7 +16,7 @@ WriteLEDs(arduino, [0,0,0]);
 
 % define default PR670 port
 portPR670 = 'COM11';
-% is the default port correct?
+% is the default port correct? (set to 1, ie. yes, for now)
 defaultPort = 1;
 
 % set constants
@@ -213,6 +213,7 @@ beep
 
 %--------------------------------------------------------------------------
 % FUNCTIONS
+
 function PrepareToExit(a)   
     % a = arduino device
 % Reset all lights to off before closing
