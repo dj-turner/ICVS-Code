@@ -15,9 +15,9 @@ arduino = OpenArduinoPort;
 WriteLEDs(arduino, [0,0,0]);
 
 % define default PR670 port
-portPR670 = 'COM11';
-% is the default port correct? (set to 1, ie. yes, for now)
-defaultPort = 1;
+defaultPortPR670 = 'COM11';
+% sets the working port as the default to start
+workingPortPR670 = defaultPortPR670;
 
 % set constants
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate
@@ -99,26 +99,24 @@ for light = 1:length(lights)
 
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
+            [luminance, spectrum, spectrumPeak] = MeasurePR670(workingPortPR670);
 
         % if this doesn't work, asks the user to check and enter the correct port number
         catch
-            % set defaultPort to 0 to reflect that the default port doesn't work
-            defaultPort = 0;
             %turns on the monitor
             MonitorPower('on', testMode)
             % saves number entered
-            newPortNum = input("Potentially wrong port number entered! Please check and enter the port number here: ");
+            enteredPortNum = input("Potentially wrong port number entered! Please check and enter the port number here: ");
             % converts entered number to correct format
-            newPortPR670 = char(strcat('COM', num2str(newPortNum)));
+            enteredPortPR670 = char(strcat('COM', num2str(enteredPortNum)));
             % turns off monitor
             MonitorPower('off', testMode)
 
             % tries to take PR670 measurements with new port number
             try
-                [luminance, spectrum, spectrumPeak] = measurePR670(newPortPR670);
+                [luminance, spectrum, spectrumPeak] = measurePR670(enteredPortPR670);
                 % if successful, sets the new port number as the defined port for future trials
-                portPR670 = newPortPR670;
+                workingPortPR670 = enteredPortPR670;
 
             % if the new port fails, exits
             catch
@@ -193,13 +191,14 @@ exportgraphics(tiledGraph, strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
 
 % displays port used
 disp(" ");
-
-disp(strcat("Arduino port used: ", arduino.Port));
-
-if defaultPort == 1
-    disp(strcat("Default PR670 port used: ", portPR670));
-elseif defaultPort == 0
-    disp(strcat("Entered PR670 port used: ", portPR670))
+% displays autodetected arduino ports
+disp(strcat("Autodetected Arduino port used: ", arduino.Port));
+% displays the PR670 port that was successfully used (by matching the
+% working port to the default or entered port)
+if strcmp(workingPortPR670, defaultPortPR670)
+    disp(strcat("Default PR670 port used: ", defaultPortPR670));
+elseif strcmp(workingPortPR670, enteredPortPR670)
+    disp(strcat("Entered PR670 port used: ", enteredPortPR670))
     disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
 end
 
