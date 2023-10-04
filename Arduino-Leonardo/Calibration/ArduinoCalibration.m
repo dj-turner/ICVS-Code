@@ -177,7 +177,7 @@ for light = 1:length(lights)
     % Displays message
     if light ~= length(lights)
         disp("Next light starting!...");
-    else
+    elseif light == length(lights)
         disp("All finished!");
     end
 end
@@ -192,18 +192,16 @@ fig.WindowState = 'maximized';
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
 
 % displays port used
-<<<<<<< Updated upstream
 disp(" ");
+
 disp(strcat("Arduino port used: ", arduino.Port));
-disp(strcat("PR670 port used: ", portPR670));
-=======
+
 if defaultPort == 1
     disp(strcat("Default PR670 port used: ", portPR670));
 elseif defaultPort == 0
     disp(strcat("Entered PR670 port used: ", portPR670))
     disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
 end
->>>>>>> Stashed changes
 
 % prepares to exit
 PrepareToExit(arduino)
