@@ -187,7 +187,13 @@ end
 fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
-exportgraphics(tiledGraph, strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
+if testMode == 0
+    graphPrefix = "Graph";
+elseif testMode == 1
+    graphPrefix = "TestGraph";
+end
+
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dt, ".JPG"))
 
 % displays port used
 disp(" ");
