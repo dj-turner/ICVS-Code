@@ -171,7 +171,7 @@ for light = 1:length(lights)
     xlabel("Lambda (nm)");
     ylim([0, max(spectrum(2,:))]);
     ylabel("Spectral Sensitivity");
-    title(strcat("Spectrum:", upper(lights(light))));
+    title(strcat("Spectrum: ", upper(lights(light))));
 
     % Displays message
     if light ~= length(lights)
