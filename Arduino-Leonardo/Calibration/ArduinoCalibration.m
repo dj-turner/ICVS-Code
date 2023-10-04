@@ -40,6 +40,9 @@ end
 % set date and time as tiled chart title
 title(tiledGraph, dt, 'Interpreter', 'none');
 
+% creates empty array for current LED for luminance values - to use in figures
+plotLumData = NaN(length(levels), length(lights));
+
 % will only move on if either 0 or 1 is entered for the testMode
 while ~exist("testMode", 'var') || (testMode ~= 0 && testMode ~= 1)
     testMode = input("Test mode? (0 = off, 1 = on): ");
@@ -73,9 +76,6 @@ for light = 1:length(lights)
         beep
         input("Alignment light on! Please press RETURN when you are ready to start.");
     end
-
-    % creates empty array for current LED for luminance values - to use in figures
-    plotLumData = NaN(length(levels), 1);
 
     % For each input level...
     for level = 1:length(levels)
@@ -139,7 +139,7 @@ for light = 1:length(lights)
         SaveCalibrationResults(testMode, lights(light), levels(level), luminance, spectrum, spectrumPeak);
 
         % saves luminance values for plotting
-        plotLumData(level) = luminance;
+        plotLumData(level, light) = luminance;
 
         % if on test mode, gives option to exit program (otherwise automatically continues)
         if testMode == 1
@@ -156,7 +156,7 @@ for light = 1:length(lights)
     % DRAWING GRAPHS
     % ROW 1: x = input value, y = luminance
     nexttile(light)
-    plot(levels, plotLumData, 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+    plot(levels, plotLumData(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
     xlim([0, max(levels)]);
     xlabel("Input value");
     ylim([0, max(plotLumData)]);
@@ -172,8 +172,8 @@ for light = 1:length(lights)
     ylabel("Spectral Sensitivity");
     title(strcat("Spectrum: ", upper(lights(light))));
 
-    % Displays message
-    if light ~= length(lights)
+    % Displays ending message
+    if light < length(lights)
         disp("Next light starting!...");
     elseif light == length(lights)
         disp("All finished!");
