@@ -191,6 +191,7 @@ fig.WindowState = 'maximized';
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
 
 % displays port used
+disp(" ");
 disp(strcat("PR670 port used: ", portPR670));
 
 % prepares to exit
