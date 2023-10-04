@@ -14,10 +14,13 @@ arduino = OpenArduinoPort;
 % Reset all lights to off (in case the arduino previously crashed)
 WriteLEDs(arduino, [0,0,0]);
 
+portPR670 = struct;
 % define default PR670 port
-defaultPortPR670 = 'COM11';
+portPR670.default = 'COM11';
 % sets the working port as the default to start
-workingPortPR670 = defaultPortPR670;
+portPR670.working = defaultPortPR670;
+% set the entered port as an empty string
+portPR670.entered = '';
 
 % set constants
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate
@@ -99,7 +102,7 @@ for light = 1:length(lights)
 
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = MeasurePR670(workingPortPR670);
+            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670.working);
 
         % if this doesn't work, asks the user to check and enter the correct port number
         catch
@@ -108,24 +111,26 @@ for light = 1:length(lights)
             % saves number entered
             enteredPortNum = input("Potentially wrong port number entered! Please check and enter the port number here: ");
             % converts entered number to correct format
-            enteredPortPR670 = char(strcat('COM', num2str(enteredPortNum)));
+            portPR670.entered = char(strcat('COM', num2str(enteredPortNum)));
             % turns off monitor
             MonitorPower('off', testMode)
 
             % tries to take PR670 measurements with new port number
             try
-                [luminance, spectrum, spectrumPeak] = measurePR670(enteredPortPR670);
+                [luminance, spectrum, spectrumPeak] = measurePR670(portPR670.entered);
                 % if successful, sets the new port number as the defined port for future trials
-                workingPortPR670 = enteredPortPR670;
+                portPR670.working = portPR670.entered;
 
             % if the new port fails, exits
             catch
+                % sets the working PR670 port to blank 
+                portPR670.working = '';
                 % turns monitor on
                 MonitorPower('on', testMode)
                 %displays error message
                 disp("Still not working! Exiting program...");
                 % prepares to exit program
-                PrepareToExit(arduino);
+                PrepareToExit(arduino, portPR670);
                 % exits program
                 return
             end
@@ -147,7 +152,7 @@ for light = 1:length(lights)
             i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
             % if exit is typed, exits program
             if strcmpi(i, "exit")
-                PrepareToExit(arduino)
+                PrepareToExit(arduino, portPR670);
                 return
             end
         end
@@ -195,21 +200,8 @@ end
 
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dt, ".JPG"))
 
-% displays port used
-disp(" ");
-% displays autodetected arduino ports
-disp(strcat("Autodetected Arduino port used: ", arduino.Port));
-% displays the PR670 port that was successfully used (by matching the
-% working port to the default or entered port)
-if strcmp(workingPortPR670, defaultPortPR670)
-    disp(strcat("Default PR670 port used: ", defaultPortPR670));
-elseif strcmp(workingPortPR670, enteredPortPR670)
-    disp(strcat("Entered PR670 port used: ", enteredPortPR670))
-    disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
-end
-
 % prepares to exit
-PrepareToExit(arduino)
+PrepareToExit(arduino, portPR670);
 
 % beeps to let user know the program has finished
 beep
@@ -219,10 +211,28 @@ beep
 %--------------------------------------------------------------------------
 % FUNCTIONS
 
-function PrepareToExit(a)   
-    % a = arduino device
+function PrepareToExit(a, PR670)   
+% a = arduino device
+% PR670 = structure of possible PR670 port values
+
 % Reset all lights to off before closing
 WriteLEDs(a,[0,0,0]);
+
+% displays port used
+disp(" ");
+% displays autodetected arduino ports
+disp(strcat("Autodetected Arduino port used: ", a.Port));
+% displays the PR670 port that was successfully used (by matching the
+% working port to the default or entered port)
+if strcmp(PR670.working, PR670.default)
+    disp(strcat("Default PR670 port used: ", PR670.default));
+elseif strcmp(PR670.working, PR670.entered)
+    disp(strcat("Entered PR670 port used: ", PR670.entered))
+    disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
+else
+    disp("PR670 port not successfully defined.")
+end
+
 % Clear everything before ending program
 delete(instrfindall);
 clear all; %#ok<CLALL>
@@ -231,8 +241,9 @@ end
 
 
 function MonitorPower(dir, tMode)
-    % dir = direction of power switch ('on' or 'off')
-    % tMode = testing mode (0 = off, 1 = on)
+% dir = direction of power switch ('on' or 'off')
+% tMode = testing mode (0 = off, 1 = on)
+
 % if not in test mode, turn the monitor on/off
 if tMode == 0
     WinPower('monitor', dir)
