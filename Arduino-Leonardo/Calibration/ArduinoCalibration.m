@@ -11,12 +11,13 @@ addpath(strcat(pwd, '\functions\'));
 
 % Loading and setting up the arduino device - Do not touch this code!
 arduino = OpenArduinoPort;
-  
 % Reset all lights to off (in case the arduino previously crashed)
 WriteLEDs(arduino, [0,0,0]);
 
 % define default PR670 port
 portPR670 = 'COM11';
+% is the default port correct?
+defaultPort = 1;
 
 % set constants
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate
@@ -39,10 +40,8 @@ end
 % set date and time as tiled chart title
 title(tiledGraph, dt, 'Interpreter', 'none');
 
-% test mode
-testMode = NaN;
 % will only move on if either 0 or 1 is entered for the testMode
-while testMode ~= 0 && testMode ~= 1
+while ~exist("testMode", 'var') || (testMode ~= 0 && testMode ~= 1)
     testMode = input("Test mode? (0 = off, 1 = on): ");
 end
 
@@ -100,10 +99,12 @@ for light = 1:length(lights)
 
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = measurePR670(portPR670);
+            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
 
         % if this doesn't work, asks the user to check and enter the correct port number
         catch
+            % set defaultPort to 0 to reflect that the default port doesn't work
+            defaultPort = 0;
             %turns on the monitor
             MonitorPower('on', testMode)
             % saves number entered
@@ -191,9 +192,18 @@ fig.WindowState = 'maximized';
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\Graph_", dt, ".JPG"))
 
 % displays port used
+<<<<<<< Updated upstream
 disp(" ");
 disp(strcat("Arduino port used: ", arduino.Port));
 disp(strcat("PR670 port used: ", portPR670));
+=======
+if defaultPort == 1
+    disp(strcat("Default PR670 port used: ", portPR670));
+elseif defaultPort == 0
+    disp(strcat("Entered PR670 port used: ", portPR670))
+    disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
+end
+>>>>>>> Stashed changes
 
 % prepares to exit
 PrepareToExit(arduino)

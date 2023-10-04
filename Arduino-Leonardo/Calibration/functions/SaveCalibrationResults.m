@@ -30,10 +30,10 @@ else
 end
 
 %% new participant results
-newResults=table(date, time, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
+newResults = table(date, time, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
 
 %% new table
-calibrationTable=[calibrationTable; newResults];
+calibrationTable = [calibrationTable; newResults];
 
 %% save file
 save(saveFilePath, 'calibrationTable');

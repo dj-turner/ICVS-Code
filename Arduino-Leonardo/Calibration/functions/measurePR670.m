@@ -1,4 +1,4 @@
-function [lum, spect, peak] = measurePR670(port)
+function [lum, spect, peak] = MeasurePR670(port)
 
 % If a port number is added, converts the value to char format
 if isa(port, 'double')
