@@ -1,36 +1,31 @@
-function SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating)
+function SaveCalibrationResults(light, lum)
 
 % Define constants
 % record current date and time
 CurrentDateAndTime=round(clock);
 
-varNames = {'ParticipantCode', 'Session', 'Trial', 'MatchType', 'DateTime', 'Red', 'Green', ...
-        'Yellow', 'Lambda', 'LambdaDelta', 'YellowDelta', 'ConfidenceRating'};
+varNames = {'DateTime', 'LED', 'Luminance'};
 
-saveFilePath = strcat(pwd, '\Saved-Data\RLM\ParticipantMatchesRLM.mat');
-
-matchTypes = ["Best", "MaxLambda", "MinLambda"];
+saveFilePath = strcat(pwd, '\CalibrationResults.mat');
 
 %% Load file
 if ~exist(saveFilePath, 'file')
     % create new table if one doesn't exist
-    ParticipantMatchesRLM=table.empty(0,length(varNames));
-    ParticipantMatchesRLM.Properties.VariableNames = varNames;
+    CalibrationResults=table.empty(0,length(varNames));
+    CalibrationResults.Properties.VariableNames = varNames;
 else
     % Load Structure File
-    load('ParticipantMatchesRLM.mat');
+    load('CalibrationResults.mat');
 end
 
 %% new participant results
-newResults=table({ptptID}, sessionNumber, trialNumber, {char(matchTypes(matchType))}, CurrentDateAndTime, ... 
-    red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating,...
-    'VariableNames', varNames);
+newResults=table(CurrentDateAndTime, {light}, lum, 'VariableNames', varNames);
 
 %% new table
-ParticipantMatchesRLM=[ParticipantMatchesRLM; newResults];
+CalibrationResults = [CalibrationResults; newResults];
 
 %% save file
-save(saveFilePath, 'ParticipantMatchesRLM');
+save(saveFilePath, 'CalibrationResults');
 clear;
 
 end
