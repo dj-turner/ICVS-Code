@@ -37,9 +37,7 @@ tiledGraph = tiledlayout(2, length(lights));
 dt = string(datetime);
 % reformat into valid file name
 charRep = [":", "."; "-", "."; " ", "_"];
-for rep = 1:height(charRep)
-    dt = strrep(dt, charRep(rep,1), charRep(rep,2));
-end
+for rep = 1:height(charRep), dt = strrep(dt, charRep(rep,1), charRep(rep,2)); end
 % set date and time as tiled chart title
 title(tiledGraph, dt, 'Interpreter', 'none');
 
@@ -151,10 +149,7 @@ for light = 1:length(lights)
             % asks for input
             i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
             % if exit is typed, exits program
-            if strcmpi(i, "exit")
-                PrepareToExit(arduino, portPR670);
-                return
-            end
+            if strcmpi(i, "exit"), PrepareToExit(arduino, portPR670); return; end
         end
     end
 
@@ -178,11 +173,7 @@ for light = 1:length(lights)
     title(strcat("Spectrum: ", upper(lights(light))));
 
     % Displays ending message
-    if light < length(lights)
-        disp("Next light starting!...");
-    elseif light == length(lights)
-        disp("All finished!");
-    end
+    if light < length(lights), disp("Next light starting!..."); elseif light == length(lights), disp("All finished!"); end
 end
 
 %--------------------------------------------------------------------------
@@ -192,12 +183,7 @@ end
 fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
-if testMode == 0
-    graphPrefix = "Graph";
-elseif testMode == 1
-    graphPrefix = "TestGraph";
-end
-
+if testMode == 0, graphPrefix = "Graph"; elseif testMode == 1, graphPrefix = "TestGraph"; end
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dt, ".JPG"))
 
 % prepares to exit
