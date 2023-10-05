@@ -18,7 +18,7 @@ portPR670 = struct;
 % define default PR670 port
 portPR670.default = 'COM11';
 % sets the working port as the default to start
-portPR670.working = defaultPortPR670;
+portPR670.working = portPR670.default;
 % set the entered port as an empty string
 portPR670.entered = '';
 
