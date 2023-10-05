@@ -215,7 +215,7 @@ if strcmp(PR.working, PR.default)
 elseif strcmp(PR.working, PR.entered)
     disp(strcat("Entered PR670 port used: ", PR.entered))
     disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
-else
+elseif isempty(PR.working)
     disp("PR670 port not successfully defined.")
 end
 
