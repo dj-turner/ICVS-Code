@@ -211,9 +211,9 @@ beep
 %--------------------------------------------------------------------------
 % FUNCTIONS
 
-function PrepareToExit(a, PR670)   
+function PrepareToExit(a, PR)   
 % a = arduino device
-% PR670 = structure of possible PR670 port values
+% PR = structure of possible PR670 port values
 
 % Reset all lights to off before closing
 WriteLEDs(a,[0,0,0]);
@@ -224,10 +224,10 @@ disp(" ");
 disp(strcat("Autodetected Arduino port used: ", a.Port));
 % displays the PR670 port that was successfully used (by matching the
 % working port to the default or entered port)
-if strcmp(PR670.working, PR670.default)
-    disp(strcat("Default PR670 port used: ", PR670.default));
-elseif strcmp(PR670.working, PR670.entered)
-    disp(strcat("Entered PR670 port used: ", PR670.entered))
+if strcmp(PR.working, PR.default)
+    disp(strcat("Default PR670 port used: ", PR.default));
+elseif strcmp(PR.working, PR.entered)
+    disp(strcat("Entered PR670 port used: ", PR.entered))
     disp("NOTE: You may want to change the default port in the ArduinoCalibration.m file!");
 else
     disp("PR670 port not successfully defined.")
