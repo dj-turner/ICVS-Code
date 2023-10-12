@@ -1,31 +1,44 @@
-function SaveCalibrationResults(light, lum)
+function SaveRLMResults(ptptID, trialNumber, red, green, yellow, lambda, lambdaDelta, yellowDelta)
+%This code creates structure variable "ParticipantMatches"
 
-% Define constants
-% record current date and time
+%'ParticipantCode' is the code of each participant ('rp_001', 'rp_002', etc.)
+
+%'DateTime' represents date and time of the end of the experiment
+
+%'RedValue', 'GreenValue', 'YellowValue', represent the intensity (in 
+%bytes, 0-255) of Red, Green, and Yellow light
+
+%% record current date and time
 CurrentDateAndTime=round(clock);
 
-varNames = {'DateTime', 'LED', 'Luminance'};
+trialNumber = num2str(trialNumber);
+red = num2str(red);
+green = num2str(green);
+yellow = num2str(yellow);
+lambda = num2str(lambda);
+lambdaDelta = num2str(lambdaDelta);
+yellowDelta = num2str(yellowDelta);
 
-saveFilePath = strcat(pwd, '\CalibrationResults.mat');
-
-%% Load file
-if ~exist(saveFilePath, 'file')
+if ~exist("ParticipantMatchesRLM.mat", 'file')
     % create new table if one doesn't exist
-    CalibrationResults=table.empty(0,length(varNames));
-    CalibrationResults.Properties.VariableNames = varNames;
+    ParticipantMatchesRLM=table([], [], [], [], [], [], [], [], [],...
+        'VariableNames',{'ParticipantCode', 'Trial', 'DateTime', 'Red', 'Green', ...
+        'Yellow', 'Lambda', 'LambdaDelta', 'YellowDelta'});
 else
     % Load Structure File
-    load('CalibrationResults.mat');
+    load('ParticipantMatchesRLM.mat');
 end
 
 %% new participant results
-newResults=table(CurrentDateAndTime, {light}, lum, 'VariableNames', varNames);
+newResults=table({ptptID}, str2num(trialNumber), CurrentDateAndTime, ... 
+    str2num(red), str2num(green), str2num(yellow), str2num(lambda), str2num(lambdaDelta), str2num(yellowDelta),...
+    'VariableNames',...
+    {'ParticipantCode', 'Trial', 'DateTime', ... 
+    'Red', 'Green', 'Yellow', 'Lambda', 'LambdaDelta', 'YellowDelta'});
 
 %% new table
-CalibrationResults = [CalibrationResults; newResults];
+ParticipantMatchesRLM=[ParticipantMatchesRLM; newResults];
 
-%% save file
-save(saveFilePath, 'CalibrationResults');
-clear;
-
-end
+%% show and save file
+save('ParticipantMatchesRLM', 'ParticipantMatchesRLM');
+clear
