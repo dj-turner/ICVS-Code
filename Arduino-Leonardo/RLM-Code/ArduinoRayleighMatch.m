@@ -70,7 +70,11 @@ while trialNumber < taskNumber
                 yellow = round(255 .* rand());                  % Yellow value
                 yellowDeltaIndex = 1;                           % Yellow step size
                 yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
+<<<<<<< Updated upstream
                 [red, green] = SetReaaaaaaaadAndGreen(lambda, redAnchor, greenAnchor);
+=======
+                [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
+>>>>>>> Stashed changes
 
                 %Resets staircase variables
                 currentDirRG = 0;
