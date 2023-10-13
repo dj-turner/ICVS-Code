@@ -29,7 +29,7 @@ FlushEvents;
 % mixture by a parameter lambda.
 redAnchor = 50;                                 % Red value for lambda = 1
 greenAnchor = 350;                              % Green value for lambda = 0
-lambdaDeltas = [0.05 0.02 0.01 0.005 0.001];    % Set of lambda deltas
+lambdaDeltas = [0.05 0.02 0.01 0.005];    % Set of lambda deltas
 % Yellow LED parameters
 yellowDeltas = [25 15 10 5 1];                  % Set of yellow deltas
 
@@ -70,11 +70,7 @@ while trialNumber < taskNumber
                 yellow = round(255 .* rand());                  % Yellow value
                 yellowDeltaIndex = 1;                           % Yellow step size
                 yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
-<<<<<<< Updated upstream
-                [red, green] = SetReaaaaaaaadAndGreen(lambda, redAnchor, greenAnchor);
-=======
                 [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
->>>>>>> Stashed changes
 
                 %Resets staircase variables
                 currentDirRG = 0;
