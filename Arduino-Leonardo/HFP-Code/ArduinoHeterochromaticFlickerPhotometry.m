@@ -102,7 +102,7 @@ while trialNumber < taskNumber
                 disp(" ");
                 fprintf("Initial Red Value = %d, Initial Green Value = %d, Red Delta Value = %d \n", rValinit, gValinit, redDelta);
                 disp(" ");
-                disp("Make your best match!");
+                disp("Make the light stop flickering!");
 
             % 2 = Most red match
             case 2
@@ -111,13 +111,13 @@ while trialNumber < taskNumber
                 redDelta = rDeltas(deltaIndex);
                 % Tells arduino to save the current red value as the best match value
                 fprintf(a, 'g');
-                disp("Now add red until the lights no longer match!");
+                disp("Now add red until the light starts flickering again!");
 
             % 3 = most green match
             case 3
                 % Tells arduino to reinstate the best match value as the current red value
                 fprintf(a, 'h');
-                disp("Now add green until the lights no longer match!");
+                disp("Now add green until the light starts flickering again!");
         end
 
         % Sets subTrialCompleted as 0. The next trial will only start when this changes to a 1.
