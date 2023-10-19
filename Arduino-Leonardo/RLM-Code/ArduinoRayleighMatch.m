@@ -64,10 +64,10 @@ while trialNumber < taskNumber
         switch matchType
             % 1 = Best match
             case 1
-                lambda = rand();                                % Lambda value
+                lambda = rand() * .4 + .4;                      % Lambda value
                 lambdaDeltaIndex = 1;                           % Lambda step size
                 lambdaDelta = lambdaDeltas(lambdaDeltaIndex);   % Lambda delta
-                yellow = round(255 .* rand());                  % Yellow value
+                yellow = round(rand() * .2 * 255 + (255 * .4)); % Yellow value
                 yellowDeltaIndex = 1;                           % Yellow step size
                 yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
                 [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
@@ -205,10 +205,10 @@ while trialNumber < taskNumber
                 % lights and resets the step sizes back to the maximum value.
                 case 'i'
                     if matchType == 1
-                        lambda = rand();                                % Lambda value
+                        lambda = rand() * .4 + .4;                      % Lambda value
                         lambdaDeltaIndex = 1;                           % Lambda step size
                         lambdaDelta = lambdaDeltas(lambdaDeltaIndex);   % Lambda delta
-                        yellow = round(255 .* rand());                  % Yellow value
+                        yellow = round(rand() * .2 * 255 + (255 * .4)); % Yellow value
                         yellowDeltaIndex = 1;                           % Yellow step size
                         yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
                         [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);

@@ -18,14 +18,14 @@ const int gOutPin=5;
 // time. 
 double gAmp;
 double rAmp;
-int rValMax=255;
-int rValMin=0;
-double rValinit=round(random(rValMax*.4, rValMax*.6)); 
-double rVal=rValinit; 
-double rValMatch=0;  
 double gValinput;             
 double gValinit=128;  //GREEN VAL
 double gVal=gValinit;
+int rValMax=255;
+int rValMin=0;
+double rValinit=round(random(gVal*.25, gVal*.55));
+double rVal=rValinit; 
+double rValMatch=0;  
 int rPhaseSetting=180;
 double rPhase=rPhaseSetting/360.0*TWOPI;;
 double gWave;
@@ -122,7 +122,7 @@ void loop() {
   if (InputFromMatlab=='i'){
     // set random initial red intensity (between .4 and .6 quantiles) for new trial. And save
     // new initial settings
-    rValinit=round(random(rValMax*.4, rValMax*.6));
+    rValinit=round(random(gVal*.25, gVal*.55));
     rVal=rValinit;
     Serial.print(rValinit+100);
   }
