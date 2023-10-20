@@ -1,6 +1,6 @@
 function [serialObj, connection] = FindArduinoPort
 % Sets default port number to try first
-defaultPortCode = 'COM6';
+defaultPortCode = 'COM11';
 
 % First attempts to open arduino using the default port number
 try
