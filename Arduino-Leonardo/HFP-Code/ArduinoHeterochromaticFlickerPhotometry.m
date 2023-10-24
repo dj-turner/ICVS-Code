@@ -22,6 +22,7 @@ end
 ListenChar(0);
 % Asks for participant code
 ptptID = input('Participant Code: ', 's');
+ptptID = upper(ptptID);
 sessionNumber = input('Session Number: ');
 disp(" ");
 %Turns on character capture
