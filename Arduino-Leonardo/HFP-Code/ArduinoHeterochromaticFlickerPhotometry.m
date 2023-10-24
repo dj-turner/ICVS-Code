@@ -52,7 +52,7 @@ while trialCount < taskNumber
     % Resets match type
     reversalCount = 0;
 
-    % Reset aruino light to max red
+    % Reset arduino light to max red
     fprintf(a, 'i'); 
 
     % reset trialResults array to an empty array
@@ -67,7 +67,7 @@ while trialCount < taskNumber
         % pauses between trials
         pause(.5);
 
-        % Adds 1 to the match type counter
+        % Adds 1 to the reversal counter
         reversalCount = reversalCount + 1;
 
         % Determine direction of reversal

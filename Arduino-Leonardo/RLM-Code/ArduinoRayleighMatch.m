@@ -177,29 +177,25 @@ while trialNumber < taskNumber
                             dirs.Y.current = 2;
                         end
                 
-                    % % If the "k" button is pressed, decreases lambda delta (the amount of
-                    % % change in lambda that occurs with each key press, i.e. the step size)
-                    % case 'k'
-                    %     lambdaDeltaIndex = lambdaDeltaIndex+1;
-                    %     % If already at the smallest step size, does not change
-                    %     if (lambdaDeltaIndex > length(lambdaDeltas))
-                    %         lambdaDeltaIndex = length(lambdaDeltas);
-                    %     else
-                    %         lambdaDelta = lambdaDeltas(lambdaDeltaIndex);
-                    %     end
-                    % 
-                    % % If the "l" button is pressed, decreases yellow delta (the amount of
-                    % % change in yellow that occurs with each key press, i.e. the step size)
-                    % case 'l'
-                    %     if matchType == 1
-                    %         yellowDeltaIndex = yellowDeltaIndex+1;
-                    %         % If already at the smallest step size, does not change
-                    %         if (yellowDeltaIndex > length(yellowDeltas))
-                    %             yellowDeltaIndex = length(lambdaDeltas);
-                    %         else        
-                    %             yellowDelta = yellowDeltas(yellowDeltaIndex);
-                    %         end
-                    %     end
+                    % If the "k" button is pressed, resets lambda delta to
+                    % largest value and resets RG staircasing variables
+                    case 'k'
+                        if matchType == 1
+                            lambdaDeltaIndex = 1;
+                            lambdaDelta = lambdaDeltas(lambdaDeltaIndex);
+                            dirs.RG.current = 0;
+                            dirs.RG.last = 0;
+                        end
+
+                    % If the "k" button is pressed, resets yellow delta to
+                    % largest value and resets Y staircasing variables
+                    case 'l'
+                        if matchType == 1
+                            yellowDeltaIndex = 1;
+                            yellowDelta = yellowDeltas(yellowDeltaIndex);
+                            dirs.Y.current = 0;
+                            dirs.Y.last = 0;
+                        end
                 
                     % If the "o" key is pressed, prints  the current light values in the
                     % console without ending the trial
