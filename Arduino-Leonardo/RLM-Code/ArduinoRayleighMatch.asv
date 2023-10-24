@@ -245,8 +245,8 @@ while trialNumber < taskNumber
                         % Opens responses in console
                         ListenChar(0);
                         % Loops until a valid value in entered for the confidence rating
-                        confidenceRating = [];
-                        while isempty(confidenceRating) || ~ismember(confidenceRating, acceptedConfidenceRatings)
+                        confidenceRating = NaN;
+                        while isempty(co~ismember(confidenceRating, acceptedConfidenceRatings)
                                 confidenceRating = input("Rate your confidence 1-4: ");
                         end
                         % Closes responses in console
