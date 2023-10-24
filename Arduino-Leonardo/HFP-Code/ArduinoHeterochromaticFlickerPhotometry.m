@@ -29,11 +29,12 @@ ListenChar(2);
 
 % Set reversal number
 reversalNumber = 9;
-changeInputs = {'q', 'q', 'w', 'w', 'e', 'e', 'e', 'e', 'e';...
-                'r', 'r', 't', 't', 'y', 'y', 'y', 'y', 'y'};
 
-greenInputs = {'z', 'x', 'c', 'v'};
-greenInputsNum = 1:4;
+changeInputs = ['q', 'q', 'w', 'w', 'e', 'e', 'e', 'e', 'e';...
+                'r', 'r', 't', 't', 'y', 'y', 'y', 'y', 'y'];
+
+greenInputs = ['z', 'x', 'c', 'v'];
+greenInputsNum = 1:length(greenInputs);
 
 % Set trial counter
 trialCount = 0;
@@ -79,7 +80,7 @@ while trialCount < taskNumber
         end
 
         % Determine user arduino input
-        userArduinoInput = char(changeInputs(direction, reversalCount));
+        userArduinoInput = changeInputs(direction, reversalCount);
 
         % Display
         disp(strjoin(["Reversal ", num2str(reversalCount), "/", num2str(reversalNumber), ", adding ", addColour, "..."],''));
@@ -116,7 +117,7 @@ while trialCount < taskNumber
                             greenValue = input("Please select a new green value ('1' = 64, '2' = 128 (default), '3' = 192, '4' = 255): ");
                         end
                         ListenChar(2);
-                        fprintf(a, char(greenInputs(greenValue)));
+                        fprintf(a, greenInputs(greenValue));
                         fprintf(a, 'i');
                     else
                         disp("Not the first reversal! Please wait until the next trial to change the green value.");
@@ -133,8 +134,8 @@ while trialCount < taskNumber
                     gVal=read(a, 6, "char");
         
                     % Stores these values as the correct numbers
-                    rVal = str2num(rVal) - 100;
-                    gVal = str2num(gVal) - 100;
+                    rVal = str2double(rVal) - 100;
+                    gVal = str2double(gVal) - 100;
         
                     % Prints the current red, green, & delta values in the console
                     fprintf("Current Red Value = %d, Current Green Value = %d", rVal, gVal);
@@ -159,8 +160,8 @@ while trialCount < taskNumber
                     gVal=read(a, 6, "char");
         
                     % Stores these values as the correct numbers
-                    rVal = str2num(rVal) - 100;
-                    gVal = str2num(gVal) - 100;
+                    rVal = str2double(rVal) - 100;
+                    gVal = str2double(gVal) - 100;
         
                     % Stores these values as the correct numbers
                     trialResultsRed(reversalCount) = rVal;

@@ -73,10 +73,11 @@ while trialNumber < taskNumber
                 [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
 
                 %Resets staircase variables
-                currentDirRG = 0;
-                lastDirRG = 0;
-                currentDirY = 0;
-                lastDirY = 0;
+                dirs = struct;
+                dirs.RG.current = 0;
+                dirs.RG.last = 0;
+                dirs.Y.current = 0;
+                dirs.Y.last = 0;
 
                 % Displays starting values
                 disp(" ");
@@ -111,167 +112,173 @@ while trialNumber < taskNumber
             % Waits for a key press
             keyName = FindKeypress;
         
-            % Responds accoring to the key pressed
-            switch keyName
-                % If the "=" key is pressed, completes the trial count, match count, and match completion so that the program saves and exits
-                case '=+'
-                    trialNumber = taskNumber;
-                    matchType = 3;
-                    matchCompleted = 1;
-                
-                % If the "a" key is pressed, increases lambda (the proportion of red in the red/green light)
-                case 'a'
-                    lambda = lambda + lambdaDelta;
-                    % Stops lambda going over 1
-                    if (lambda > 1)
-                        lambda = 1;
-                    end
-                    % Records increase in RG for staircase
-                    if matchType == 1
-                        lastDirRG = currentDirRG;
-                        currentDirRG = 1;
-                    end
-                
-                % If the "d" key is pressed, decreases lambda (the proportion of red in the red/green light)
-                case 'd'
-                    lambda = lambda - lambdaDelta;
-                    % Stops lambda going below 0
-                    if (lambda < 0)
-                        lambda = 0;
-                    end
-                    % Records decrease in RG for staircase
-                    if matchType == 1
-                        lastDirRG = currentDirRG;
-                        currentDirRG = 2;
-                    end
-                  
-                % If the "w" key is pressed, increases the brightness of the yellow light
-                case 'w'
-                    if matchType == 1
-                        yellow = round(yellow+yellowDelta);
-                        % Stops yellow going over 255
-                        if (yellow > 255)
-                            yellow = 255;
+            if ischar(keyName)
+                % Responds accoring to the key pressed
+                switch keyName
+                    % If the "=" key is pressed, completes the trial count, match count, and match completion so that the program saves and exits
+                    case '=+'
+                        trialNumber = taskNumber;
+                        matchType = 3;
+                        matchCompleted = 1;
+                    
+                    % If the "a" key is pressed, increases lambda (the proportion of red in the red/green light)
+                    case 'a'
+                        if matchType == 1 || matchType == 2
+                            lambda = lambda + lambdaDelta;
+                            % Stops lambda going over 1
+                            if (lambda > 1)
+                                lambda = 1;
+                            end
+                            % Records increase in RG for staircase
+                            if matchType == 1
+                                dirs.RG.last = dirs.RG.current;
+                                dirs.RG.current = 1;
+                            end
                         end
-                        % Records increase in Y for staircase
-                        lastDirY = currentDirY;
-                        currentDirY = 1;
-                    end
-            
-                % If the "s" key is pressed, decreases the brightness of the yellow light
-                case 's'
-                    if matchType == 1
-                        yellow = round(yellow-yellowDelta);
-                        % Stops yellow going below 0
-                        if (yellow < 0)
-                            yellow = 0;
-                        end
-                        % Records decrease in Y for staircase
-                        lastDirY = currentDirY;
-                        currentDirY = 2;
-                    end
-            
-                % % If the "k" button is pressed, decreases lambda delta (the amount of
-                % % change in lambda that occurs with each key press, i.e. the step size)
-                % case 'k'
-                %     lambdaDeltaIndex = lambdaDeltaIndex+1;
-                %     % If already at the smallest step size, does not change
-                %     if (lambdaDeltaIndex > length(lambdaDeltas))
-                %         lambdaDeltaIndex = length(lambdaDeltas);
-                %     else
-                %         lambdaDelta = lambdaDeltas(lambdaDeltaIndex);
-                %     end
-                % 
-                % % If the "l" button is pressed, decreases yellow delta (the amount of
-                % % change in yellow that occurs with each key press, i.e. the step size)
-                % case 'l'
-                %     if matchType == 1
-                %         yellowDeltaIndex = yellowDeltaIndex+1;
-                %         % If already at the smallest step size, does not change
-                %         if (yellowDeltaIndex > length(yellowDeltas))
-                %             yellowDeltaIndex = length(lambdaDeltas);
-                %         else        
-                %             yellowDelta = yellowDeltas(yellowDeltaIndex);
-                %         end
-                %     end
-            
-                % If the "o" key is pressed, prints  the current light values in the
-                % console without ending the trial
-                case 'o'
-                    fprintf('Lambda = %0.3f, Red = %d, Green = %d, Yellow = %d\n',lambda, red, green, yellow); 
-                    fprintf('\tLambda delta %0.3f; Yellow delta %d\n', lambdaDelta, yellowDelta); 
-            
-                % If the "i" key is pressed, resets the trial. This randomises the
-                % lights and resets the step sizes back to the maximum value.
-                case 'i'
-                    if matchType == 1
-                        lambda = rand();                                % Lambda value
-                        lambdaDeltaIndex = 1;                           % Lambda step size
-                        lambdaDelta = lambdaDeltas(lambdaDeltaIndex);   % Lambda delta
-                        yellow = round(255 .* rand());                  % Yellow value
-                        yellowDeltaIndex = 1;                           % Yellow step size
-                        yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
-                        [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
                         
-                        %Resets staircase variables
-                        currentDirRG = 0;
-                        lastDirRG = 0;
-                        currentDirY = 0;
-                        lastDirY = 0;
-
-                        % Prints the new light values
+                    % If the "d" key is pressed, decreases lambda (the proportion of red in the red/green light)
+                    case 'd'
+                        if matchType == 1 || matchType == 3
+                            lambda = lambda - lambdaDelta;
+                            % Stops lambda going below 0
+                            if (lambda < 0)
+                                lambda = 0;
+                            end
+                            % Records decrease in RG for staircase
+                            if matchType == 1
+                                dirs.RG.last = dirs.RG.current;
+                                dirs.RG.current = 2;
+                            end
+                        end
+                      
+                    % If the "w" key is pressed, increases the brightness of the yellow light
+                    case 'w'
+                        if matchType == 1
+                            yellow = round(yellow+yellowDelta);
+                            % Stops yellow going over 255
+                            if (yellow > 255)
+                                yellow = 255;
+                            end
+                            % Records increase in Y for staircase
+                            dirs.Y.last = dirs.Y.current;
+                            dirs.Y.current = 1;
+                        end
+                
+                    % If the "s" key is pressed, decreases the brightness of the yellow light
+                    case 's'
+                        if matchType == 1
+                            yellow = round(yellow-yellowDelta);
+                            % Stops yellow going below 0
+                            if (yellow < 0)
+                                yellow = 0;
+                            end
+                            % Records decrease in Y for staircase
+                            dirs.Y.last = dirs.Y.current;
+                            dirs.Y.current = 2;
+                        end
+                
+                    % % If the "k" button is pressed, decreases lambda delta (the amount of
+                    % % change in lambda that occurs with each key press, i.e. the step size)
+                    % case 'k'
+                    %     lambdaDeltaIndex = lambdaDeltaIndex+1;
+                    %     % If already at the smallest step size, does not change
+                    %     if (lambdaDeltaIndex > length(lambdaDeltas))
+                    %         lambdaDeltaIndex = length(lambdaDeltas);
+                    %     else
+                    %         lambdaDelta = lambdaDeltas(lambdaDeltaIndex);
+                    %     end
+                    % 
+                    % % If the "l" button is pressed, decreases yellow delta (the amount of
+                    % % change in yellow that occurs with each key press, i.e. the step size)
+                    % case 'l'
+                    %     if matchType == 1
+                    %         yellowDeltaIndex = yellowDeltaIndex+1;
+                    %         % If already at the smallest step size, does not change
+                    %         if (yellowDeltaIndex > length(yellowDeltas))
+                    %             yellowDeltaIndex = length(lambdaDeltas);
+                    %         else        
+                    %             yellowDelta = yellowDeltas(yellowDeltaIndex);
+                    %         end
+                    %     end
+                
+                    % If the "o" key is pressed, prints  the current light values in the
+                    % console without ending the trial
+                    case 'o'
                         fprintf('Lambda = %0.3f, Red = %d, Green = %d, Yellow = %d\n',lambda, red, green, yellow); 
                         fprintf('\tLambda delta %0.3f; Yellow delta %d\n', lambdaDelta, yellowDelta); 
-                    else
-                        disp(" ");
-                        disp("Can only randomise a best match trial!");
-                        disp(" ");
-                    end
-                   
-                % If the "return" or "p" key is pressed, ends the trial
-                case {'return', 'p'}
-            
-                    % Prints final values of the trial in the console
-                    fprintf('Lambda = %0.3f, Red = %d, Green = %d, Yellow = %d\n', lambda, red, green, yellow); 
-                    fprintf('\tLambda delta %0.3f; Yellow delta %d\n', lambdaDelta, yellowDelta);
-
-                    % CONFIDENCE RATING
-                    % Opens responses in console
-                    ListenChar(0);
-                    % Loops until a valid value in entered for the confidence rating
-                    confidenceRating = NaN;
-                    while ~ismember(confidenceRating, acceptedConfidenceRatings)
-                            confidenceRating = input("Rate your confidence 1-4: ");
-                    end
-                    % Closes responses in console
-                    ListenChar(2);
-                    
-                    % Informs the experimenter that the results will be saved
-                    disp("Saving results...");
-                    disp(" ");
-            
-                    % Adds the results to "ParticipantMatchesRLM.mat"
-                    SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating);
+                
+                    % If the "i" key is pressed, resets the trial. This randomises the
+                    % lights and resets the step sizes back to the maximum value.
+                    case 'i'
+                        if matchType == 1
+                            lambda = rand();                                % Lambda value
+                            lambdaDeltaIndex = 1;                           % Lambda step size
+                            lambdaDelta = lambdaDeltas(lambdaDeltaIndex);   % Lambda delta
+                            yellow = round(255 .* rand());                  % Yellow value
+                            yellowDeltaIndex = 1;                           % Yellow step size
+                            yellowDelta = yellowDeltas(yellowDeltaIndex);   % Yellow delta
+                            [red, green] = SetRedAndGreen(lambda, redAnchor, greenAnchor);
+                            
+                            %Resets staircase variables
+                            dirs.RG.current = 0;
+                            dirs.RG.last = 0;
+                            dirs.Y.current = 0;
+                            dirs.Y.last = 0;
     
-                    % Sets subTrialCompleted to 1 to move on to the next trial
-                    matchCompleted = 1;
+                            % Prints the new light values
+                            fprintf('Lambda = %0.3f, Red = %d, Green = %d, Yellow = %d\n',lambda, red, green, yellow); 
+                            fprintf('\tLambda delta %0.3f; Yellow delta %d\n', lambdaDelta, yellowDelta); 
+                        else
+                            disp(" ");
+                            disp("Can only randomise a best match trial!");
+                            disp(" ");
+                        end
+                       
+                    % If the "return" or "p" key is pressed, ends the trial
+                    case {'return', 'p'}
+                
+                        % Prints final values of the trial in the console
+                        fprintf('Lambda = %0.3f, Red = %d, Green = %d, Yellow = %d\n', lambda, red, green, yellow); 
+                        fprintf('\tLambda delta %0.3f; Yellow delta %d\n', lambdaDelta, yellowDelta);
+    
+                        % CONFIDENCE RATING
+                        % Opens responses in console
+                        ListenChar(0);
+                        % Loops until a valid value in entered for the confidence rating
+                        confidenceRating = NaN;
+                        while ~ismember(confidenceRating, acceptedConfidenceRatings)
+                                confidenceRating = input("Rate your confidence 1-4: ");
+                        end
+                        % Closes responses in console
+                        ListenChar(2);
+                        
+                        % Informs the experimenter that the results will be saved
+                        disp("Saving results...");
+                        disp(" ");
+                
+                        % Adds the results to "ParticipantMatchesRLM.mat"
+                        SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating);
+        
+                        % Sets subTrialCompleted to 1 to move on to the next trial
+                        matchCompleted = 1;
+                end
             end
 
             % STAIRCASING (for best matches only)
             if matchType == 1
                 % If direction was switched between last change to RG and
                 % current change (1 = increase, 2 = decrease)...
-                if  (lambdaDeltaIndex < length(lambdaDeltas)) && (currentDirRG + lastDirRG == 3)
+                if  (lambdaDeltaIndex < length(lambdaDeltas)) && (dirs.RG.current + dirs.RG.last == 3)
                     % Resets lastDirRG
-                    lastDirRG = 0;   
+                    dirs.RG.last = 0;   
                     % Decreases RG step size
                     lambdaDeltaIndex = lambdaDeltaIndex+1;
                     lambdaDelta = lambdaDeltas(lambdaDeltaIndex);
                 % If direction was switched between last change to Y and
                 % current change (1 = increase, 2 = decrease)...
-                elseif (yellowDeltaIndex < length(yellowDeltas)) && (currentDirY + lastDirY == 3)
+                elseif (yellowDeltaIndex < length(yellowDeltas)) && (dirs.Y.current + dirs.Y.last == 3)
                     % Reset lastDirY
-                    lastDirY = 0;
+                    dirs.Y.last = 0;
                     % Decrease Y step size 
                     yellowDeltaIndex = yellowDeltaIndex+1;
                     yellowDelta = yellowDeltas(yellowDeltaIndex);
