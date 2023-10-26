@@ -20,8 +20,10 @@ double gAmp;
 double rAmp;
 int rValMax=255;
 int rValMin=0;
-double rVal=rValMax;            
-double gVal=128;  //GREEN VAL
+int rValRange=64;
+int rValDir;
+double rVal=0;          
+double gVal=255;  //GREEN VAL
 int rPhaseSetting=180;
 double rPhase=rPhaseSetting/360.0*TWOPI;;
 double gWave;
@@ -64,6 +66,7 @@ void loop() {
   analogWrite(gOutPin, 255-(gWave*255));
   
   // find new amplitudes
+  
   rAmp=(double)rVal/255;
   gAmp=(double)gVal/255;
 
@@ -132,7 +135,11 @@ void loop() {
     Serial.print(gVal+100);
   }
   if (InputFromMatlab=='i'){
-    rVal=rValMax;
+    rValDir = (rand() % 2);
+    rVal= (rand() % (rValRange + 1));
+    if (rValDir==1){
+      rVal = rVal + (rValMax - rValRange);
+    }
   }
 }
   

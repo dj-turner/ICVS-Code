@@ -53,14 +53,32 @@ while trialCount < taskNumber
     % Resets match type
     reversalCount = 0;
 
-    % Reset arduino light to max red
-    fprintf(a, 'i'); 
-
     % reset trialResults array to an empty array
     trialResultsRed = NaN(1, reversalNumber);
 
+    % Reset arduino light to random red
+    fprintf(a, 'i'); 
+
+    % Sends the 'o' character to the device
+    fprintf(a, 'o');
+
+    % Reads the current red and green values from the device
+    rValInit=read(a, 6, "char");
+    gValInit=read(a, 6, "char");
+
+    % Stores these values as the correct numbers
+    rValInit = str2double(rValInit) - 100;
+    gValInit = str2double(gValInit) - 100;
+
     % Display the current trial
     disp(strjoin(["TRIAL", num2str(trialCount), "STARTING..."],' '));
+
+    % display starting values
+    disp(strjoin(["Initial red = ", num2str(rValInit), ", Initial green = ", gValInit],''));
+    disp(" ");
+
+    % set change direction to NaN for the first reversal
+    changeDir = NaN;
     
     % Loops until all 3 matches are completed
     while reversalCount < reversalNumber
@@ -71,17 +89,21 @@ while trialCount < taskNumber
         % Adds 1 to the reversal counter
         reversalCount = reversalCount + 1;
 
-        % Determine direction of reversal
-        if rem(reversalCount,2) == 0
-            direction = 1; 
-            addColour = "red";
-        else 
-            direction = 2; 
-            addColour = "green";
+        % Switch direction of reversal
+        switch changeDir
+            case 0
+                changeDir = 1;
+                addColour = "green";
+            case 1
+                changeDir = 0;
+                addColour = "red";
+            otherwise
+                addColour = "either colour";
         end
 
-        % Determine user arduino input
-        userArduinoInput = changeInputs(direction, reversalCount);
+        % Determine user arduino inputs
+        redInputIncrease = changeInputs(1, reversalCount);
+        redInputDecrease = changeInputs(2, reversalCount);
 
         % Display
         disp(strjoin(["Reversal ", num2str(reversalCount), "/", num2str(reversalNumber), ", adding ", addColour, "..."],''));
@@ -97,89 +119,104 @@ while trialCount < taskNumber
             % Waits for a key press
             keyName = FindKeypress;
         
-            % Responds according to key pressed
-            switch keyName
-                % If the "=" key is pressed, completes the trial count, match count, and match completed so that the program saves and exits
-                case '=+'
-                    delete(instrfindall);
-                    ListenChar(0)
-                    return
-         
-                % If the "a" key is pressed, increases the red value based on the current delta
-                case 's'
-                    % Sends red value change to device
-                    fprintf(a, userArduinoInput);
-
-                case 'm'
-                    if reversalCount == 1
-                        greenValue = NaN;
-                        ListenChar(0);
-                        while ~any(greenValue==greenInputsNum)
-                            greenValue = input("Please select a new green value ('1' = 64, '2' = 128 (default), '3' = 192, '4' = 255): ");
+            if ischar(keyName)
+                % Responds according to key pressed
+                switch keyName
+                    % If the "=" key is pressed, completes the trial count, match count, and match completed so that the program saves and exits
+                    case '=+'
+                        delete(instrfindall);
+                        ListenChar(0)
+                        return
+             
+                    % If the "a" key is pressed, increases the red value based on the current delta
+                    case 'a'
+                        % Sends red value change to device
+                        if changeDir ~= 1
+                            fprintf(a, redInputIncrease);
                         end
-                        ListenChar(2);
-                        fprintf(a, greenInputs(greenValue));
-                        fprintf(a, 'i');
-                    else
-                        disp("Not the first reversal! Please wait until the next trial to change the green value.");
-                    end
-        
-                % If the "o" key is pressed, sends an 'o' character to the device.
-                % This tells the device to send all the current values to MATLAB.
-                case 'o'
-                    % Sends the 'o' character to the device
-                    fprintf(a, 'o');
-        
-                    % Reads the current red and green values from the device
-                    rVal=read(a, 6, "char");
-                    gVal=read(a, 6, "char");
-        
-                    % Stores these values as the correct numbers
-                    rVal = str2double(rVal) - 100;
-                    gVal = str2double(gVal) - 100;
-        
-                    % Prints the current red, green, & delta values in the console
-                    fprintf("Current Red Value = %d, Current Green Value = %d", rVal, gVal);
-                    disp(" ");
-
-                    % Pauses the program for .5 seconds
-                    pause(.5);
-        
-                % If the "return" or "p" key is pressed, ends the trial
-                case {'return', 'p'}
-                    
-                    % Tells the user that the results are being processed
-                    disp("Printing final results... please wait");
-        
-                    % Sends a 'u' character to the device, which tells it to send
-                    % all the values to MATLAB and re-randomise the red value for
-                    % the next trial
-                    fprintf(a, 'o');
-         
-                    % Reads the current red and green values from the device
-                    rVal=read(a, 6, "char");
-                    gVal=read(a, 6, "char");
-        
-                    % Stores these values as the correct numbers
-                    rVal = str2double(rVal) - 100;
-                    gVal = str2double(gVal) - 100;
-        
-                    % Stores these values as the correct numbers
-                    trialResultsRed(reversalCount) = rVal;
-        
-                    % Prints the final values in the console
-                    disp(" ");
-                    fprintf("Final Red Value = %d, Final Green Value = %d", rVal, gVal);
-                    disp(" ");            
-        
-                    % Tells MATLAB to go to the next trial
-                    reversalCompleted = 1;
+                        if reversalCount == 1
+                            changeDir = 0;
+                        end
+    
+                    case 'd'
+                        if changeDir ~= 0
+                            fprintf(a, redInputDecrease);
+                        end
+                        if reversalCount == 1
+                            changeDir = 1;
+                        end
+    
+                    case 'm'
+                        if reversalCount == 1
+                            greenValue = NaN;
+                            ListenChar(0);
+                            while ~any(greenValue==greenInputsNum)
+                                greenValue = input("Please select a new green value ('1' = 64, '2' = 128 (default), '3' = 192, '4' = 255): ");
+                            end
+                            ListenChar(2);
+                            fprintf(a, greenInputs(greenValue));
+                            fprintf(a, 'i');
+                        else
+                            disp("Not the first reversal! Please wait until the next trial to change the green value.");
+                        end
+            
+                    % If the "o" key is pressed, sends an 'o' character to the device.
+                    % This tells the device to send all the current values to MATLAB.
+                    case 'o'
+                        % Sends the 'o' character to the device
+                        fprintf(a, 'o');
+            
+                        % Reads the current red and green values from the device
+                        rVal=read(a, 6, "char");
+                        gVal=read(a, 6, "char");
+            
+                        % Stores these values as the correct numbers
+                        rVal = str2double(rVal) - 100;
+                        gVal = str2double(gVal) - 100;
+            
+                        % Prints the current red, green, & delta values in the console
+                        fprintf("Current Red Value = %d, Current Green Value = %d", rVal, gVal);
+                        disp(" ");
+    
+                        % Pauses the program for .5 seconds
+                        pause(.5);
+            
+                    % If the "return" or "p" key is pressed, ends the trial
+                    case {'return', 'p'}
+                        
+                        % Tells the user that the results are being processed
+                        disp("Printing final results... please wait");
+            
+                        % Sends a 'u' character to the device, which tells it to send
+                        % all the values to MATLAB and re-randomise the red value for
+                        % the next trial
+                        fprintf(a, 'o');
+             
+                        % Reads the current red and green values from the device
+                        rVal=read(a, 6, "char");
+                        gVal=read(a, 6, "char");
+            
+                        % Stores these values as the correct numbers
+                        rVal = str2double(rVal) - 100;
+                        gVal = str2double(gVal) - 100;
+            
+                        % Stores these values as the correct numbers
+                        trialResultsRed(reversalCount) = rVal;
+            
+                        % Prints the final values in the console
+                        disp(" ");
+                        fprintf("Final Red Value = %d, Final Green Value = %d", rVal, gVal);
+                        disp(" ");            
+            
+                        % Tells MATLAB to go to the next trial
+                        reversalCompleted = 1;
+                end
             end
         end
     end
 
     % Saves the resulte to "ParticipantMatchesHFP.mat"
-    SaveHFPResults(ptptID, sessionNumber, trialCount, trialResultsRed, gVal); 
+    SaveHFPResults(ptptID, sessionNumber, trialCount, rValInit, trialResultsRed, gVal); 
     disp(" ");
 end
 
