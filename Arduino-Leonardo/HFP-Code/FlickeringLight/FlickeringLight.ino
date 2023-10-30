@@ -23,7 +23,7 @@ int rValMin=0;
 int rValRange=64;
 int rValDir;
 double rVal=0;          
-double gVal=255;  //GREEN VAL
+double gVal=0;  //GREEN VAL
 int rPhaseSetting=180;
 double rPhase=rPhaseSetting/360.0*TWOPI;;
 double gWave;
@@ -140,6 +140,10 @@ void loop() {
     if (rValDir==1){
       rVal = rVal + (rValMax - rValRange);
     }
+  }
+  if (InputFromMatlab=='j'){
+    rVal = 0;
+    gVal = 0;
   }
 }
   
