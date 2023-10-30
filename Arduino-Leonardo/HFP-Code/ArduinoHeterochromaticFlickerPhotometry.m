@@ -1,6 +1,3 @@
-% if the code doesn't work, check that the arduino port (written in
-% ConstantsHFP) is the right one (for windows, check Device Manager->ports)
-
 function ptptID = ArduinoHeterochromaticFlickerPhotometry(taskNumber)
 
 % Clear everything before starting program
@@ -10,7 +7,6 @@ delete(instrfindall)
 clearvars -except taskNumber;
 
 % Call arduino object
-% Tries using the value in ConstantsHFP
 [arduino, connection] = FindArduinoPort;
 
 % If the connection failed, exit the program
@@ -69,7 +65,7 @@ while trialCount < taskNumber
     % Display the current trial
     disp(strjoin(["TRIAL", num2str(trialCount), "STARTING..."],' '));
 
-    [rValInit, ~] = ExtractResults(arduino);
+    [rValInit, gVal] = ExtractResults(arduino);
 
     % set change direction to NaN for the first reversal
     changeDir = NaN;
@@ -166,7 +162,7 @@ while trialCount < taskNumber
                             % Re-randomises the red light for the new trial
                             fprintf(arduino, 'i');
                             % Prints new starting values
-                            [rValInit, ~] = ExtractResults(arduino);
+                            [rValInit, gVal] = ExtractResults(arduino);
                         % displays error message if this is not the first reversal
                         else
                             disp("Not the first reversal! Please wait until the next trial to change the green value.");
@@ -180,7 +176,7 @@ while trialCount < taskNumber
                     % If the "return" or "p" key is pressed, ends the trial
                     case {'return', 'p'}
             
-                        [rVal, gVal] = ExtractResults(arduino);
+                        [rVal, ~] = ExtractResults(arduino);
             
                         % Stores these values as the correct numbers
                         trialResultsRed(reversalCount) = rVal;        
