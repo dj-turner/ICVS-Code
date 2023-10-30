@@ -84,6 +84,9 @@ while trialCount < taskNumber
         reversalCount = reversalCount + 1;
 
         % Switch direction of reversal
+            % 0 = adding red reversal
+            % 1 = adding green reversal
+            % NaN = adding either reversal (1st)
         switch changeDir
             case 0
                 changeDir = 1;
