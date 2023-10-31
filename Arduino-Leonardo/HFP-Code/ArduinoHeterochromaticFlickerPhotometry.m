@@ -1,4 +1,4 @@
-function ptptID = ArduinoHeterochromaticFlickerPhotometry(taskNumber)
+function ptptID = ArduinoHeterochromaticFlickerPhotometry(trialNumber)
 
 % Clear everything before starting program
 delete(instrfindall)
@@ -48,7 +48,7 @@ trialCount = 0;
 
 % EXECUTION LOOP
 % Loops until all trials are completed
-while trialCount < taskNumber
+while trialCount < trialNumber
 
     % Add 1 to trial number counter
     trialCount = trialCount + 1;
@@ -203,11 +203,11 @@ function [r,g] = ExtractResults(a)
 % asks arduino for values
 fprintf(a, 'o');
 % Reads the current red and green values from the device
-r=read(a, 6, "char");
-g=read(a, 6, "char");
+rRaw = read(a, 6, "char");
+gRaw = read(a, 6, "char");
 % Stores these values as the correct numbers
-r = str2double(r) - 100;
-g = str2double(g) - 100;
+r = str2double(rRaw) - 100;
+g = str2double(gRaw) - 100;
 % displays values
 disp(" ");
 fprintf("Red Value = %d, Green Value = %d", r, g);
