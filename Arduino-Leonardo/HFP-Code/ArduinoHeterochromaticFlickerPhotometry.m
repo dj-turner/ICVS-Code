@@ -33,7 +33,6 @@ reversalNumber = 9;
 % Arduino inputs depending on reversal and direction
 changeInputs = ['q', 'q', 'w', 'w', 'e', 'e', 'e', 'e', 'e';...
                 'r', 'r', 't', 't', 'y', 'y', 'y', 'y', 'y'];
-
 % Green level inputs
 greenInputs = ['z', 'x', 'c', 'v'];
 greenInputsNum = 1:length(greenInputs);
@@ -52,30 +51,24 @@ while trialCount < trialNumber
 
     % Add 1 to trial number counter
     trialCount = trialCount + 1;
-
     % Resets match type
     reversalCount = 0;
-
+    % set change direction to NaN for the first reversal
+    changeDir = NaN;
     % reset trialResults array to an empty array
     trialResultsRed = NaN(1, reversalNumber);
-
     % Reset arduino light to random red
     fprintf(arduino, 'i'); 
 
     % Display the current trial
     disp(strjoin(["TRIAL", num2str(trialCount), "STARTING..."],' '));
-
+    % pulls initial values from arduino
     [rValInit, gVal] = ExtractResults(arduino);
 
-    % set change direction to NaN for the first reversal
-    changeDir = NaN;
-    
-    % Loops until all 3 matches are completed
     while reversalCount < reversalNumber
 
         % pauses between trials
         pause(.5);
-
         % Adds 1 to the reversal counter
         reversalCount = reversalCount + 1;
 
@@ -175,12 +168,9 @@ while trialCount < trialNumber
             
                     % If the "return" or "p" key is pressed, ends the trial
                     case {'return', 'p'}
-            
                         [rVal, ~] = ExtractResults(arduino);
-            
                         % Stores these values as the correct numbers
-                        trialResultsRed(reversalCount) = rVal;        
-            
+                        trialResultsRed(reversalCount) = rVal;       
                         % Tells MATLAB to go to the next trial
                         reversalCompleted = 1;
                 end
