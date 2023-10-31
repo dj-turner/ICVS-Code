@@ -17,6 +17,7 @@ WriteLEDs(a,[0,0,0]);
 ListenChar(0);
 % Asks for participant ID and session number
 ptptID = input('Participant Code: ', 's');
+ptptID = upper(ptptID);
 sessionNumber = input('Session Number: ');
 disp(" ");
 % Disables console responses

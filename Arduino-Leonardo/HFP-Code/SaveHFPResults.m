@@ -1,4 +1,4 @@
-function SaveHFPResults(PPcode, sessionNumber, trialNumber, trialResultsRed, greenValue)
+function SaveHFPResults(PPcode, sessionNumber, trialNumber, rValInit, trialResultsRed, greenValue)
 
 % Define constants
 avgNum = 4;
@@ -8,7 +8,7 @@ CurrentDateAndTime=round(clock);
 
 redMean = mean(trialResultsRed((length(trialResultsRed) - avgNum + 1):length(trialResultsRed)));
 
-varNames = {'ParticipantCode', 'Session', 'Trial', 'DateTime', 'RedValues', 'RedMean', 'GreenValue'};
+varNames = {'ParticipantCode', 'Session', 'Trial', 'DateTime', 'InitialRed', 'RedValues', 'RedMean', 'GreenValue'};
 
 saveFilePath = strcat(pwd, '\Saved-Data\HFP\ParticipantMatchesHFP.mat');
 
@@ -23,7 +23,7 @@ else
 end
 
 %% new participant results
-newResults=table({PPcode}, sessionNumber, trialNumber, CurrentDateAndTime, ...
+newResults=table({PPcode}, sessionNumber, trialNumber, CurrentDateAndTime, rValInit,...
     trialResultsRed, redMean, greenValue, 'VariableNames', varNames);
 
 %% new table
