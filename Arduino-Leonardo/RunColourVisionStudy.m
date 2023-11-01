@@ -35,8 +35,7 @@ elseif strcmp(taskType, 'HFP')
     ptptID = ArduinoHeterochromaticFlickerPhotometry(taskNumber);
 % Displays an error message and exits the program if any other code is entered
 else
-    disp("ERROR: Please enter 'RLM' or 'HFP' as the task type!");
-    return;
+    error("Invalid task: Please enter 'RLM' or 'HFP' as the task type!");
 end
 
 % Finds the save table name for the current task
