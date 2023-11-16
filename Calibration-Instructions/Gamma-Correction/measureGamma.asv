@@ -3,10 +3,14 @@ Screen('Preference', 'SkipSyncTests', 1);
 
 % SET CONSTANTS
 display = 'standard'; %'standard' or 'display++';
-meter = 'PR670'; %'colorCal' or 'spectroCal' or 'PR670'
-% port = 'COM8';
+meter = 'pr670'; %'colorCal' or 'spectroCal' or 'pr670'
 steps = 10; %number of steps recorded from. 
 mode = 'tri'; %which channel is recorded? 'full' = RGB+white, 'tri' = RGB, 'white' = only white
+
+if strcmp(meter, 'pr670') && ~exist("port", 'var')
+    portNum = input("Please enter the pr670 port number here!: ");
+    port = strcat('COM', num2str(portNum));
+end
 
 % Add all folders to path
 calPath = strcat("C:\Users\", getenv('USERNAME'), "\Documents\GitHub\ICVS-Code\Calibration-Instructions\");
@@ -36,8 +40,7 @@ gammaCoefficients = zeros(3,length(name));
 
 %looping through each of the channels
 for channel = 1:length(name)
-    %looping through each step levelsca
-
+    %looping through each step level
     for level = 1:steps
         
         %draw current channel-level combination to the screen
@@ -45,11 +48,9 @@ for channel = 1:length(name)
     
         %record luminance and add to 'gamma'
         if exist("port", 'var')
-            rec = measureLuminance(meter, port);
         else
-            rec = measureLuminance(meter); 
-        end
-
+        rec = measureLuminance(meter);
+        en
         gamma(level,1+channel) = rec;
     
     end

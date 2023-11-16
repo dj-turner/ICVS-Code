@@ -6,7 +6,7 @@ function luminance = measureLuminance(device,port)
 
 if nargin < 2 || isempty(port)
     if IsWin
-        port = serialportlist('available');
+        port = serialportlist;
         port = port(end);
     else
         port = FindSerialPort('usbmodem', 1);
@@ -33,6 +33,11 @@ switch device
         step = S(2);
         % measure luminance
         [~, ~, luminance] = SpectroCALMakeSPDMeasurement(port,l1,l2,step);
+
+    case 'pr670'
+        PR670init(port);
+        [xyz, ~] = PR670measxyz;
+        luminance = xyz(2);
 
 end
 end
