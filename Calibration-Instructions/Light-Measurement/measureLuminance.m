@@ -34,7 +34,7 @@ switch device
         % measure luminance
         [~, ~, luminance] = SpectroCALMakeSPDMeasurement(port,l1,l2,step);
 
-    case 'pr670'
+    case 'PR670'
         PR670init(port);
         [xyz, ~] = PR670measxyz;
         luminance = xyz(2);

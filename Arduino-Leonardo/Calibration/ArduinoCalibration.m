@@ -97,7 +97,7 @@ for light = 1:length(lights)
 
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = measurePR670(portPR670);
+            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
 
         % if this doesn't work, displays error and quits
         catch
