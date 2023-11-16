@@ -4,7 +4,7 @@ function ptptID = ArduinoHeterochromaticFlickerPhotometry(trialNumber)
 delete(instrfindall)
 
 % Clear all extra variables from the workspace
-clearvars -except taskNumber;
+clearvars -except trialNumber;
 
 % Call arduino object
 [arduino, connection] = FindArduinoPort;
@@ -116,7 +116,7 @@ while trialCount < trialNumber
                         return
              
                     % If the "a" key is pressed, increases the red value based on the current delta
-                    case 'a'
+                    case {'a', '1'}
                         % Sends red value increase to device (unless green trial)
                         if changeDir ~= 1
                             fprintf(arduino, redInputIncrease);
@@ -126,7 +126,7 @@ while trialCount < trialNumber
                             changeDir = 0;
                         end
     
-                    case 'd'
+                    case {'d', '3'}
                         % Sends red value decrease to device (unless red trial)
                         if changeDir ~= 0
                             fprintf(arduino, redInputDecrease);

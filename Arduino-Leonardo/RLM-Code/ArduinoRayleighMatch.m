@@ -123,7 +123,7 @@ while trialNumber < taskNumber
                         matchCompleted = 1;
                     
                     % If the "a" key is pressed, increases lambda (the proportion of red in the red/green light)
-                    case 'a'
+                    case {'a', '1'}
                         if matchType == 1 || matchType == 2
                             lambda = lambda + lambdaDelta;
                             % Stops lambda going over 1
@@ -138,7 +138,7 @@ while trialNumber < taskNumber
                         end
                         
                     % If the "d" key is pressed, decreases lambda (the proportion of red in the red/green light)
-                    case 'd'
+                    case {'d', '3'}
                         if matchType == 1 || matchType == 3
                             lambda = lambda - lambdaDelta;
                             % Stops lambda going below 0
@@ -153,7 +153,7 @@ while trialNumber < taskNumber
                         end
                       
                     % If the "w" key is pressed, increases the brightness of the yellow light
-                    case 'w'
+                    case {'w', '5'}
                         if matchType == 1
                             yellow = round(yellow+yellowDelta);
                             % Stops yellow going over 255
@@ -166,7 +166,7 @@ while trialNumber < taskNumber
                         end
                 
                     % If the "s" key is pressed, decreases the brightness of the yellow light
-                    case 's'
+                    case {'s', '2'}
                         if matchType == 1
                             yellow = round(yellow-yellowDelta);
                             % Stops yellow going below 0
