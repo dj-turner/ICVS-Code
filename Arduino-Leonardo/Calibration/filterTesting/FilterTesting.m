@@ -1,4 +1,5 @@
-
+clc; clear; close all;
+addpath(strcat("C:\Users\", getenv('USERNAME'), "\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\functions"));
 
 filterValues = struct;
 conditions = ["filter", "nofilter"];

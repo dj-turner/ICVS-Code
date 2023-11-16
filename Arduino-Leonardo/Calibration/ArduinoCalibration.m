@@ -7,9 +7,10 @@ clc; clear; close all;
 % INITIALISATION
 % set constants
 portPR670 = 'COM9';
-lights = ["red", "green"];                    % LEDs to calibrate
-levels = [255];      % Input values to test
+lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
+levels = [0, 32, 64, 96, 128, 160, 192, 224, 255];      % Input values to test (in order!)
 
+%--------------------------------------------------------------------------
 % add folder path to required functions
 addpath(strcat(pwd, '\functions\'));
 
@@ -48,27 +49,19 @@ end
 for light = 1:length(lights)
 
     % Set all light values to 0 in the LED value structure
-    LEDs.red = 0;
-    LEDs.green = 0;
-    LEDs.yellow = 0;
+    LEDs.red = 0; LEDs.green = 0; LEDs.yellow = 0;
 
     % Display which light we're currently calibrating
     disp(" ");
     disp(strcat("Current testing light: ", lights(light)));
 
-    % If the light is either red or yellow...
-    if strcmp(lights(light), "red") || strcmp(lights(light), "yellow")
-
-        % Set current test light value to max
-        LEDs.(lights(light)) = 255;
-
-        % Write LED values to the arduino device
-        WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
-
-        % Wait for user to press RETURN to continue (for light alignment)
-        beep
-        input("Alignment light on! Please press RETURN when you are ready to start.");
-    end
+    % Set current test light value to max
+    LEDs.(lights(light)) = 255;
+    % Write LED values to the arduino device
+    WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
+    % Wait for user to press RETURN to continue (for light alignment)
+    beep
+    input("Alignment light on! Please press RETURN when you are ready to start.");
 
     % For each input level...
     for level = 1:length(levels)
@@ -94,7 +87,7 @@ for light = 1:length(lights)
         try
             [luminance, spectrum, spectrumPeak] = measurePR670(portPR670);
 
-        % if this doesn't work, asks the user to check and enter the correct port number
+        % if this doesn't work, displays error and quits
         catch
             %turns on the monitor
             MonitorPower('on', testMode)
