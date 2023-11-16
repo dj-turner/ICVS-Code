@@ -1,10 +1,5 @@
 function [lum, spect, peak] = MeasurePR670(port)
 
-% If a port number is added, converts the value to char format
-if isa(port, 'double')
-    port = char(strcat('COM', num2str(port)));
-end
-
 % Set constants
 minLambda = 380;    % minimum lambda value
 lambdaStep = 5;     % steps between each lamda value

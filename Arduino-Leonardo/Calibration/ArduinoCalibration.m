@@ -6,7 +6,6 @@ clc; clear; close all;
 %--------------------------------------------------------------------------
 % INITIALISATION
 % set constants
-portPR670 = 'COM9';
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
 levels = [0, 32, 64, 96, 128, 160, 192, 224, 255];      % Input values to test (in order!)
 
@@ -16,6 +15,19 @@ addpath(strcat(pwd, '\functions\'));
 
 % Loading and setting up the arduino device - Do not touch this code!
 arduino = OpenArduinoPort;
+% Display the arduino port
+disp(strjoin(["Using port", arduino.Port, "for the Arduino device!"]));
+
+% Finding the PR670 port
+% Find all available ports
+availablePorts = serialportlist;
+% Remove the arduino port from the list
+availablePorts = availablePorts(~strcmp(availablePorts,arduino.Port));
+% Set the PR670 port as the last on the list
+portPR670 = char(availablePorts(end));
+% Display the pr670 port
+disp(strjoin(["Using port", portPR670, "for the PR670!"]));
+
 % Reset all lights to off (in case the arduino previously crashed)
 WriteLEDs(arduino, [0,0,0]);
 
@@ -85,7 +97,7 @@ for light = 1:length(lights)
 
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = measurePR670(portPR670);
+            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
 
         % if this doesn't work, displays error and quits
         catch
