@@ -50,3 +50,14 @@ nexttile
     s.green = greenNoFilterOverFilter;
 
     save("no-filter-over-filter", "s");
+
+    %%
+  load('filter.mat')  
+
+ wavelengths = filterValues.filter.spect(1,:);
+ filterSpect = filterValues.filter.spect(2,:);
+ noFilterSpect = filterValues.nofilter.spect(2,:);
+
+ noFilterOverFilter = noFilterSpect ./ filterSpect;
+
+plot(wavelengths, noFilterOverFilter, 'Marker', 'x', 'MarkerEdgeColor', 'r', 'Color', 'k')
