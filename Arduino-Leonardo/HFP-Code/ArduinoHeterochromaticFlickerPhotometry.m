@@ -7,12 +7,7 @@ delete(instrfindall)
 clearvars -except trialNumber;
 
 % Call arduino object
-[arduino, connection] = FindArduinoPort;
-
-% If the connection failed, exit the program
-if connection == 0
-    return
-end
+arduino = FindArduinoPort;
 
 % Turn off character capture
 ListenChar(0);
