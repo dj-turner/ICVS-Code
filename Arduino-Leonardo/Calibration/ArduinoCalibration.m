@@ -148,7 +148,7 @@ for light = 1:length(lights)
     title(strcat("Spectrum: ", upper(lights(light))));
 
     % Displays ending message
-    if light < length(lights), disp("Next light starting!..."); elseif light == length(lights), disp("All finished!"); end
+    if light < length(lights), disp("Next light starting!..."); else, disp("All finished!"); end
 end
 
 %--------------------------------------------------------------------------
@@ -162,9 +162,7 @@ if testMode == 0, graphPrefix = "Graph"; elseif testMode == 1, graphPrefix = "Te
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dtString, ".JPG"))
 
 % generates and saves "over time" graph
-if testMode == 0
-    CalibrationOverTime(dtString);
-end
+if testMode == 0, CalibrationOverTime(dtString); end
 
 % prepares to exit
 PrepareToExit(arduino);
@@ -195,11 +193,8 @@ function MonitorPower(dir, tMode)
 % tMode = testing mode (0 = off, 1 = on)
 
 % if not in test mode, turn the monitor on/off
-if tMode == 0
-    WinPower('monitor', dir)
+if tMode == 0, WinPower('monitor', dir)
     % if monitor is being turned off, pause for 1 second
-    if strcmpi(dir, 'off')
-        pause(1);
-    end
+    if strcmpi(dir, 'off'), pause(1); end
 end
 end
