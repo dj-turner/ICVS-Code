@@ -39,8 +39,7 @@ LEDs = struct;
 fig = figure('WindowState', 'minimized');
 tiledGraph = tiledlayout(2, length(lights));
 % calculate date and time
-dt = datetime;
-dtString = string(dt);
+dtString = string(datetime);
 % reformat into valid file name
 charRep = [":", "."; "-", "."; " ", "_"];
 for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
