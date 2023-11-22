@@ -17,6 +17,7 @@ end
 
 summaryTbl = array2table(summaryArray, "VariableNames", bestTbl.Properties.VariableNames);
 
+clearvars("dates");
 % date
 for session = 1:sessionNum
     date = datetime(strcat(string(summaryTbl.Day(session)), "/",... 
@@ -27,7 +28,7 @@ for session = 1:sessionNum
 end
 
 
-figure(1)
+f = figure(1);
 % graphs
 t = tiledlayout(2, 2);
 
@@ -44,6 +45,9 @@ title("Lambda by Date");
 nexttile
 plot(dates, summaryTbl.Yellow, 'Marker', 'x', 'Color', 'b', 'MarkerEdgeColor', 'k');
 title("Yellow by Date");
+
+f.WindowState = 'maximized';
+exportgraphics(t, strcat(pwd, '\DanaOverTime_RLM.jpg'));
 
 %%
 % HFP
@@ -63,6 +67,7 @@ end
 
 summaryTbl = array2table(summaryArray, "VariableNames", bestTbl.Properties.VariableNames);
 
+clearvars("dates");
 % date
 for session = 1:sessionNum
     date = datetime(strcat(string(summaryTbl.Day(session)), "/",... 
@@ -72,7 +77,7 @@ for session = 1:sessionNum
     dates(session,1) = date;
 end
 
-figure(2)
+f = figure(2);
 % graphs
 t = tiledlayout(1, 2);
 
@@ -83,3 +88,6 @@ title("RG Ratio by Session");
 nexttile
 plot(dates, summaryTbl.RatioRG, 'Marker', 'x', 'Color', 'r', 'MarkerEdgeColor', 'k');
 title("RG Ratio by Date");
+
+f.WindowState = 'maximized';
+exportgraphics(t, strcat(pwd, '\DanaOverTime_HFP.jpg'));
