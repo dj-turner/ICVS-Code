@@ -160,6 +160,11 @@ fig.WindowState = 'maximized';
 if testMode == 0, graphPrefix = "Graph"; elseif testMode == 1, graphPrefix = "TestGraph"; end
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dt, ".JPG"))
 
+% generates and saves "over time" graph
+if testMode == 0
+    CalibrationOverTime(dt);
+end
+
 % prepares to exit
 PrepareToExit(arduino);
 
