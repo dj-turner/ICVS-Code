@@ -2,12 +2,10 @@ function SaveCalibrationResults(testMode, light, level, lum, spect, peak)
 
 % Define constants
 % record current date and time
-dt = string(datetime);
-date = extractBefore(dt, " ");
-time = extractAfter(dt, " ");
+dt = datetime;
 
 % Define variable names for table
-varNames = {'Date', 'Time', 'LED', 'InputValue', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
+varNames = {'DateTime', 'LED', 'InputValue', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
 
 % testMode
 if testMode == 0
@@ -30,7 +28,7 @@ else
 end
 
 %% new participant results
-newResults = table(date, time, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
+newResults = table(dt, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
 
 %% new table
 calibrationTable = [calibrationTable; newResults];

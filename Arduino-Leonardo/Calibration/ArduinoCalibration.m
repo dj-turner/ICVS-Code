@@ -39,12 +39,13 @@ LEDs = struct;
 fig = figure('WindowState', 'minimized');
 tiledGraph = tiledlayout(2, length(lights));
 % calculate date and time
-dt = string(datetime);
+dt = datetime;
+dtString = string(dt);
 % reformat into valid file name
 charRep = [":", "."; "-", "."; " ", "_"];
-for rep = 1:height(charRep), dt = strrep(dt, charRep(rep,1), charRep(rep,2)); end
+for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
 % set date and time as tiled chart title
-title(tiledGraph, dt, 'Interpreter', 'none');
+title(tiledGraph, dtString, 'Interpreter', 'none');
 
 % creates empty array for current LED for luminance values - to use in figures
 plotLumData = NaN(length(levels), length(lights));
@@ -158,11 +159,11 @@ fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
 if testMode == 0, graphPrefix = "Graph"; elseif testMode == 1, graphPrefix = "TestGraph"; end
-exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dt, ".JPG"))
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dtString, ".JPG"))
 
 % generates and saves "over time" graph
 if testMode == 0
-    CalibrationOverTime(dt);
+    CalibrationOverTime(dtString);
 end
 
 % prepares to exit
