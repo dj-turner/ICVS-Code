@@ -50,7 +50,8 @@ title(tiledGraph, dtString, 'Interpreter', 'none');
 plotLumData = NaN(length(levels), length(lights));
 
 % will only move on if either 0 or 1 is entered for the testMode
-while ~exist("testMode", 'var') || (testMode ~= 0 && testMode ~= 1)
+testMode = NaN;
+while testMode ~= 0 && testMode ~= 1
     testMode = input("Test mode? (0 = off, 1 = on): ");
 end
 
@@ -61,7 +62,7 @@ end
 for light = 1:length(lights)
 
     % Set all light values to 0 in the LED value structure
-    LEDs.red = 0; LEDs.green = 0; LEDs.yellow = 0;
+    for i = 1:length(lights), LEDs.(lights(i)) = 0; end
 
     % Display which light we're currently calibrating
     disp(" ");
@@ -102,7 +103,7 @@ for light = 1:length(lights)
         % if this doesn't work, displays error and quits
         catch
             %turns on the monitor
-            MonitorPower('on', testMode)
+            MonitorPower('on', testMode);
             disp(lasterror);
             PrepareToExit(arduino);
             return
@@ -127,6 +128,7 @@ for light = 1:length(lights)
         end
     end
 
+    %----------------------------------------------------------------------
     % DRAWING GRAPHS
     % ROW 1: x = input value, y = luminance
     nexttile(light)
@@ -192,7 +194,8 @@ function MonitorPower(dir, tMode)
 % tMode = testing mode (0 = off, 1 = on)
 
 % if not in test mode, turn the monitor on/off
-if tMode == 0, WinPower('monitor', dir)
+if tMode == 0
+    WinPower('monitor', dir)
     % if monitor is being turned off, pause for 1 second
     if strcmpi(dir, 'off'), pause(1); end
 end
