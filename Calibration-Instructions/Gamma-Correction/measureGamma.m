@@ -1,9 +1,17 @@
 % This script measures the gamma of a display using measureLuminance
+Screen('Preference', 'SkipSyncTests', 1);
 
+% SET CONSTANTS
 display = 'standard'; %'standard' or 'display++';
-meter = 'spectroCal'; %'colorCal' or 'spectroCal'
+meter = 'PR670'; %'colorCal' or 'spectroCal' or 'PR670'
+% port = 'COM8';
 steps = 10; %number of steps recorded from. 
 mode = 'tri'; %which channel is recorded? 'full' = RGB+white, 'tri' = RGB, 'white' = only white
+
+% Add all folders to path
+calPath = strcat("C:\Users\", getenv('USERNAME'), "\Documents\GitHub\ICVS-Code\Calibration-Instructions\");
+folders = ["Camera-Calibration", "Chromaticity-Conversions", "Gamma-Correction", "Light-Measurement"];
+for folder = 1:length(folders), addpath(strcat(calPath, folders(folder))); end
 
 %initialise display
 [window,windowDimensions] = initialiseDisplay(display);
@@ -28,14 +36,20 @@ gammaCoefficients = zeros(3,length(name));
 
 %looping through each of the channels
 for channel = 1:length(name)
-    %looping through each step level
+    %looping through each step levelsca
+
     for level = 1:steps
         
         %draw current channel-level combination to the screen
         drawColorToDisplay(colorCode(channel,:).*(level/steps).*WhiteIndex(window),display,window,windowDimensions)
     
         %record luminance and add to 'gamma'
-        rec = measureLuminance(meter);
+        if exist("port", 'var')
+            rec = measureLuminance(meter, port);
+        else
+            rec = measureLuminance(meter); 
+        end
+
         gamma(level,1+channel) = rec;
     
     end

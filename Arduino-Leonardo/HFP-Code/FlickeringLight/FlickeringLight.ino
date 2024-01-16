@@ -20,12 +20,10 @@ double gAmp;
 double rAmp;
 int rValMax=255;
 int rValMin=0;
-double rValinit=round(random(rValMax*.4, rValMax*.6)); 
-double rVal=rValinit; 
-double rValMatch=0;  
-double gValinput;             
-double gValinit=128;  //GREEN VAL
-double gVal=gValinit;
+int rValRange=64;
+int rValDir;
+double rVal=0;          
+double gVal=0;  //GREEN VAL
 int rPhaseSetting=180;
 double rPhase=rPhaseSetting/360.0*TWOPI;;
 double gWave;
@@ -68,6 +66,7 @@ void loop() {
   analogWrite(gOutPin, 255-(gWave*255));
   
   // find new amplitudes
+  
   rAmp=(double)rVal/255;
   gAmp=(double)gVal/255;
 
@@ -84,60 +83,69 @@ void loop() {
   if (Serial.available()){
   InputFromMatlab=Serial.read();
   if (InputFromMatlab=='q'){
-    rVal=rVal+20;
+    rVal=rVal+25;
     if (rVal>rValMax){
       rVal=rValMax;
     }
   }
   if (InputFromMatlab=='w'){
-    rVal=rVal+5;
+    rVal=rVal+10;
     if (rVal>rValMax){
       rVal=rValMax;
     }
   }
   if (InputFromMatlab=='e'){
-    rVal=rVal+1;
+    rVal=rVal+2;
     if (rVal>rValMax){
       rVal=rValMax;
     }
   }    
   if (InputFromMatlab=='r'){
-    rVal=rVal-20;
+    rVal=rVal-25;
     if(rVal<rValMin){
       rVal=rValMin;
     }
   }
   if (InputFromMatlab=='t'){
-    rVal=rVal-5;
+    rVal=rVal-10;
     if(rVal<rValMin){
       rVal=rValMin;
     }
   }
   if (InputFromMatlab=='y'){
-    rVal=rVal-1;
+    rVal=rVal-2;
     if(rVal<rValMin){
       rVal=rValMin;
     }
   }
-  if (InputFromMatlab=='i'){
-    // set random initial red intensity (between .4 and .6 quantiles) for new trial. And save
-    // new initial settings
-    rValinit=round(random(rValMax*.4, rValMax*.6));
-    rVal=rValinit;
-    Serial.print(rValinit+100);
-    Serial.print(gValinit+100);
+  if (InputFromMatlab=='z'){
+    gVal=64;
+  }
+  if (InputFromMatlab=='x'){
+    gVal=128;
+  }  
+  if (InputFromMatlab=='c'){
+    gVal=192;
+  }
+  if (InputFromMatlab=='v'){
+    gVal=255;
   }
   if (InputFromMatlab=='o'){
-  Serial.print(rVal+100);
-  Serial.print(gVal+100);  
-  }
-    if (InputFromMatlab=='u'){
-    // Send initial and final red intensity to MATLAB
-    Serial.print(rValinit+100);
     Serial.print(rVal+100);
-    Serial.print(gValinit+100);
     Serial.print(gVal+100);
   }
+  if (InputFromMatlab=='i'){
+    rValDir = (rand() % 2);
+    rVal= (rand() % (rValRange + 1));
+    if (rValDir==1){
+      rVal = rVal + (rValMax - rValRange);
+    }
+  }
+  if (InputFromMatlab=='j'){
+    rVal = 0;
+    gVal = 0;
+  }
 }
+  
 InputFromMatlab=0;
 }
