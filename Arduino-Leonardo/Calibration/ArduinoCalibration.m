@@ -56,13 +56,15 @@ while testMode ~= 0 && testMode ~= 1
 end
 
 % asks which Arduino is being tested
+validDeviceNums = [0 1 2];
 deviceNum = NaN;
-while deviceNum ~=1 && deviceNum ~= 2
-    deviceNum = input("Which Arduino? (1 = Josh's yellow band device, 2 = Mitch's green band device): ");
+while ~ismember(deviceNum, validDeviceNums)
+    deviceNum = input("Which Arduino? (1 = Josh's yellow band device, 2 = Mitch's green band device, 0 = Other): ");
 end
 
 % Assigns correct device label depending on entered number
-if deviceNum == 1, deviceLabel = "Yellow Band";
+if deviceNum == 0, deviceLabel = string(input("Input Device Label: ", 's'));
+elseif deviceNum == 1, deviceLabel = "Yellow Band";
 elseif deviceNum == 2, deviceLabel = "Green Band";
 end
 
