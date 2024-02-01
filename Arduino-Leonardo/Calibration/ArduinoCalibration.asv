@@ -176,7 +176,7 @@ fig.WindowState = 'maximized';
 
 % saves graphs as .JPG file
 if testMode == 0, graphPrefix = "Graph"; elseif testMode == 1, graphPrefix = "TestGraph"; end
-exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dtString, ".JPG"))
 
 % generates and saves "over time" graph
 if testMode == 0, CalibrationOverTime(deviceLabel, dtString); end

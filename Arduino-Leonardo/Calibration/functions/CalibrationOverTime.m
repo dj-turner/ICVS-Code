@@ -1,4 +1,4 @@
-function CalibrationOverTime(dtString, deviceLabel)
+function CalibrationOverTime(deviceLabel, dtString)
 
 % Loads all Calibration data taken out of test mode
 load('CalibrationResults.mat');
@@ -22,7 +22,8 @@ fig = figure(figNum);
 % creates a tiled layout for the graphs
 t = tiledlayout(1, length(LEDs));
 % sets the title as the inputted date and time
-title(t, strjoin([deviceLabel, dtString]), 'Interpreter', 'none');
+title(t, deviceLabel, 'Interpreter', 'none');
+subtitle(t, dtString, 'Interpreter', 'none');
 
 % for each LED...
 for colour = 1:length(LEDs)
