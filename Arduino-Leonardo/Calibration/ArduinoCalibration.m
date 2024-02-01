@@ -7,7 +7,7 @@ clc; clear; close all;
 %--------------------------------------------------------------------------
 % SET CONSTANTS
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
-levels = [0, 32, 64, 96, 128, 160, 192, 224, 255];      % Input values to test (in order!)
+levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
 
 %--------------------------------------------------------------------------
 % ADD PATHS
@@ -41,20 +41,6 @@ LEDs = struct;
 plotLuminance = NaN(length(levels), length(lights));
 
 %--------------------------------------------------------------------------
-% GRAPH SETUP
-% Initialise graphs
-fig = figure('WindowState', 'minimized');
-tiledGraph = tiledlayout(2, length(lights));
-% Calculate date and time
-dtString = string(datetime);
-% Reformat into valid file name
-charRep = [":", "."; "-", "."; " ", "_"];
-for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
-% Set device and date and time as tiled chart title
-title(tiledGraph, deviceLabel, 'Interpreter', 'none');
-subtitle(tiledGraph, dtString, 'Interpreter', 'none');
-
-%--------------------------------------------------------------------------
 % USER INPUTS
 % Debug Mode
 debugMode = NaN;
@@ -73,6 +59,20 @@ while ~ismember(deviceNum, validDeviceNums)
     elseif deviceNum == 2, deviceLabel = "Green Band";
     end
 end
+
+%--------------------------------------------------------------------------
+% GRAPH SETUP
+% Initialise graphs
+fig = figure('WindowState', 'minimized');
+tiledGraph = tiledlayout(2, length(lights));
+% Calculate date and time
+dtString = string(datetime);
+% Reformat into valid file name
+charRep = [":", "."; "-", "."; " ", "_"];
+for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
+% Set device and date and time as tiled chart title
+title(tiledGraph, deviceLabel, 'Interpreter', 'none');
+subtitle(tiledGraph, dtString, 'Interpreter', 'none');
 
 %--------------------------------------------------------------------------
 % TESTING LOOP
@@ -183,25 +183,3 @@ if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
 beep
-
-%--------------------------------------------------------------------------
-% FUNCTIONS
-function PrepareToExit(a)   
-% a = arduino device
-% Reset all lights to off before closing
-WriteLEDs(a,[0,0,0]);
-% Clear everything before ending program
-delete(instrfindall);
-clear all; %#ok<CLALL>
-warning('on', 'instrument:instrfindall:FunctionToBeRemoved');
-end
-
-function MonitorPower(dir, dMode)
-% dir = direction of power switch ('on' or 'off')
-% dMode = debug mode (0 = off, 1 = on)
-% if not in debug mode, turn the monitor on/off
-if dMode == 0, WinPower('monitor', dir);
-    % if monitor is being turned off, pause for 1 second
-    if strcmpi(dir, 'off'), pause(1); end
-end
-end
