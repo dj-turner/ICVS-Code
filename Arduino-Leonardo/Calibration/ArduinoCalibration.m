@@ -150,7 +150,7 @@ for light = 1:length(lights)
     nexttile(light)
     plot(levels, plotLuminance(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
     xlim([0, max(levels)]);
-    xlabel("Input value");
+    xlabel("Input Value");
     ylim([0, max(plotLuminance(:,light))]);
     ylabel("Luminance");
     title(strcat("Luminance: ", upper(lights(light))));
@@ -195,7 +195,6 @@ delete(instrfindall);
 clear all; %#ok<CLALL>
 warning('on', 'instrument:instrfindall:FunctionToBeRemoved');
 end
-
 
 function MonitorPower(dir, dMode)
 % dir = direction of power switch ('on' or 'off')
