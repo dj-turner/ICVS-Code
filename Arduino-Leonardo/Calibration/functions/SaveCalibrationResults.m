@@ -1,4 +1,4 @@
-function SaveCalibrationResults(testMode, device, light, level, lum, spect, peak)
+function SaveCalibrationResults(debugMode, device, light, level, lum, spect, peak)
 
 % Define constants
 % record current date and time
@@ -8,8 +8,8 @@ dt = datetime;
 varNames = {'Device', 'DateTime', 'LED', 'InputValue', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
 
 % testMode
-if testMode == 0, fileName = 'CalibrationResults.mat';
-elseif testMode == 1, fileName = 'CalibrationResults_test.mat';
+if debugMode == 0, fileName = 'CalibrationResults.mat';
+elseif debugMode == 1, fileName = 'CalibrationResults_test.mat';
 end
 
 % Defines path to .mat file

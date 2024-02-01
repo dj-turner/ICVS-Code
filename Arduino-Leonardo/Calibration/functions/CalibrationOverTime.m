@@ -1,6 +1,6 @@
 function CalibrationOverTime(deviceLabel, dtString)
 
-% Loads all Calibration data taken out of test mode
+% Loads all Calibration data taken out of debug mode
 load('CalibrationResults.mat');
 
 % selects only data where the input was at max. value, and the relevant
