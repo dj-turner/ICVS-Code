@@ -52,7 +52,19 @@ plotLumData = NaN(length(levels), length(lights));
 % will only move on if either 0 or 1 is entered for the testMode
 testMode = NaN;
 while testMode ~= 0 && testMode ~= 1
-    testMode = input("Test mode? (0 = off, 1 = on): ");
+    testMode = input("Debug mode? (0 = off, 1 = on): ");
+end
+
+% asks which Arduino is being tested
+validDeviceNums = [0 1 2];
+deviceNum = NaN;
+while ~ismember(deviceNum, validDeviceNums)
+    deviceNum = input("Which Arduino? (1 = Josh's yellow band device, 2 = Mitch's green band device, 0 = Other): ");
+    % Assigns correct device label depending on entered number
+    if deviceNum == 0, deviceLabel = string(input("Input Device Label: ", 's'));
+    elseif deviceNum == 1, deviceLabel = "Yellow Band";
+    elseif deviceNum == 2, deviceLabel = "Green Band";
+    end
 end
 
 %--------------------------------------------------------------------------
@@ -114,7 +126,7 @@ for light = 1:length(lights)
 
         %------------------------------------------------------------------
         % Saves results to .mat file
-        SaveCalibrationResults(testMode, lights(light), levels(level), luminance, spectrum, spectrumPeak);
+        SaveCalibrationResults(testMode, deviceLabel, lights(light), levels(level), luminance, spectrum, spectrumPeak);
 
         % saves luminance values for plotting
         plotLumData(level, light) = luminance;
@@ -163,7 +175,7 @@ if testMode == 0, graphPrefix = "Graph"; elseif testMode == 1, graphPrefix = "Te
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", dtString, ".JPG"))
 
 % generates and saves "over time" graph
-if testMode == 0, CalibrationOverTime(dtString); end
+if testMode == 0, CalibrationOverTime(dtString, deviceLabel); end
 
 % prepares to exit
 PrepareToExit(arduino);

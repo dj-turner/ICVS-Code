@@ -1,17 +1,15 @@
-function SaveCalibrationResults(testMode, light, level, lum, spect, peak)
+function SaveCalibrationResults(testMode, device, light, level, lum, spect, peak)
 
 % Define constants
 % record current date and time
 dt = datetime;
 
 % Define variable names for table
-varNames = {'DateTime', 'LED', 'InputValue', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
+varNames = {'Device', 'DateTime', 'LED', 'InputValue', 'Luminance', 'Lambdas', 'LambdaSpectrum', 'PeakLambda'};
 
 % testMode
-if testMode == 0
-    fileName = 'CalibrationResults.mat';
-elseif testMode == 1
-    fileName = 'CalibrationResults_test.mat';
+if testMode == 0, fileName = 'CalibrationResults.mat';
+elseif testMode == 1, fileName = 'CalibrationResults_test.mat';
 end
 
 % Defines path to .mat file
@@ -28,7 +26,7 @@ else
 end
 
 %% new participant results
-newResults = table(dt, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
+newResults = table(device, dt, light, level, lum, spect(1,:), spect(2,:), peak, 'VariableNames', varNames);
 
 %% new table
 calibrationTable = [calibrationTable; newResults];
