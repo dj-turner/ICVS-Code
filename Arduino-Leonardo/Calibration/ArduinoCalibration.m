@@ -1,3 +1,4 @@
+function ArduinoCalibration
 %--------------------------------------------------------------------------
 % MATLAB RESET
 warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
@@ -188,3 +189,5 @@ if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
 beep
+
+end
