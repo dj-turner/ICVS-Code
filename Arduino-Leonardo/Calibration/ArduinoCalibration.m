@@ -1,15 +1,21 @@
-function ArduinoCalibration
+function ArduinoCalibration(repeats)
 %--------------------------------------------------------------------------
 % MATLAB RESET
 warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
 delete(instrfindall)
-clc; clear; close all; 
+close all; 
 
 %--------------------------------------------------------------------------
 % SET CONSTANTS
-levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
+% levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
+levels = [255, 192, 128, 64, 0];
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
 lightPositions = ["right", "right", "left"];            % Position of LEDs in the device (in order!)
+
+if exist("repeats", 'var')
+    lights = repmat(lights, [1, repeats]);
+    lightPositions = repmat(lightPositions, [1, repeats]);
+end
 
 %--------------------------------------------------------------------------
 % ADD PATHS
