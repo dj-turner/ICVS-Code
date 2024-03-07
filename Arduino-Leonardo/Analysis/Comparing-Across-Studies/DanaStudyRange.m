@@ -1,3 +1,6 @@
+% Clear workspace
+clc; clear; close all;
+
 % Read in data table
 tbl = readtable("data-B.xlsx", 'Sheet', 'Matlab_Data');
 
@@ -80,9 +83,7 @@ errPos = meanValuesMinMax(:,4);
 hold on
 
 % Draw error bars
-errorbar(x, bestY, errNeg, errPos,...
-    'LineStyle', 'none', 'Color', 'r', 'LineWidth', 2,...  
-    'Marker', 'none');
+errorbar(x, bestY, errNeg, errPos, 'LineStyle', 'none', 'Color', 'r', 'LineWidth', 2, 'Marker', 'none');
 
 % Draw best match
 scatter(x, bestY, 100, 'k', 'x', 'LineWidth', 2);
@@ -90,17 +91,14 @@ scatter(x, bestY, 100, 'k', 'x', 'LineWidth', 2);
 % plot median values with a blue x
 scatter(x, middleY, 100, 'b', 'x', 'LineWidth', 2);
 
-% Set y axis limits to min/max possible values
-ylim([0 1024]);
+% set graph overlay to off
+hold off
 
 % Set x limits so all participants display away from the graph edges
 xlim([0 height(meanValuesMinMax)+1]);
 
-% Add test to each best match marker with the relevant participant ID
-text(x+.05, bestY, ptpts);
-
-% Set graph title
-title("Dana's HFP Data with Best & Min/Max Settings");
+% Set y axis limits to min/max possible values
+ylim([0 1024]);
 
 % Set graph x axis label
 xlabel("Participant Number");
@@ -108,11 +106,14 @@ xlabel("Participant Number");
 %Set graph y axis label
 ylabel("Mean Setting in Device Units");
 
+% Set graph title
+title("Dana's HFP Data with Best & Min/Max Settings");
+
+% Add test to each best match marker with the relevant participant ID
+text(x+.05, bestY, ptpts);
+
 % add legend to explain different markers
 lgd = legend(["Min/Max Matching Range", "Best Match", "Min/Max Mean"]);
 
 % Set legend font size to 20
 lgd.FontSize = 20;
-
-% set graph overlay to off
-hold off
