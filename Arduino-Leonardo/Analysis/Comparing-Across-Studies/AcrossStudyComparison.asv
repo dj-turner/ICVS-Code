@@ -243,24 +243,22 @@ mitchDataRLM.ParticipantCode = x;
 ids = unique(string(x));
 
 mitchMeanTbl = array2table(NaN(length(ids), length(vars)),'VariableNames',vars);
-tMitch = NaT(length(ids),1);
+
 for ptpt = 1:length(ids)
     idx = strcmp(string(mitchDataRLM.ParticipantCode), ids(ptpt)) & mitchDataRLM.Session ~= 2;
     ptptTbl = mitchDataRLM(idx,:);
     ptptTbl = ptptTbl(1:rowsPerPtpt,:);
     bestTbl = ptptTbl(strcmp(string(ptptTbl.MatchType),"Best"),vars);
     meanTbl = mean(bestTbl,1);
+    date = ;
     mitchMeanTbl(ptpt,:) = meanTbl;
-    tMitch(ptpt,1) = datetime(ptptTbl.DateTime(1,1:3));
+    tMitch(ptpt,1) = date;
 end
 
 
 figure(3)
 hold on
-hj = histogram(joshMeanTbl.RLM_Lambda, 'BinWidth', .005, 'FaceAlpha', .5,'FaceColor', 'g');
-hm = histogram(mitchMeanTbl.Lambda, 20, 'BinWidth', .005, 'FaceAlpha', .5, 'FaceColor', 'r');
-
-figure(4)
-scatter(tMitch,mitchMeanTbl.Lambda, 100, 'Marker', 'x', 'MarkerEdgeColor', 'k');
+hj = histogram(joshMeanTbl.RLM_Lambda, 'BinWidth', .01, 'FaceAlpha', .5);
+hm = histogram(mitchMeanTbl.Lambda, 20, 'BinWidth', .01, 'FaceAlpha', .5)
 
 
