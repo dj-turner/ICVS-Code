@@ -7,7 +7,7 @@ user = getenv('USERNAME');
 d = dir('*.xlsx');
 
 tbl = readtable(d.name, "Sheet", "Matlab_Data");
-
+%%
 indexTbl = ["RLM_Lambda", "RLM_MixLight";... 
             "RLM_Yellow", "RLM_RefLight";...
             "HFP_Leo_RG", "HFP_Uno_Red"];
@@ -25,10 +25,10 @@ for pair = 1:height(indexTbl)
         for ptpt = 1:max(tbl.PPno)
             ptptTbl = tbl(tbl.PPno == ptpt & tbl.Match_Type == 1, :);
             if ptptTbl.HRR_Pass(1) == 1 %&& (ptpt ~= 8 || pair ~= 3)
-                s.(indexTbl(pair,device)).mean(ptpt) = table2array(mean(ptptTbl(:,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device))), "all", "omitmissing"));
-                s.(indexTbl(pair,device)).sMean(ptpt,:) = table2array(mean(ptptTbl(:,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device))), 1, "omitmissing"));
-                s.(indexTbl(pair,device)).sd(ptpt) = std(table2array(ptptTbl(:,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device)))), 0, "all", "omitmissing");
-                s.(indexTbl(pair,device)).sSd(ptpt,:) = std(table2array(ptptTbl(:,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device)))), 0, 1, "omitmissing");
+                s.(indexTbl(pair,device)).mean(ptpt) = table2array(mean(ptptTbl(2:end,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device))), "all", "omitmissing"));
+                s.(indexTbl(pair,device)).sMean(ptpt,:) = table2array(mean(ptptTbl(2:end,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device))), 1, "omitmissing"));
+                s.(indexTbl(pair,device)).sd(ptpt) = std(table2array(ptptTbl(2:end,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device)))), 0, "all", "omitmissing");
+                s.(indexTbl(pair,device)).sSd(ptpt,:) = std(table2array(ptptTbl(2:end,startsWith(ptptTbl.Properties.VariableNames, indexTbl(pair,device)))), 0, 1, "omitmissing");
 
             end
         end
@@ -38,11 +38,16 @@ for pair = 1:height(indexTbl)
 
         t = tiledlayout(1,sessionNum-1);
         title(t, strcat(indexTbl(pair,device)), 'Interpreter','none');
-        x = s.(indexTbl(pair,device)).sMean(:,1);
+        
         for ySession = 2:sessionNum
+            x = s.(indexTbl(pair,device)).sMean(:,1);
             y = s.(indexTbl(pair,device)).sMean(:,ySession);
+            l = 1:height(x);
+            
+            [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
+
             nexttile
-            DrawGraph(x,y,strcat("Sessions 1 & ", num2str(ySession)),"Session 1", strcat("Session ", num2str(ySession)));
+            DrawGraph(xRank,yRank,strcat("Sessions 1 & ", num2str(ySession)),"Session 1", strcat("Session ", num2str(ySession)),lRank);
         end
     end
 
@@ -52,17 +57,28 @@ for pair = 1:height(indexTbl)
     t = tiledlayout(1, sessionNum);
     for session = 1:sessionNum
         x = s.(indexTbl(pair,1)).sMean(:,session);
-        y = s.(indexTbl(pair,2)).sMean(:,session);   
+        y = s.(indexTbl(pair,2)).sMean(:,session); 
+        l = 1:height(x);
+
+        [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
         
         gTit = strcat(extractAfter(indexTbl(pair,1),"_"), " & ", extractAfter(indexTbl(pair,2),"_"), ", session ", num2str(session));
         nexttile
-        DrawGraph(x,y,gTit,"Leonardo Device","Lab-Based Device");
+        DrawGraph(xRank,yRank,gTit,"Leonardo Device","Lab-Based Device",lRank);
     end
 end
 
-function DrawGraph(xVar,yVar,gTitle,xLab,yLab)
-
-    [r, p] = corr(xVar, yVar, 'rows', 'pairwise');
+function DrawGraph(xVar,yVar,gTitle,xLab,yLab,scatterLabels)
+    
+    if isequal(sort(xVar)', 1:length(xVar)) || isequal(sort(yVar)', 1:length(yVar))
+        corrType = 'Spearman';
+        repType = "Rho";
+    else
+        corrType = 'Pearson';
+        repType = "R";
+    end
+    
+    [c, p] = corr(xVar, yVar, 'rows', 'pairwise', 'type', corrType);
     scatter(xVar, yVar, 'Marker', 'x', 'MarkerEdgeColor', 'b', 'LineWidth', 1)
     
     % hold on
@@ -75,8 +91,29 @@ function DrawGraph(xVar,yVar,gTitle,xLab,yLab)
 
     xlabel(xLab);
     ylabel(yLab);
-    text(max(xVar), max(yVar), strjoin(["R = ", num2str(r), ",", newline, "P = ", num2str(p)],''));
-    text(xVar+.001*max(xVar), yVar+.001*max(yVar), string(1:length(xVar)));
+    text(max(xVar), max(yVar), strjoin([corrType, "'s ", repType, " = ", num2str(round(c,2)), ",", newline, "P = ", num2str(round(p,3))],''));
+    text(xVar+.005*max(xVar), yVar+.005*max(yVar), scatterLabels);
     title(gTitle, 'Interpreter','none');
 
 end
+
+function [xRanked,yRanked,lRanked] = ContinuousToRanked(xCont,yCont,lCont)
+
+idx = ~isnan(xCont) & ~isnan(yCont);
+xCont = xCont(idx); yCont = yCont(idx); lRanked = lCont(idx);
+
+lRanked = string(lRanked');
+
+[~,pX] = sort(xCont,'descend');
+xRanked = 1:length(xCont);
+xRanked(pX) = xRanked;
+xRanked = xRanked';
+
+[~,pY] = sort(yCont,'descend');
+yRanked = 1:length(yCont);
+yRanked(pY) = yRanked;
+yRanked = yRanked';
+
+end
+
+
