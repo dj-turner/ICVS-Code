@@ -97,21 +97,19 @@ for led = 1:length(colours)
         
     % newData
     currentData = newData255(strcmp(newData255.LED, colours(led)),:);
-    for device = 1:length(newDevices)
-        for date = 1:length(newDataDates)
-            nexttile(led)
-            idx = strcmp(newData.LED, colours(led))...
-                  & strcmp(newData.Device, newDevices(device))...
-                  & startsWith(string(newData.DateTime), newDataDates(date));
-            x = table2array(newData(idx,"InputValue"));
-            y = table2array(newData(idx,"Luminance"));
-            SpectraPlot(x,y,lineColours(icvsGroups+device,:))
-    
-            nexttile(led+length(colours))
-            x = table2array(currentData(device,"Lambdas"));
-            y = table2array(currentData(device,"LambdaSpectrum"));
-            SpectraPlot(x,y,lineColours(icvsGroups+device,:))
-        end
+    for device = 1:height(currentData)
+        nexttile(led)
+        idx = strcmp(newData.LED, colours(led))...
+              & strcmp(newData.Device, newDevices(device))...
+              & startsWith();
+        x = table2array(newData(idx,"InputValue"));
+        y = table2array(newData(idx,"Luminance"));
+        SpectraPlot(x,y,lineColours(icvsGroups+device,:))
+
+        nexttile(led+length(colours))
+        x = table2array(currentData(device,"Lambdas"));
+        y = table2array(currentData(device,"LambdaSpectrum"));
+        SpectraPlot(x,y,lineColours(icvsGroups+device,:))
     end
 end
 
