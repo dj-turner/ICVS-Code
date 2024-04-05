@@ -230,10 +230,6 @@ mdlRLM = fitlm(danaData, 'RLM_RG ~ MonthSin + MonthCos');
 mdlHFP = fitlm(danaData, 'HFP_RG ~ MonthSin + MonthCos');
 
 %%
-mdlRLM = fitlm(danaData, 'RLM_MixLight_1 ~ MonthSin + MonthCos');
-mdlHFP = fitlm(danaData, 'HFP_Uno_Red_1 ~ MonthSin + MonthCos');
-
-%%
 djData.MonthCos = cos(djData.("Birth Month"));
 djData.MonthSin = sin(djData.("Birth Month"));
 
@@ -248,10 +244,15 @@ mitchDataResults.MonthCos = cos(mitchDataResults.Month);
 mitchDataResults.MonthSin = sin(mitchDataResults.Month);
 
 hfpVars = ["Month", "HFP_RG", "MonthCos", "MonthSin"];
-allieResultsData.Properties.VariableNames = hfpVars;
-amHFPData = [allieResultsData; mitchDataResults(:,hfpVars)];
+rlmVars = ["Month", "RLM_RG", "MonthCos", "MonthSin"];
 
-mdlRLM = fitlm(mitchDataResults, 'RLM_RG ~ MonthSin + MonthCos');
-mdlHFP = fitlm(amHFPData, 'HFP_RG ~ MonthSin + MonthCos');
+mitchHFPResults = mitchDataResults(:,hfpVars);
 
+allieResultsData.Properties.VariableNames = hfpCV;
+
+amData = [allieResultsData; mitchHFPResults];
+
+mdlHFP = fitlm(amData, 'HFP_RG ~ MonthSin + MonthCos');
+
+%%
 
