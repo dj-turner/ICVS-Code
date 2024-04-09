@@ -1,94 +1,90 @@
 % clear up
 clc; clear; close all;
 
-monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+[scW, scH] = Screen('WindowSize',0);
 
 %%
 % Link data
-linkTbl = readtable("Ptpt_ID_Links.xlsx");
-linkTbl = convertvars(linkTbl, linkTbl.Properties.VariableNames, 'string');
+ptptIdTbl = readtable("Ptpt_ID_Links.xlsx");
+ptptIdTbl = convertvars(ptptIdTbl, ptptIdTbl.Properties.VariableNames, 'string');
+
+% Possible var names
+taskNames = ["RLM_Leo", "HFP_Leo", "RLM_Anom", "HFP_Uno"];
+
+data = struct;
+monthMeans = struct;
+monthNs = struct;
 
 %%
 % Allie's data
 aData = load("data-A.mat"); aData = aData.hfpTable;
-allieDataDemo = readtable("newDataDemo-A.xlsx");
+aDataDemo = readtable("newDataDemo-A.xlsx");
 
 ptptIDs = unique(string(aData.ptptID));
 
-allieResultsData = NaN(height(ptptIDs), 2);
+data.Allie = NaN(height(ptptIDs), 2);
 for ptpt = 1:height(aData)
-    idx = contains(string(allieDataDemo.ID), ptptIDs(ptpt));
-    if sum(idx) == 1 && table2array(allieDataDemo(strcmp(string(allieDataDemo.ID),ptptIDs(ptpt)),"CVD")) == 0
-        month = table2array(allieDataDemo(idx,"MOB"));
-        logRG = table2array(aData(ptpt, "meanTestAmp"));
-        allieResultsData(ptpt,:) = [month logRG];
+    idx1 = contains(string(aDataDemo.ID), ptptIDs(ptpt));
+    idx2 = table2array(aDataDemo(strcmp(string(aDataDemo.ID),ptptIDs(ptpt)),"CVD"));
+    if sum(idx1) == 1 && idx2 == 0
+        month = table2array(aDataDemo(idx1,"MOB"));
+        logRG = log(table2array(aData(ptpt, "meanTestAmp")) ./ 1024);
+        data.Allie(ptpt,:) = [month logRG];
     end
 end
 
-idx = sum(isnan(allieResultsData),2) == width(allieResultsData);
-allieResultsData = allieResultsData(~idx,:);
-allieResultsData = array2table(allieResultsData, "VariableNames", ["Month", "amp"]);
+idx = sum(isnan(data.Allie),2) ~= width(data.Allie);
+data.Allie = data.Allie(idx,:);
+data.Allie = array2table(data.Allie, "VariableNames", ["Month", "HFP_Uno_logRG"]);
 
-monthMeansA = NaN(1,12);
-monthNsA = NaN(1,12);
-for month = 1:12
-    monthDataA = allieResultsData(allieResultsData.Month == month, strcmp(allieResultsData.Properties.VariableNames, "amp"));
-    monthNsA(month) = height(monthDataA(~isnan(table2array(monthDataA(:,1))),:));
-    monthMeansA(month) = table2array(mean(monthDataA, "omitmissing"))';
-end
+[monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Allie, taskNames, "Allie");
 
 %%
 % Dana's data
 vars = ["Month", "RLM_Red_1", "RLM_Green_1", "RLM_MixLight_1", "HFP_Leo_Red_1", "HFP_Leo_Green_1", "HFP_Uno_Red_1"];
-dataB = readtable("data-B.xlsx", 'Sheet','Matlab_Data');
-ptptIDs = unique(string(dataB.PPcode));
-danaData = array2table(NaN(length(ptptIDs), length(vars)), 'VariableNames', vars);
+dData = readtable("data-B.xlsx", 'Sheet','Matlab_Data');
+ptptIDs = unique(string(dData.PPcode));
+data.Dana = array2table(NaN(length(ptptIDs), length(vars)), 'VariableNames', vars);
 for ptpt = 1:length(ptptIDs)
-    donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), linkTbl);
-    idx = strcmp(string(dataB.PPcode), ptptIDs(ptpt))...
-          & table2array(sum(dataB(strcmp(dataB.PPcode,ptptIDs(ptpt)), "HRR_Pass"))) > 0 ...
-          & dataB.Study == 1.1 ...
+    donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
+    idx = strcmp(string(dData.PPcode), ptptIDs(ptpt))...
+          & table2array(sum(dData(strcmp(dData.PPcode,ptptIDs(ptpt)), "HRR_Pass"))) > 0 ...
+          & dData.Study == 1.1 ...
           & donePreviousStudy == 0;
-    currentData = dataB(idx,vars);
-    if ~isempty(currentData)
-        danaData(ptpt,:) = mean(currentData(2:end, :), 'omitmissing');
+    ptptData = dData(idx,vars);
+    if ~isempty(ptptData)
+        data.Dana(ptpt,:) = mean(ptptData(2:end, :), 'omitmissing');
     end
 end
 
-danaData.RLM_RG = danaData.RLM_Red_1 ./ danaData.RLM_Green_1;
-danaData.HFP_RG = danaData.HFP_Leo_Red_1 ./ danaData.HFP_Leo_Green_1;
+data.Dana.RLM_Leo_logRG = log(data.Dana.RLM_Red_1 ./ data.Dana.RLM_Green_1);
+data.Dana.HFP_Leo_logRG = log(data.Dana.HFP_Leo_Red_1 ./ data.Dana.HFP_Leo_Green_1);
+data.Dana.RLM_Anom_logRG = log(data.Dana.RLM_MixLight_1);
+data.Dana.HFP_Uno_logRG = log(data.Dana.HFP_Uno_Red_1 ./ 1024);
 
-monthMeansB = NaN(4,12);
-monthNsB = NaN(4,12);
-for month = 1:12
-    monthDataB = danaData(danaData.Month == month, ["RLM_RG", "RLM_MixLight_1", "HFP_RG", "HFP_Uno_Red_1"]);
-    for i = 1:width(monthDataB)
-        monthNsB(i,month) = height(monthDataB(~isnan(table2array(monthDataB(:,i))),:));
-    end
-    monthMeansB(:,month) = table2array(mean(monthDataB, "omitmissing"))';
-end
+[monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Dana, taskNames, "Dana");
 
 %%
-% josh's data
-joshData = readtable("data-DJ.xlsx", "VariableNamingRule","preserve");
+% Josh's data
+jData = readtable("data-DJ.xlsx", "VariableNamingRule","preserve");
 
 demoVars = ["PP", "Code", "Birth Month", "Country of Birth", "Ethnicity", "Plates"];
-joshDataDemo = joshData(~isnan(joshData.PP), demoVars);
-joshDataDemo = convertvars(joshDataDemo, ["Code", "Country of Birth", "Plates"], 'string');
+jDataDemo = jData(~isnan(jData.PP), demoVars);
+jDataDemo = convertvars(jDataDemo, ["Code", "Country of Birth", "Plates"], 'string');
 
 rlmVars = ["RLM_Red", "RLM_Green", "RLM_Yellow"];
 hfpVars = ["HFP_RedValue", "HFP_GreenValue"];
-resultsVars = [rlmVars, hfpVars];
+vars = [rlmVars, hfpVars];
 
-ptptIDs = unique(joshDataDemo.Code);
+ptptIDs = unique(jDataDemo.Code);
 
-resultsData = NaN(length(ptptIDs), length(resultsVars));
+jDataValues = NaN(length(ptptIDs), length(vars));
 for ptpt = 1:length(ptptIDs)
-    donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), linkTbl);
-    idx = strcmp(joshData.Code, ptptIDs(ptpt))... 
-        & strcmp(joshData.("Match Type"), "Best")...
+    donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
+    idx = strcmp(jData.Code, ptptIDs(ptpt))... 
+        & strcmp(jData.("Match Type"), "Best")...
         & donePreviousStudy == 0;
-    ptptData = joshData(idx,:);
+    ptptData = jData(idx,:);
 
     if ~isempty(ptptData)
         idx = strcmp(table2array(ptptData(1, "Plates")), "P");
@@ -96,234 +92,236 @@ for ptpt = 1:length(ptptIDs)
             ptptData = ptptData(2:end,:);
             rlmData = table2array(mean(ptptData(ptptData.RLM_ConfidenceRating > 1, rlmVars), 'omitmissing'));
             hfpData = table2array(mean(ptptData(ptptData.HFP_ConfidenceRating > 1, hfpVars), 'omitmissing'));
-            resultsData(ptpt,:) = [rlmData hfpData];
+            jDataValues(ptpt,:) = [rlmData hfpData];
         end
     end
 end
 
-joshDataResults = array2table(resultsData, 'VariableNames', resultsVars);
+jDataValues = array2table(jDataValues, 'VariableNames', vars);
 
-djData = [joshDataDemo joshDataResults];
+data.Josh = [jDataDemo jDataValues];
+data.Josh = renamevars(data.Josh,"Birth Month","Month");
 
-djData.RLM_RG = djData.RLM_Red ./ djData.RLM_Green;
-djData.HFP_RG = djData.HFP_RedValue ./ djData.HFP_GreenValue;
+data.Josh.RLM_Leo_logRG = log(data.Josh.RLM_Red ./ data.Josh.RLM_Green);
+data.Josh.HFP_Leo_logRG = log(data.Josh.HFP_RedValue ./ data.Josh.HFP_GreenValue);
 
-monthMeansDJ = NaN(2, 12);
-monthNsDJ = NaN(2,12);
-for month = 1:12
-    monthDataDJ = djData(djData.("Birth Month") == month, endsWith(djData.Properties.VariableNames, "RG"));
-    monthNsDJ(1,month) = height(monthDataDJ(~isnan(table2array(monthDataDJ(:,1))),:));
-    monthNsDJ(2,month) = height(monthDataDJ(~isnan(table2array(monthDataDJ(:,2))),:));
-    monthMeansDJ(:, month) = table2array(mean(monthDataDJ, "omitmissing"))';
-end
+[monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Josh, taskNames, "Josh");
 
 %%
-% mitch's rlm data
+% Mitch's RLM data
 rlmVars = ["Red", "Green", "Yellow"];
 
-mitchDataRLM = load("dataRLM-MT.mat","ParticipantMatchesRLM");
-mitchDataRLM = mitchDataRLM.ParticipantMatchesRLM;
-mitchDataRLM = mitchDataRLM(~contains(string(mitchDataRLM.ParticipantCode), "TEST"),:);
+mDataRLM = load("dataRLM-MT.mat","ParticipantMatchesRLM");
+mDataRLM = mDataRLM.ParticipantMatchesRLM;
+mDataRLM = mDataRLM(~contains(string(mDataRLM.ParticipantCode), "TEST"),:);
 
-mitchDataDemo = readtable("dataDemo-MT.xlsx");
+mDataDemo = readtable("dataDemo-MT.xlsx");
 
-ptptIDs = unique(string(mitchDataRLM.ParticipantCode));
+ptptIDs = unique(string(mDataRLM.ParticipantCode));
 ptptIDs = ptptIDs(strlength(ptptIDs) == 3);
 
-mitchDataResultsRLM = NaN(length(ptptIDs), 4);
+mitchDataRLM = NaN(length(ptptIDs), 4);
 for ptpt = 1:length(ptptIDs)
-    donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), linkTbl);
-    idx = strcmp(string(mitchDataRLM.ParticipantCode), ptptIDs(ptpt))...
-          & strcmp(mitchDataRLM.MatchType, "Best")... 
-          & strcmp(string(table2array(mitchDataDemo(strcmp(mitchDataDemo.ParticipantCode, ptptIDs(ptpt)), "HRR"))), "Pass")...
-          & mitchDataRLM.Trial ~= 1 & mitchDataRLM.ConfidenceRating > 1 ...
+    donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
+    idx = strcmp(string(mDataRLM.ParticipantCode), ptptIDs(ptpt))...
+          & strcmp(mDataRLM.MatchType, "Best")... 
+          & strcmp(string(table2array(mDataDemo(strcmp(mDataDemo.ParticipantCode, ptptIDs(ptpt)), "HRR"))), "Pass")...
+          & mDataRLM.Trial ~= 1 & mDataRLM.ConfidenceRating > 1 ...
           & donePreviousStudy == 0;
-    ptptData = mitchDataRLM(idx,:);
+    ptptData = mDataRLM(idx,:);
     if unique(ptptData.Session) > 1
         ptptData = ptptData(ptptData.Session == ptptData.Session(1),:);
     end
     if height(ptptData) > 4
         ptptData = ptptData(1:4,:);
     end
-    mitchDataResultsRLM(ptpt,2:4) = table2array(mean(ptptData(:,rlmVars)));
+    mitchDataRLM(ptpt,2:4) = table2array(mean(ptptData(:,rlmVars)));
 
-    mitchDataResultsRLM(ptpt,1) = table2array(mitchDataDemo(strcmp(mitchDataDemo.ParticipantCode, ptptIDs(ptpt)),"BirthMonth"));
+    mitchDataRLM(ptpt,1) = table2array(mDataDemo(strcmp(mDataDemo.ParticipantCode, ptptIDs(ptpt)),"BirthMonth"));
 end
 
-mitchDataResultsRLM = array2table(mitchDataResultsRLM, "VariableNames", ["Month", rlmVars]);
-mitchDataResultsRLM.RLM_RG = mitchDataResultsRLM.Red ./ mitchDataResultsRLM.Green;
+mitchDataRLM = array2table(mitchDataRLM, "VariableNames", ["Month", rlmVars]);
+mitchDataRLM.RLM_Leo_logRG = log(mitchDataRLM.Red ./ mitchDataRLM.Green);
 
-% mitches hfp data
-mitchDataHFP_files=dir(fullfile('dataHFP-MT','*.mat'));
-mitchDataResultsHFP = NaN(height(ptptIDs),1);
-for file = 1:length(mitchDataHFP_files)
-    fileName = mitchDataHFP_files(file).name;
+% Mitch's HFP data
+mDataHFP_files=dir(fullfile('dataHFP-MT','*.mat'));
+mitchDataHFP = NaN(height(ptptIDs),1);
+for file = 1:length(mDataHFP_files)
+    fileName = mDataHFP_files(file).name;
     currentFile = load(strcat(pwd, '\dataHFP-MT\', fileName));
     currentFile = currentFile.hfpData;
     currentFile = convertvars(currentFile, "trialID", 'string');
     currentID = extractBefore(extractAfter(fileName, 'HFP_'), '_');
     currentFile.trialID = repmat(currentID, [height(currentFile) 1]);
-    if file == 1, mitchDataHFP = currentFile;
-    else, mitchDataHFP = [mitchDataHFP; currentFile]; %#ok<AGROW>
+    if file == 1, mDataHFP = currentFile;
+    else, mDataHFP = [mDataHFP; currentFile]; %#ok<AGROW>
     end
     
-    mitchDataResultsHFP(strcmp(currentID, ptptIDs)) = table2array(mean(currentFile(currentFile.trialNum > 1, "meanTestAmpSetting")));
+    mitchDataHFP(strcmp(currentID, ptptIDs)) = table2array(mean(currentFile(currentFile.trialNum > 1, "logRG")));
 end
-mitchDataResultsHFP = array2table(mitchDataResultsHFP, "VariableNames", "HFP_RG");
-mitchDataResults = [mitchDataResultsRLM mitchDataResultsHFP];
+mitchDataHFP = array2table(mitchDataHFP, "VariableNames", "HFP_Uno_logRG");
+data.Mitch = [mitchDataRLM mitchDataHFP];
 
-monthMeansMT = NaN(2,12);
-monthNsMT = NaN(2,12);
-for month = 1:12
-    monthDataMT = mitchDataResults(mitchDataResults.Month == month, endsWith(mitchDataResults.Properties.VariableNames, "RG"));
-    monthNsMT(1,month) = height(monthDataMT(~isnan(table2array(monthDataMT(:,1))),:));
-    monthNsMT(2,month) = height(monthDataMT(~isnan(table2array(monthDataMT(:,2))),:));
-    monthMeansMT(:, month) = table2array(mean(monthDataMT, "omitmissing"))';
-end
+[monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Mitch, taskNames, "Mitch");
 
 %%
-% radar graphs
-monthTbl = array2table([monthMeansDJ; monthMeansMT; monthMeansA; monthMeansB],... 
-    "RowNames", ["RLM-Leo-DJ", "HFP-Leo-DJ", "RLM-Leo-MT", "HFP-Uno-MT", "HFP-Uno-A", "RLM-Leo-B", "RLM-Anom-B", "HFP-Leo-B", "HFP-Uno-B"], "VariableNames", monthVars);
-
-monthLabs = strings(4,12);
-for month = 1:12
-    monthLabs(1,month) = strcat(monthVars(month), " (nJosh = ", num2str(monthNsDJ(1,month)), ", nMitch = ", num2str(monthNsMT(1,month)), ", nDana = ", num2str(monthNsB(1,month)), ")");
-    monthLabs(2,month) = strcat(monthVars(month), " (nDana = ", num2str(monthNsB(2,month)), ")");
-    monthLabs(3,month) = strcat(monthVars(month), " (nJosh = ", num2str(monthNsDJ(2,month)), ", nDana = ", num2str(monthNsB(3,month)), ")");
-    monthLabs(4,month) = strcat(monthVars(month), " (nMitch = ", num2str(monthNsMT(2,month)), ", nAllie = ", num2str(monthNsA(month)), ", nDana = ", num2str(monthNsB(4,month)), ")");
+% Radar graphs
+resNames = string(fieldnames(monthMeans));
+monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+monthRowNames = strings(1,length(resNames)*length(taskNames));
+for res = 1:length(resNames) 
+    for task = 1:length(taskNames)
+        row = (res-1)*length(resNames) + task;
+        monthRowNames(row) = strcat(taskNames(task), "-", resNames(res));
+    end
 end
 
-figure(1)
-idx = contains(monthTbl.Properties.RowNames, "RLM-Leo");
-s1 = spider_plot(table2array(monthTbl(idx,:)), 'AxesLabels', cellstr(monthLabs(1,:)), 'AxesLimits',...
+monthArray = struct2cell(monthMeans);
+monthArray = vertcat(monthArray{:});
+idx = sum(isnan(monthArray),2) ~= 12;
+monthTbl = array2table(monthArray(idx,:), "RowNames", monthRowNames(idx), "VariableNames", monthVars);
+
+monthLabs = strings(length(taskNames),12);
+colourCodes = struct;
+
+for task = 1:length(taskNames)
+    taskTbl = monthTbl(contains(monthTbl.Properties.RowNames,taskNames(task)),:);
+    currentResNames = string(extractAfter(taskTbl.Properties.RowNames, "-"));
+    for month = 1:12
+        mLab = strcat(monthVars(month), " (");
+        for res = 1:length(currentResNames)
+            mLab = strcat(mLab, "n", currentResNames(res), " = ", num2str(monthNs.(currentResNames(res))(task,month)));
+            if res == length(currentResNames), mLab = strcat(mLab, ")");
+            else, mLab = strcat(mLab, ", ");
+            end
+        end
+        monthLabs(task,month) = mLab;
+    end
+    colourCodes.(taskNames(task)) = FindColours(currentResNames);
+end
+
+for task = 1:length(taskNames)
+    f = figure(task);
+    idx = startsWith(monthTbl.Properties.RowNames, taskNames(task));
+    spider_plot(table2array(monthTbl(idx,:)), 'AxesLabels', cellstr(monthLabs(task,:)), 'AxesLimits',...
     [repmat(table2array(min(monthTbl(idx,:), [], "all")), [1 12]); repmat(table2array(max(monthTbl(idx,:), [], "all")), [1 12])],...
-    'Color', [1 0 0; 0 1 0; 1 0 1], 'FillOption', 'on', 'FillTransparency', .3);
-    title("RLM Leonardo");
-l1 = legend(extractAfter(extractAfter(monthTbl.Properties.RowNames(idx), "-"),"-"));
+    'Color', colourCodes.(taskNames(task)), 'FillOption', 'on', 'FillTransparency', .3);
+    title(taskNames(task), 'Interpreter', 'none');
+    rNames = string(extractAfter(monthTbl.Properties.RowNames(idx), "-"));
+    legend(rNames);
 
-figure(2)
-idx = contains(monthTbl.Properties.RowNames, "RLM-Anom");
-s2 = spider_plot(table2array(monthTbl(idx,:)), 'AxesLabels', cellstr(monthLabs(2,:)), 'AxesLimits',...
-    [repmat(table2array(min(monthTbl(idx,:), [], "all")), [1 12]); repmat(table2array(max(monthTbl(idx,:), [], "all")), [1 12])],...
-    'Color', [1 0 1], 'FillOption', 'on', 'FillTransparency', .3);
-    title("RLM Anomaloscope");
-l2 = legend(extractAfter(extractAfter(monthTbl.Properties.RowNames(idx), "-"),"-"));
-
-figure(3)
-idx = contains(monthTbl.Properties.RowNames, "HFP-Leo");
-s3 = spider_plot(table2array(monthTbl(idx,:)), 'AxesLabels', cellstr(monthLabs(3,:)), 'AxesLimits',...
-    [repmat(table2array(min(monthTbl(idx,:), [], "all")), [1 12]); repmat(table2array(max(monthTbl(idx,:), [], "all")), [1 12])],...
-    'Color', [1 0 0; 1 0 1], 'FillOption', 'on', 'FillTransparency', .3);
-    title("HFP Leonardo");
-l3 = legend(extractAfter(extractAfter(monthTbl.Properties.RowNames(idx), "-"),"-"));
-
-figure(4)
-idx = contains(monthTbl.Properties.RowNames, "HFP-Uno");
-s4 = spider_plot(table2array(monthTbl(idx,:)), 'AxesLabels', cellstr(monthLabs(4,:)), 'AxesLimits',...
-    [repmat(table2array(min(monthTbl(idx,:), [], "all")), [1 12]); repmat(table2array(max(monthTbl(idx,:), [], "all")), [1 12])],...
-    'Color', [0 1 0; 0 0 1; 1 0 1], 'FillOption', 'on', 'FillTransparency', .3);
-    title("HFP Uno");
-l4 = legend(extractAfter(extractAfter(monthTbl.Properties.RowNames(idx), "-"),"-"));
+    rem = mod(task,2);
+    if rem == 0, f.Position = [scW/2 -25 scW/2 scH/2]; input("Press ENTER to continue");
+    else, f.Position = [scW/2 scH/2 scW/2 scH/2];
+    end
+end
+close all
 
 %%
-figure(5)
-x = 1:12;
-hold on
-y = table2array(monthTbl("RLM-Leo-B",:));
-scatter(danaData.Month, danaData.RLM_RG, 'ro', "filled");
-plot(x(~isnan(y)), y(~isnan(y)), 'rx-');
+mdls = struct;
 
-y = table2array(monthTbl("HFP-Leo-B",:));
-scatter(danaData.Month, danaData.HFP_RG, 'bo', "filled");
-plot(x(~isnan(y)), y(~isnan(y)), 'bx-');
-hold off
-
-xlim([1 12]);
-xlabel("Month");
-ylabel("Device Value");
-
-l = legend({"RLM","","HFP",""});
+for res = 1:length(resNames)
+    [data.(resNames(res)).MonthSin, data.(resNames(res)).MonthCos] = SinCosMonth(data.(resNames(res)).Month);
+    for task = 1:length(taskNames)
+        if sum(contains(data.(resNames(res)).Properties.VariableNames, taskNames(task)))
+            mdlStr = strcat(taskNames(task), '_logRG', '~ MonthSin + MonthCos');
+            mdls.(resNames(res)).(taskNames(task)) = fitlm(data.(resNames(res)), mdlStr);
+        end
+    end
+end
 
 %%
-danaData.MonthCos = cos(danaData.Month);
-danaData.MonthSin = sin(danaData.Month);
-
-mdlRLM_Bleo = fitlm(danaData, 'RLM_RG ~ MonthSin + MonthCos');
-mdlHFP_Bleo = fitlm(danaData, 'HFP_RG ~ MonthSin + MonthCos');
-
-%%
-mdlRLM_Banom = fitlm(danaData, 'RLM_MixLight_1 ~ MonthSin + MonthCos');
-mdlHFP_Buno = fitlm(danaData, 'HFP_Uno_Red_1 ~ MonthSin + MonthCos');
-
-%%
-djData.MonthCos = cos(djData.("Birth Month"));
-djData.MonthSin = sin(djData.("Birth Month"));
-
-mdlRLM_DJ = fitlm(djData, 'RLM_RG ~ MonthSin + MonthCos');
-mdlHFP_DJ = fitlm(djData, 'HFP_RG ~ MonthSin + MonthCos');
+for task = 1:length(taskNames)
+    mergedData.(taskNames(task)) = table.empty(0,3);
+    taskVars = [strcat(taskNames(task), "_logRG"), "MonthSin", "MonthCos"];
+    mergedData.(taskNames(task)).Properties.VariableNames = taskVars;
+    
+    for res = 1:length(resNames)
+        if sum(contains(data.(resNames(res)).Properties.VariableNames, (taskNames(task))))
+           mergedData.(taskNames(task)) = [mergedData.(taskNames(task)); data.(resNames(res))(:,taskVars)];
+        end
+    end
+    
+    mdlStr = strcat(taskNames(task), '_logRG ~ MonthSin + MonthCos');
+    mdls.merged.(taskNames(task)) = fitlm(mergedData.(taskNames(task)), mdlStr);
+end
 
 %%
-allieResultsData.MonthCos = cos(allieResultsData.Month);
-allieResultsData.MonthSin = sin(allieResultsData.Month);
-
-mitchDataResults.MonthCos = cos(mitchDataResults.Month);
-mitchDataResults.MonthSin = sin(mitchDataResults.Month);
-
-hfpVars = ["Month", "HFP_RG", "MonthCos", "MonthSin"];
-
-danaUnoData = danaData(:,["Month", "HFP_Uno_Red_1", "MonthCos", "MonthSin"]);
-danaUnoData.Properties.VariableNames = hfpVars;
-
-allieResultsData.Properties.VariableNames = hfpVars;
-
-damHFPData = [danaUnoData; allieResultsData; mitchDataResults(:,hfpVars)];
-
-mdlRLM_MT = fitlm(mitchDataResults, 'RLM_RG ~ MonthSin + MonthCos');
-mdlHFP_AMT = fitlm(damHFPData, 'HFP_RG ~ MonthSin + MonthCos');
-
-%%
-s = struct;
-unoRows = find(contains(monthTbl.Properties.RowNames, "HFP-Uno"))';
+graphParas = struct;
 for row = 1:height(monthTbl)
     rowName = strrep(string(monthTbl.Properties.RowNames(row)), "-", "_");
-    s.(rowName) = SinFit(monthTbl(row,:));
     x = 1:12;
     y = table2array(monthTbl(row,:));
-    idx = ~isnan(y);
-    x = x(idx); y = y(idx);
-    sineFit(x,y);
-    title(rowName, "Interpreter", "none")
-    movegui(1,"northeast")
-    movegui(2,"southeast")
+    idx = ~isnan(y); x = x(idx); y = y(idx);
+
+    graphParas.(rowName) = sineFit(x,y);
+    movegui(1, [scW/2 scH/2]); movegui(2, [scW/2 50]);
+    figure(1); title(rowName, "Interpreter", "none"); subtitle("SINUS");
+    figure(2); title(rowName, "Interpreter", "none"); subtitle("FFT");
+
+    taskName = extractBefore(string(monthTbl.Properties.RowNames(row)), "-");
+    resName = extractAfter(string(monthTbl.Properties.RowNames(row)), "-");
+    disp(taskName); disp(resName); disp(mdls.(resName).(taskName)); disp(" ");
+
     input("Press ENTER to continue");
 end
 close all
 
 %%
-damMeanData = NaN(1,12);
-for month = 1:12
-    idx = damHFPData.Month == month;
-    damMeanData(month) = mean(table2array(damHFPData(idx,"HFP_RG")),"omitmissing");
-end
-
-sineFit(1:12,damMeanData);
-
-%%
-function participatedBefore = CheckPreviousParticipation(ppID, idList)
+function participatedBefore = CheckPreviousParticipation(ppID,idList)
 
 participatedBefore = 0;
-
 idList = table2array(idList(:,contains(idList.Properties.VariableNames, "ID")));
-
 idx = strcmp(ppID, idList);
 [row,col] = find(idx);
-
 if ~isempty(row) && col > 1
     prevIdList = idList(row,1:col-1);
     idx = ~strcmp(prevIdList, "");
     if sum(idx) > 0
         participatedBefore = 1;
+    end
+end
+
+end
+
+%%
+function colArray = FindColours(nameList)
+
+colArray = NaN(length(nameList), 3);
+for name = 1:length(nameList)
+    switch nameList(name)
+        case "Allie", rgbCode = [0 0 1];
+        case "Dana", rgbCode = [1 0 1];
+        case "Josh", rgbCode = [1 0 0];
+        case "Mitch", rgbCode = [0 1 0];
+        otherwise, rgbCode = [0 0 0];
+    end
+    colArray(name,:) = rgbCode;
+end
+
+end
+
+%%
+function [sinMonths,cosMonths] = SinCosMonth(inputMonths)
+
+cosMonths = cos(2*pi*(inputMonths/12));
+sinMonths = sin(2*pi*(inputMonths/12));
+
+end
+
+%%
+function [mMeans,mNs] = MonthMeansAndNs(mMeans,mNs,data,tasks,name)
+
+mMeans.(name) = NaN(length(tasks),12);
+mNs.(name) = NaN(length(tasks),12);
+
+for task = 1:length(tasks)
+    for month = 1:12
+        mData = data(data.Month == month, strcmp(data.Properties.VariableNames, strcat(tasks(task), "_logRG")));
+        if ~isempty(mData)
+            mNs.(name)(task,month) = height(mData(~isnan(table2array(mData(:,1))),:));
+            mMeans.(name)(task,month) = table2array(mean(mData, "omitmissing"))';
+        end
     end
 end
 
