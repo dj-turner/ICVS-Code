@@ -44,12 +44,12 @@ for ptpt = 1:height(aData)
         ptptID = ptptIDs(ptpt);
         sex = upper(string(table2array(aDataDemo(idx1,"Gender"))));
         if strcmp(sex,"X"), sex = ""; end
-        month = table2array(aDataDemo(idx1,"MOB"));
+        catVal = table2array(aDataDemo(idx1,"MOB"));
         dob = char(table2array(aDataDemo(idx1,"DOB")));
         if ~isempty(dob), year = str2double(dob(end-3:end)); else, year = NaN; end
         ethnicity = table2array(aDataDemo(idx1,"Ethnicity"));
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
-        data.Allie(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, rg1, rg2, rg3, rg4];
+        data.Allie(ptpt,:) = [study, ptptID, sex, catVal, year, ethnicity, rg1, rg2, rg3, rg4];
     end
 end
 
@@ -276,15 +276,15 @@ colourCodes = struct;
 for task = 1:length(taskNames)
     taskTbl = monthTbl(contains(monthTbl.Properties.RowNames,taskNames(task)),:);
     currentResNames = string(extractAfter(taskTbl.Properties.RowNames, "-"));
-    for month = 1:12
-        mLab = strcat(monthVars(month), " (");
+    for catVal = 1:12
+        mLab = strcat(monthVars(catVal), " (");
         for res = 1:length(currentResNames)
-            mLab = strcat(mLab, "n", currentResNames(res), " = ", num2str(monthNs.(currentResNames(res))(task,month)));
+            mLab = strcat(mLab, "n", currentResNames(res), " = ", num2str(monthNs.(currentResNames(res))(task,catVal)));
             if res == length(currentResNames), mLab = strcat(mLab, ")");
             else, mLab = strcat(mLab, ", ");
             end
         end
-        monthLabs(task,month) = mLab;
+        monthLabs(task,catVal) = mLab;
     end
     colourCodes.(taskNames(task)) = FindColours(currentResNames);
 end
