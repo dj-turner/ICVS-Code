@@ -18,6 +18,8 @@ taskNames = ["RLM_Leo", "HFP_Leo", "RLM_Anom", "HFP_Uno"];
 data = struct;
 monthMeans = struct;
 monthNs = struct;
+seasonMeans = struct;
+seasonNs = struct;
 
 dataVars = ["study", "ptptID", "sex", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
 numVars = ["month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
@@ -240,8 +242,13 @@ for res = 1:length(resNames)
     [data.(resNames(res)).monthSin, data.(resNames(res)).monthCos] = SinCosMonth(data.(resNames(res)).month);
 end
 
-dataVars = [dataVars, newCats(:,1)', "monthSin", "monthCos"];
-numVars = [numVars, "monthSin", "monthCos"];
+for res = 1:length(resNames)
+    [seasonMeans, seasonNs] = SeasonMeansAndNs(seasonMeans, seasonNs, data.(resNames(res)), taskNames, resNames(res));
+    [data.(resNames(res)).seasonSin, data.(resNames(res)).seasonCos] = SinCosSeason(data.(resNames(res)).season);
+end
+
+dataVars = [dataVars, newCats(:,1)', "monthSin", "monthCos", "seasonSin", "seasonCos"];
+numVars = [numVars, "monthSin", "monthCos", "seasonSin", "seasonCos"];
 strVars = [strVars, newCats(:,1)'];
 
 %%
@@ -257,20 +264,29 @@ studyIDs = unique(data.all.study);
 %%
 % Radar graphs
 monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-monthRowNames = strings(1,length(resNames)*length(taskNames));
+seasonVars = ["Spring", "Summer", "Autumn", "Winter"];
+msRowNames = strings(1,length(resNames)*length(taskNames));
 for res = 1:length(resNames) 
     for task = 1:length(taskNames)
         row = (res-1)*length(resNames) + task;
-        monthRowNames(row) = strcat(taskNames(task), "-", resNames(res));
+        msRowNames(row) = strcat(taskNames(task), "-", resNames(res));
     end
 end
 
 monthArray = struct2cell(monthMeans);
 monthArray = vertcat(monthArray{:});
 idx = sum(isnan(monthArray),2) ~= 12;
-monthTbl = array2table(monthArray(idx,:), "RowNames", monthRowNames(idx), "VariableNames", monthVars);
+monthTbl = array2table(monthArray(idx,:), "RowNames", msRowNames(idx), "VariableNames", monthVars);
+
+seasonArray = struct2cell(seasonMeans);
+seasonArray = vertcat(seasonArray{:});
+idx = sum(isnan(seasonArray),2) ~= 4;
+seasonTbl = array2table(seasonArray(idx,:), "RowNames", msRowNames(idx), "VariableNames", seasonVars);
+
+%%
 
 monthLabs = strings(length(taskNames),12);
+seasonLabs = strings(length(taskNames),4);
 colourCodes = struct;
 
 for task = 1:length(taskNames)
@@ -286,9 +302,20 @@ for task = 1:length(taskNames)
         end
         monthLabs(task,month) = mLab;
     end
+    for season = 1:4
+        sLab = strcat(seasonVars(season), " (");
+        for res = 1:length(currentResNames)
+            sLab = strcat(sLab, "n", currentResNames(res), " = ", num2str(seasonNs.(currentResNames(res))(task,season)));
+            if res == length(currentResNames), sLab = strcat(sLab, ")");
+            else, sLab = strcat(sLab, ", ");
+            end
+        end
+        seasonLabs(task,season) = sLab;
+    end
     colourCodes.(taskNames(task)) = FindColours(currentResNames);
 end
 
+%%
 for task = 1:length(taskNames)
     f = figure(task);
     idx = startsWith(monthTbl.Properties.RowNames, taskNames(task));
@@ -307,25 +334,95 @@ end
 close all
 
 %%
-% MODELS
-modelVars = ["HFP_Leo_logRG",... 
-                "RLM_Leo_logRG", "study", "sex", "monthSin", "monthCos", "ethnicGroup"];
+for task = 1:length(taskNames)
+    f = figure(task);
+    idx = startsWith(seasonTbl.Properties.RowNames, taskNames(task));
+    spider_plot(table2array(seasonTbl(idx,:)), 'AxesLabels', cellstr(seasonLabs(task,:)), 'AxesLimits',...
+    [repmat(table2array(min(seasonTbl(idx,:), [], "all")), [1 4]); repmat(table2array(max(seasonTbl(idx,:), [], "all")), [1 4])],...
+    'Color', colourCodes.(taskNames(task)), 'FillOption', 'on', 'FillTransparency', .3);
+    title(taskNames(task), 'Interpreter', 'none');
+    rNames = string(extractAfter(seasonTbl.Properties.RowNames(idx), "-"));
+    legend(rNames);
 
-modelStrVars = modelVars(ismember(modelVars, strVars));
-modelNumVars = modelVars(ismember(modelVars, numVars));
-idxStr = strcmp(table2array(data.all(:,modelStrVars)), "");
-idxNum = isnan(table2array(data.all(:,modelNumVars)));
-idx = sum([idxStr,idxNum],2);
-modelData = data.all(~idx,:);
+    rem = mod(task,2);
+    if rem == 0, f.Position = [scW/2 -25 scW/2 scH/2]; input("Press ENTER to continue");
+    else, f.Position = [scW/2 scH/2 scW/2 scH/2];
+    end
+end
+close all
 
-modelStr = char(strjoin(modelVars, " + "));
-modelStr(regexp(modelStr, '+', 'once')) = "~";
+%%
+combTasks = ["RLM", "Anom", "Leo";...
+             "HFP", "Uno", "Leo"];
 
-for var = 1:length(modelStrVars)
-    modelData.(modelStrVars(var)) = categorical(modelData.(modelStrVars(var)));
+for task = 1:height(combTasks)
+    combVar = strcat("comb", combTasks(task,1));
+    devCombVar = strcat("devComb", combTasks(task,1));
+
+    data.all.(combVar) = NaN(height(data.all), 1);
+    data.all.(devCombVar) = strings(height(data.all), 1);
+    
+    for var = 2:width(combTasks)
+        varName = strcat(combTasks(task,1), "_", combTasks(task,var), "_logRG");
+        idx = ~isnan(data.all.(varName));
+        data.all.(combVar)(idx) = data.all.(varName)(idx);
+        data.all.(devCombVar)(idx) = lower(combTasks(task,var));
+    end
+    
+    dataVars = [dataVars, combVar, devCombVar]; %#ok<AGROW>
+    numVars = [numVars, combVar]; %#ok<AGROW>
+    strVars = [strVars, devCombVar]; %#ok<AGROW>
 end
 
-lme = fitlme(modelData,modelStr) %#ok<NOPTS>
+%%
+% MODELS
+modelVars = struct;
+
+modelVars.noRLM = ["combHFP",... 
+                "devCombHFP", "study", "sex", "seasonSin", "seasonCos", "ethnicGroup"];
+modelVars.RLM = ["combHFP",... 
+                "devCombHFP", "study", "sex", "seasonSin", "seasonCos", "ethnicGroup", "combRLM"];
+
+modelFields = string(fieldnames(modelVars));
+for model = 1:numel(modelFields)
+    currentVars = modelVars.(modelFields(model));
+    modelStrVars = currentVars(ismember(currentVars, strVars));
+    modelNumVars = currentVars(ismember(currentVars, numVars));
+    idxStr = strcmp(table2array(data.all(:,modelStrVars)), "");
+    idxNum = isnan(table2array(data.all(:,modelNumVars)));
+    idx = sum([idxStr,idxNum],2) == 0;
+    modelData = data.all(idx,currentVars);
+    
+    modelStr = char(strjoin(currentVars, " + "));
+    modelStr(regexp(modelStr, '+', 'once')) = "~"; 
+    
+    for var = 1:length(modelStrVars)
+        modelData.(modelStrVars(var)) = categorical(modelData.(modelStrVars(var)));
+    end
+    
+    lme = fitlme(modelData,modelStr) %#ok<NOPTS>
+end
+
+%%
+% violin plots
+violinData = struct;
+vars = dataVars(endsWith(dataVars, "_RG"));
+
+seasonColours = [0 1 0; 1 1 0; 1 0 0; 0 0 1];
+
+t = tiledlayout(2,2);
+for var = 1:length(vars)
+    violinData.(vars(var)) = cell(1,4);
+    for season = 1:length(seasonVars)
+        idx = strcmpi(data.all.season, seasonVars(season));
+        seasonData = data.all.(vars(var))(idx);
+        violinData.(vars(var))(season) = {seasonData(~isnan(seasonData))};
+    end
+    nexttile
+    violin(violinData.(vars(var)), 'xlabel', strcat(seasonVars), 'facecolor', seasonColours);
+    title(vars(var),'Interpreter','none')
+end
+
 
 %%
 function participatedBefore = CheckPreviousParticipation(ppID,idList)
@@ -370,6 +467,23 @@ cosMonths = cos(2*pi*((inputMonths-1)/12));
 end
 
 %%
+function [sinSeasons,cosSeasons] = SinCosSeason(inputSeasons)
+
+seasons = ["spring", "summer", "autumn", "winter"];
+seasonNums = NaN(height(inputSeasons),1);
+
+for row = 1:height(inputSeasons)
+    if ~strcmp(inputSeasons(row), "")
+        seasonNums(row) = find(strcmp(seasons, inputSeasons(row)));
+    end
+end
+
+sinSeasons = sin(2*pi*((seasonNums-1)/4));
+cosSeasons = cos(2*pi*((seasonNums-1)/4));
+
+end
+
+%%
 function [mMeans,mNs] = MonthMeansAndNs(mMeans,mNs,data,tasks,name)
 
 mMeans.(name) = NaN(length(tasks),12);
@@ -388,6 +502,31 @@ for task = 1:length(tasks)
 end
 
 end
+
+%%
+function [sMeans,sNs] = SeasonMeansAndNs(sMeans,sNs,data,tasks,name)
+
+sMeans.(name) = NaN(length(tasks),4);
+sNs.(name) = NaN(length(tasks),4);
+
+seasons = ["spring", "summer", "autumn", "winter"];
+
+for task = 1:length(tasks)
+    for season = 1:4
+        idx_x = strcmp(data.season, seasons(season));
+        idx_y = strcmp(data.Properties.VariableNames, strcat(tasks(task), "_RG"));
+        sData = data(idx_x, idx_y);
+        if ~isempty(sData)
+            sNs.(name)(task,season) = height(sData(~isnan(table2array(sData(:,1))),:));
+            sMeans.(name)(task,season) = table2array(mean(sData, "omitmissing"))';
+        end
+    end
+end
+
+end
+
+
+
 
 
 
@@ -422,10 +561,10 @@ end
 % 
 % %%
 % graphParas = struct;
-% for row = 1:height(monthTbl)
-%     rowName = strrep(string(monthTbl.Properties.RowNames(row)), "-", "_");
-%     x = 1:12;
-%     y = table2array(monthTbl(row,:));
+% for row = 1:height(seasonTbl)
+%     rowName = strrep(string(seasonTbl.Properties.RowNames(row)), "-", "_");
+%     x = 1:4;
+%     y = table2array(seasonTbl(row,:));
 %     idx = ~isnan(y); x = x(idx); y = y(idx);
 % 
 %     graphParas.(rowName) = sineFit(x,y);
@@ -433,9 +572,9 @@ end
 %     figure(1); title(rowName, "Interpreter", "none"); subtitle("SINUS");
 %     figure(2); title(rowName, "Interpreter", "none"); subtitle("FFT");
 % 
-%     taskName = extractBefore(string(monthTbl.Properties.RowNames(row)), "-");
-%     resName = extractAfter(string(monthTbl.Properties.RowNames(row)), "-");
-%     disp(taskName); disp(resName); disp(mdls.(resName).(taskName)); disp(" ");
+%     taskName = extractBefore(string(seasonTbl.Properties.RowNames(row)), "-");
+%     resName = extractAfter(string(seasonTbl.Properties.RowNames(row)), "-");
+%     disp(taskName); disp(resName); %disp(mdls.(resName).(taskName)); disp(" ");
 % 
 %     input("Press ENTER to continue");
 % end
