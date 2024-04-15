@@ -352,8 +352,8 @@ end
 close all
 
 %%
-combTasks = ["RLM", "Anom", "Leo";...
-             "HFP", "Uno", "Leo"];
+combTasks = ["RLM", "Leo", "Anom";...
+             "HFP", "Leo", "Uno"];
 
 for task = 1:height(combTasks)
     combVar = strcat("comb", combTasks(task,1));
@@ -377,11 +377,12 @@ end
 %%
 % MODELS
 modelVars = struct;
+lmes = struct;
 
 modelVars.noRLM = ["combHFP",... 
-                "devCombHFP", "study", "sex", "seasonSin", "seasonCos", "ethnicGroup"];
+                   "study", "sex", "monthSin", "monthCos", "ethnicGroup"];
 modelVars.RLM = ["combHFP",... 
-                "devCombHFP", "study", "sex", "seasonSin", "seasonCos", "ethnicGroup", "combRLM"];
+                 "study", "sex", "monthSin", "monthCos", "ethnicGroup", "combRLM"];
 
 modelFields = string(fieldnames(modelVars));
 for model = 1:numel(modelFields)
@@ -392,6 +393,10 @@ for model = 1:numel(modelFields)
     idxNum = isnan(table2array(data.all(:,modelNumVars)));
     idx = sum([idxStr,idxNum],2) == 0;
     modelData = data.all(idx,currentVars);
+
+    validEths = ["white", "asian", "mixed"];
+    idx = ismember(modelData.ethnicGroup, validEths);
+    modelData = modelData(idx,:); 
     
     modelStr = char(strjoin(currentVars, " + "));
     modelStr(regexp(modelStr, '+', 'once')) = "~"; 
@@ -400,8 +405,40 @@ for model = 1:numel(modelFields)
         modelData.(modelStrVars(var)) = categorical(modelData.(modelStrVars(var)));
     end
     
-    lme = fitlme(modelData,modelStr) %#ok<NOPTS>
+    lmes.(modelFields(model)) = fitlme(modelData,modelStr);
+    disp(lmes.(modelFields(model)))
 end
+
+%%
+studies = unique(data.all.study);
+studyStats = NaN(length(studies),4);
+
+for i = 1:length(studies)
+    idx = strcmp(data.all.study, studies(i)) & ~isnan(data.all.combHFP);
+    studyTbl = data.all(idx,:);
+    studyN = height(studyTbl);
+    studyMean = mean(studyTbl.combHFP);
+    studyStd = std(studyTbl.combHFP);
+    studySe = studyStd / sqrt(studyN);
+    studyStats(i,:) = [studyN, studyMean, studyStd, studySe];
+end
+studyStats = array2table(studyStats, "RowNames", studies, "VariableNames", ["n", "mean", "std", "se"]);
+
+cols = FindColours(studies);
+textX = max(studyStats.mean + studyStats.se);
+
+hold on
+for i = 1:length(studies)
+    yVal = length(studies)+1-i;
+    errorbar(studyStats.mean(i), yVal,...
+        0, 0, studyStats.se(i), studyStats.se(i),...
+        'Marker', 'o', 'MarkerSize', 8, 'MarkerFaceColor', cols(i,:), 'LineWidth', 2.5, 'Color', cols(i,:))
+    textStr = strcat(studies(i), " (n = ", num2str(studyStats.n(i)), ")");
+    text(textX, yVal, textStr,'FontSize', 20,'Color', cols(i,:))
+end
+hold off
+
+ylim([0,length(studies)+1])
 
 %%
 % violin plots
@@ -446,11 +483,13 @@ function colArray = FindColours(nameList)
 
 colArray = NaN(length(nameList), 3);
 for name = 1:length(nameList)
-    switch nameList(name)
-        case "Allie", rgbCode = [0 0 1];
-        case "Dana", rgbCode = [1 0 1];
-        case "Josh", rgbCode = [1 0 0];
-        case "Mitch", rgbCode = [0 1 0];
+    n = char(nameList(name));
+    n = n(1);
+    switch n
+        case "A", rgbCode = [0 0 1];
+        case "D", rgbCode = [1 0 1];
+        case "J", rgbCode = [1 0 0];
+        case "M", rgbCode = [0 1 0];
         otherwise, rgbCode = [0 0 0];
     end
     colArray(name,:) = rgbCode;
