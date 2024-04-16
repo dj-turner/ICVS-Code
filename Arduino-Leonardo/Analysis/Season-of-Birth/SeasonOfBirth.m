@@ -3,7 +3,7 @@ clc; clear; close all;
 
 [scW, scH] = Screen('WindowSize',0);
 
-%%
+%
 % Link data
 ptptIdTbl = readtable("Ptpt_ID_Links.xlsx");
 ptptIdTbl = convertvars(ptptIdTbl, ptptIdTbl.Properties.VariableNames, 'string');
@@ -11,6 +11,10 @@ ptptIdTbl = convertvars(ptptIdTbl, ptptIdTbl.Properties.VariableNames, 'string')
 % Key data
 keyTbl = readtable("KeyData.xlsx");
 keyTbl = convertvars(keyTbl, ["Type", "Category"], 'string');
+
+% Sunshine Data
+%weatherData.sunlightHours.UK = table2array(readtable("londonSunshineHours.xlsx", 'Sheet','MATLAB_Data'));
+%weatherData.sunlightHours.China = ;
 
 % Possible var names
 taskNames = ["RLM_Leo", "HFP_Leo", "RLM_Anom", "HFP_Uno"];
@@ -21,11 +25,11 @@ monthNs = struct;
 seasonMeans = struct;
 seasonNs = struct;
 
-dataVars = ["study", "ptptID", "sex", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
+dataVars = ["study", "ptptID", "sex", "month", "year", "ethnicity", "country", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
 numVars = ["month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
-strVars = ["study", "ptptID", "sex"];
+strVars = ["study", "ptptID", "sex", "country"];
 
-%%
+%
 % Allie's data
 aData = load("data-A.mat"); aData = aData.hfpTable;
 aDataDemo = readtable("newDataDemo-A.xlsx");
@@ -38,6 +42,7 @@ study = "A";
 rg1 = NaN;
 rg2 = NaN;
 rg3 = NaN;
+country = "";
 
 for ptpt = 1:height(aData)
     idx1 = contains(string(aDataDemo.ID), ptptIDs(ptpt));
@@ -51,7 +56,7 @@ for ptpt = 1:height(aData)
         if ~isempty(dob), year = str2double(dob(end-3:end)); else, year = NaN; end
         ethnicity = table2array(aDataDemo(idx1,"Ethnicity"));
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
-        data.Allie(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, rg1, rg2, rg3, rg4];
+        data.Allie(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4];
     end
 end
 
@@ -62,11 +67,14 @@ data.Allie = convertvars(data.Allie, numVars, 'double');
 
 [monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Allie, taskNames, "Allie");
 
-%%
+%
 % Dana's data
 dData = readtable("data-B.xlsx", 'Sheet','Matlab_Data');
 ptptIDs = unique(string(dData.PPcode));
 data.Dana = strings(length(ptptIDs), length(dataVars));
+
+country = "";
+
 for ptpt = 1:length(ptptIDs)
     donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
     idx = strcmp(string(dData.PPcode), ptptIDs(ptpt))...
@@ -88,7 +96,7 @@ for ptpt = 1:length(ptptIDs)
         rg2 = ptptData.HFP_Leo_Red_1 ./ ptptData.HFP_Leo_Green_1;
         rg3 = ptptData.RLM_MixLight_1;
         rg4 = ptptData.HFP_Uno_Red_1 ./ 1024;
-        data.Dana(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, rg1, rg2, rg3, rg4];
+        data.Dana(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4];
     end
 end
 
@@ -99,7 +107,7 @@ data.Dana = convertvars(data.Dana, numVars, 'double');
 
 [monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Dana, taskNames, "Dana");
 
-%%
+%
 % Josh's data
 jData = readtable("data-DJ.xlsx", "VariableNamingRule","preserve");
 
@@ -125,12 +133,13 @@ for ptpt = 1:length(ptptIDs)
             month = ptptData.("Birth Month")(1);
             year = ptptData.("Birth Year")(1);
             ethnicity = ptptData.Ethnicity(1);
+            country = string(ptptData.("Country of Birth")(1));
             
             ptptValueData = mean(ptptData(2:end,["RLM_Red","RLM_Green","HFP_RedValue","HFP_GreenValue"]),1,"omitmissing");
             rg1 = ptptValueData.RLM_Red ./ ptptValueData.RLM_Green;
             rg2 = ptptValueData.HFP_RedValue ./ ptptValueData.HFP_GreenValue;
 
-            data.Josh(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, rg1, rg2, rg3, rg4];
+            data.Josh(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4];
         end
     end
 end
@@ -142,7 +151,7 @@ data.Josh = convertvars(data.Josh, numVars, 'double');
 
 [monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Josh, taskNames, "Josh");
 
-%%
+%
 % Mitch's RLM data
 mDataRLM = load("dataRLM-MT.mat","ParticipantMatchesRLM");
 mDataRLM = mDataRLM.ParticipantMatchesRLM;
@@ -167,7 +176,7 @@ for file = 1:length(mDataHFP_files)
     else, mDataHFP = [mDataHFP; currentFile]; %#ok<AGROW>
     end
 end
-%%
+%
 % Combine
 data.Mitch = strings(length(ptptIDs), length(dataVars));
 
@@ -186,6 +195,7 @@ for ptpt = 3:length(ptptIDs)
             month = ptptDataDemo.BirthMonth;
             year = ptptDataDemo.BirthYear;
             ethnicity = ptptDataDemo.Ethnicity;
+            country = string(ptptDataDemo.CountryOfBirth);
         end
 
         idx = strcmp(string(mDataRLM.ParticipantCode),ptptID)...
@@ -199,7 +209,7 @@ for ptpt = 3:length(ptptIDs)
         ptptDataHFP = table2array(mean(mDataHFP(idx,"meanTestAmpSetting")));
         rg4 = ptptDataHFP ./ 1024;
 
-        data.Mitch(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, rg1, rg2, rg3, rg4];
+        data.Mitch(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4];
     end
 end
 
@@ -210,7 +220,7 @@ data.Mitch = convertvars(data.Mitch, numVars, 'double');
 
 [monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Mitch, taskNames, "Mitch");
 
-%%
+%
 resNames = string(fieldnames(monthMeans));
 newVars = strcat(taskNames, "_logRG");
 % log values
@@ -222,7 +232,7 @@ end
 dataVars = [dataVars, newVars];
 numVars = [numVars, newVars];
 
-%%
+%
 % Season and ethnicity categories
 newCats = ["season", "month"; "ethnicGroup", "ethnicity"];
 
@@ -251,7 +261,7 @@ dataVars = [dataVars, newCats(:,1)', "monthSin", "monthCos", "seasonSin", "seaso
 numVars = [numVars, "monthSin", "monthCos", "seasonSin", "seasonCos"];
 strVars = [strVars, newCats(:,1)'];
 
-%%
+%
 % all data combine
 data.all = table.empty(0,length(dataVars));
 data.all.Properties.VariableNames = dataVars;
@@ -261,7 +271,66 @@ end
 
 studyIDs = unique(data.all.study);
 
+% uk terms
+ukTerms = ["United Kingdom", "UK", "England"];
+idx = ismember(data.all.country, ukTerms);
+data.all.country(idx) = "UK";
+
 %%
+% daylight hours (worlddata.info for capital cities)
+weatherData.daylightHours.UK = [8+(24/60), 10+(3/60), 11+(56/60),... 
+                   13+(58/60), 15+(43/60), 16+(41/60),... 
+                   16+(14/60), 14+(39/60), 12+(42/60),... 
+                   10+(45/60), 8+(55/60), 7+(56/60)];
+
+weatherData.daylightHours.China = [9+(41/40), 10+(44/60), 11+(58/60),...
+                      13+(19/60), 14+(26/60), 15+(3/60),...
+                      14+(47/60), 13+(48/60), 12+(31/60),...
+                      11+(13/60), 10+(2/60), 9+(25/60)];
+
+% sunlight hours
+
+
+monthTimeFrame = 6;
+
+weathers = string(fieldnames(weatherData));
+countries = string(fieldnames(weatherData.daylightHours));
+
+for month = 1:12
+    relevantMonths = month:month+monthTimeFrame;
+    idx = relevantMonths>12;
+    relevantMonths(idx) = relevantMonths(idx) - 12;
+
+    for weather = 1:length(weathers)
+        for country = 1:length(countries)
+            weatherHours = weatherData.(weathers(weather)).(countries(country))(relevantMonths);
+            weatherHours([1,end]) = 0.5*weatherHours([1,end]);
+            weatherHours = sum(weatherHours);
+            weatherData.(strcat("avg_", weathers(weather))).(countries(country))(month) = weatherHours;
+        end
+    end
+end
+
+for weather = 1:length(weathers)
+    data.all.(weathers(weather)) = NaN(height(data.all),1);
+end
+
+for ptpt = 1:height(data.all)
+    for country = 1:length(countries)
+        idx = ~isnan(data.all.month) & strcmp(data.all.country, countries(country));
+        if idx(ptpt)
+            for weather = 1:length(weathers)
+                data.all.(weathers(weather))(ptpt) = weatherData.(strcat("avg_", weathers(weather))).(countries(country))(data.all.month(ptpt));
+            end
+        end
+    end
+end
+
+dataVars = [dataVars, weathers'];
+numVars = [numVars, weathers'];
+
+%%
+%
 % Radar graphs
 monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 seasonVars = ["Spring", "Summer", "Autumn", "Winter"];
@@ -283,7 +352,7 @@ seasonArray = vertcat(seasonArray{:});
 idx = sum(isnan(seasonArray),2) ~= 4;
 seasonTbl = array2table(seasonArray(idx,:), "RowNames", msRowNames(idx), "VariableNames", seasonVars);
 
-%%
+%
 
 monthLabs = strings(length(taskNames),12);
 seasonLabs = strings(length(taskNames),4);
@@ -315,7 +384,7 @@ for task = 1:length(taskNames)
     colourCodes.(taskNames(task)) = FindColours(currentResNames);
 end
 
-%%
+%
 for task = 1:length(taskNames)
     f = figure(task);
     idx = startsWith(monthTbl.Properties.RowNames, taskNames(task));
@@ -352,6 +421,7 @@ end
 close all
 
 %%
+%
 combTasks = ["RLM", "Leo", "Anom";...
              "HFP", "Leo", "Uno"];
 
@@ -375,14 +445,15 @@ for task = 1:height(combTasks)
 end
 
 %%
+%
 % MODELS
 modelVars = struct;
 lmes = struct;
 
-modelVars.noRLM = ["combHFP",... 
-                   "study", "sex", "monthSin", "monthCos", "ethnicGroup"];
-modelVars.RLM = ["combHFP",... 
-                 "study", "sex", "monthSin", "monthCos", "ethnicGroup", "combRLM"];
+modelVars.control = ["combHFP",... 
+                   "study", "sex", "ethnicGroup", "combRLM"];
+modelVars.daysun = ["combHFP",... 
+                 "study", "sex", "ethnicGroup", "combRLM", "daylightHours"];
 
 modelFields = string(fieldnames(modelVars));
 for model = 1:numel(modelFields)
