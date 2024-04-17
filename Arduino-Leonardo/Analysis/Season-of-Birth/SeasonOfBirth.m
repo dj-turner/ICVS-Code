@@ -277,59 +277,6 @@ idx = ismember(data.all.country, ukTerms);
 data.all.country(idx) = "UK";
 
 %%
-% daylight hours (worlddata.info for capital cities)
-weatherData.daylightHours.UK = [8+(24/60), 10+(3/60), 11+(56/60),... 
-                   13+(58/60), 15+(43/60), 16+(41/60),... 
-                   16+(14/60), 14+(39/60), 12+(42/60),... 
-                   10+(45/60), 8+(55/60), 7+(56/60)];
-
-weatherData.daylightHours.China = [9+(41/40), 10+(44/60), 11+(58/60),...
-                      13+(19/60), 14+(26/60), 15+(3/60),...
-                      14+(47/60), 13+(48/60), 12+(31/60),...
-                      11+(13/60), 10+(2/60), 9+(25/60)];
-
-% sunlight hours
-
-
-monthTimeFrame = 6;
-
-weathers = string(fieldnames(weatherData));
-countries = string(fieldnames(weatherData.daylightHours));
-
-for month = 1:12
-    relevantMonths = month:month+monthTimeFrame;
-    idx = relevantMonths>12;
-    relevantMonths(idx) = relevantMonths(idx) - 12;
-
-    for weather = 1:length(weathers)
-        for country = 1:length(countries)
-            weatherHours = weatherData.(weathers(weather)).(countries(country))(relevantMonths);
-            weatherHours([1,end]) = 0.5*weatherHours([1,end]);
-            weatherHours = sum(weatherHours);
-            weatherData.(strcat("avg_", weathers(weather))).(countries(country))(month) = weatherHours;
-        end
-    end
-end
-
-for weather = 1:length(weathers)
-    data.all.(weathers(weather)) = NaN(height(data.all),1);
-end
-
-for ptpt = 1:height(data.all)
-    for country = 1:length(countries)
-        idx = ~isnan(data.all.month) & strcmp(data.all.country, countries(country));
-        if idx(ptpt)
-            for weather = 1:length(weathers)
-                data.all.(weathers(weather))(ptpt) = weatherData.(strcat("avg_", weathers(weather))).(countries(country))(data.all.month(ptpt));
-            end
-        end
-    end
-end
-
-dataVars = [dataVars, weathers'];
-numVars = [numVars, weathers'];
-
-%%
 %
 % Radar graphs
 monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -445,6 +392,63 @@ for task = 1:height(combTasks)
 end
 
 %%
+% daylight hours (worlddata.info for capital cities)
+weatherData.daylightHours.UK = [8+(24/60), 10+(3/60), 11+(56/60),... 
+                   13+(58/60), 15+(43/60), 16+(41/60),... 
+                   16+(14/60), 14+(39/60), 12+(42/60),... 
+                   10+(45/60), 8+(55/60), 7+(56/60)];
+
+weatherData.daylightHours.China = [9+(41/40), 10+(44/60), 11+(58/60),...
+                      13+(19/60), 14+(26/60), 15+(3/60),...
+                      14+(47/60), 13+(48/60), 12+(31/60),...
+                      11+(13/60), 10+(2/60), 9+(25/60)];
+
+% sunshine hours (https://en.wikipedia.org/wiki/List_of_cities_by_sunshine_duration)
+weatherData.sunshineHours.UK = [62, 78, 115, 169, 199, 204,... 
+                                212, 205, 149, 117, 73, 52];
+
+weatherData.sunshineHours.China = [194.1, 197.4, 231.8, 251.9,...
+                                   283.4, 261.4, 212.4, 220.9,...
+                                   232.1, 222.1, 185.3, 180.7];
+
+monthTimeFrame = 6;
+
+weathers = string(fieldnames(weatherData));
+countries = string(fieldnames(weatherData.(weathers(1))));
+
+%%
+for month = 1:12
+    relevantMonths = month:month+monthTimeFrame;
+    idx = relevantMonths>12;
+    relevantMonths(idx) = relevantMonths(idx) - 12;
+
+    for weather = 1:length(weathers)
+        for country = 1:length(countries)
+            weatherHours = weatherData.(weathers(weather)).(countries(country))(relevantMonths);
+            weatherHours([1,end]) = 0.5*weatherHours([1,end]);
+            weatherHours = sum(weatherHours);
+            weatherData.(strcat("avg_", weathers(weather))).(countries(country))(month) = weatherHours;
+        end
+    end
+end
+
+for weather = 1:length(weathers)
+    data.all.(weathers(weather)) = NaN(height(data.all),1);
+end
+
+for ptpt = 1:height(data.all)
+    for country = 1:length(countries)
+        idx = ~isnan(data.all.month) & strcmp(data.all.country, countries(country));
+        if idx(ptpt)
+            for weather = 1:length(weathers)
+                data.all.(weathers(weather))(ptpt) = weatherData.(strcat("avg_", weathers(weather))).(countries(country))(data.all.month(ptpt));
+            end
+        end
+    end
+end
+
+dataVars = [dataVars, weathers'];
+numVars = [numVars, weathers'];
 %
 % MODELS
 modelVars = struct;
@@ -465,7 +469,7 @@ for model = 1:numel(modelFields)
     idx = sum([idxStr,idxNum],2) == 0;
     modelData = data.all(idx,currentVars);
 
-    validEths = ["white", "asian", "mixed"];
+    validEths = ["white", "asian"];
     idx = ismember(modelData.ethnicGroup, validEths);
     modelData = modelData(idx,:); 
     
