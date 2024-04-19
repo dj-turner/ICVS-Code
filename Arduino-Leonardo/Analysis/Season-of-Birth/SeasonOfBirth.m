@@ -7,36 +7,43 @@ addpath('data\'); addpath('data\dataHFP-MT');
 %% load data
 % studyPriorityOrder = ["Allie", "Dana", "Josh", "Mitch"];
 studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
-monthTimeFrame = 7;
+monthTimeFrame = 6;
 LoadData;
 
 %% models
+clc;
 modelVars = struct;
 validcats = struct;
 
-modelVars.control = ["combHFP",... 
-                   "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG"];
+% modelVars.control = ["combHFP",... 
+%                    "study", "sex", "ethnicGroup", "RLM_Leo_RG"];
 modelVars.seasonCat = ["combHFP",... 
-                   "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "season"];
-modelVars.month = ["combHFP",... 
-                   "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
-modelVars.season = ["combHFP",... 
-                   "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
-modelVars.day = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
+                  "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "season"];
+% modelVars.month = ["combHFP",... 
+%                    "study", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
+% modelVars.season = ["combHFP",... 
+%                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
+% modelVars.day = ["combHFP",... 
+%              "study", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
 % sunshine hours available for UK only!
-modelVars.sun = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
-modelVars.irr = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance"];
+% modelVars.sun = ["combHFP",... 
+%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
+% modelVars.irr = ["combHFP",... 
+%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance"];
 
-validcats.ethnicGroup = ["white", "asian", "mixed-wa", "mixed-wb"];
+validcats.ethnicGroup = ["white", "asian", "mixed-wa"];
 validcats.country = ["UK", "China"];
-validcats.year = [1980 2005];
+%validcats.year = [1980 2005];
+validcats.season = ["winter", "autumn", "summer", "spring"];
 validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
 validcats.sex = ["M", "F"];
 
 LMEs;
+%%
+p = coefTest(lmes.seasonCat, [0 0 0 0 0 0 0 1 1])
+%%
+clear modelvars
+clear validcats
 
 %% graphs
 RadarGraphs;
@@ -53,4 +60,14 @@ for country = 1:length(countries)
     countryCount(country) = sum(strcmp(data.all.country, countries(country)));
 end
 
+c =array2table([countries countryCount], 'VariableNames', ["Country", "N"]);
+c = convertvars(c, "N", 'double')
 
+eths = unique(data.all.ethnicGroup);
+ethCount = NaN(length(eths), 1);
+for eth = 1:length(eths)
+    ethCount(eth) = sum(strcmp(data.all.ethnicGroup, eths(eth)));
+end
+
+e =array2table([eths ethCount], 'VariableNames', ["Ethnic Group", "N"]);
+e = convertvars(e, "N", 'double')

@@ -30,7 +30,8 @@ for task = 1:length(taskNames)
     for month = 1:12
         mLab = strcat(monthVars(month), " (");
         for res = 1:length(currentResNames)
-            mLab = strcat(mLab, "n", currentResNames(res), " = ", num2str(monthNs.(currentResNames(res))(task,month)));
+            rName = char(currentResNames(res));
+            mLab = strcat(mLab, "n", rName(1), " = ", num2str(monthNs.(currentResNames(res))(task,month)));
             if res == length(currentResNames), mLab = strcat(mLab, ")");
             else, mLab = strcat(mLab, ", ");
             end
@@ -40,7 +41,8 @@ for task = 1:length(taskNames)
     for season = 1:4
         sLab = strcat(seasonVars(season), " (");
         for res = 1:length(currentResNames)
-            sLab = strcat(sLab, "n", currentResNames(res), " = ", num2str(seasonNs.(currentResNames(res))(task,season)));
+            rName = char(currentResNames(res));
+            sLab = strcat(sLab, "n", rName(1), " = ", num2str(seasonNs.(currentResNames(res))(task,season)));
             if res == length(currentResNames), sLab = strcat(sLab, ")");
             else, sLab = strcat(sLab, ", ");
             end
@@ -59,7 +61,12 @@ for task = 1:length(taskNames)
     'Color', colourCodes.(taskNames(task)), 'FillOption', 'on', 'FillTransparency', .3);
     title(taskNames(task), 'Interpreter', 'none');
     rNames = string(extractAfter(monthTbl.Properties.RowNames(idx), "-"));
-    legend(rNames);
+    rLabs = char(length(rNames),1);
+    for i = 1:length(rNames)
+        rName = char(rNames(i));
+        rLabs(i) = rName(1);
+    end
+    legend(rLabs);
 
     rem = mod(task,2);
     if rem == 0, f.Position = [scW/2 -25 scW/2 scH/2]; input("Press ENTER to continue");
@@ -77,7 +84,12 @@ for task = 1:length(taskNames)
     'Color', colourCodes.(taskNames(task)), 'FillOption', 'on', 'FillTransparency', .3);
     title(taskNames(task), 'Interpreter', 'none');
     rNames = string(extractAfter(seasonTbl.Properties.RowNames(idx), "-"));
-    legend(rNames);
+    rLabs = char(length(rNames),1);
+    for i = 1:length(rNames)
+        rName = char(rNames(i));
+        rLabs(i) = rName(1);
+    end
+    legend(rLabs);
 
     rem = mod(task,2);
     if rem == 0, f.Position = [scW/2 -25 scW/2 scH/2]; input("Press ENTER to continue");
