@@ -1,7 +1,7 @@
-countries = ["UK", "China"];
+chinaData = readtable("China-pop-irr.csv");
+ukData = readtable("UK-pop-irr.csv");
 
-chinaData = readtable("SurfaceIrradiance.xlsx", 'Sheet', 'China');
-ukData = readtable("SurfaceIrradiance.xlsx", 'Sheet', 'China');
+%%
 
 chinaData = table2timetable(chinaData(:,1:2));
 ukData = table2timetable(ukData(:,1:2));
@@ -16,7 +16,7 @@ irradianceData.Properties.VariableNames = ["date", "UK", "China"];
 [irradianceData.year, irradianceData.month, ~] = ymd(irradianceData.date);
 
 %%
-save("IrrandianceDataProcessed.mat", "irradianceData")
+save("IrrandianceDataProcessed_pop.mat", "irradianceData")
 
 
 %%

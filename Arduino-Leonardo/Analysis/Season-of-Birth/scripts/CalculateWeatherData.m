@@ -30,11 +30,10 @@ for ptpt = 1:height(data.all)
         data.all.daylightHours(ptpt) = sum(daylightData);
 
         if ~isnan(year)
-            idx = find(weatherData.irradiance.(country).month == month...
-                  & weatherData.irradiance.(country).year == year);
+            idx = find(weatherData.irradiance.month == month...
+                  & weatherData.irradiance.year == year);
             if ~isempty(idx)
-                irradianceData = weatherData.irradiance.(country);
-                irradianceData = irradianceData(idx:idx+monthTimeFrame,country);
+                irradianceData = weatherData.irradiance(idx:idx+monthTimeFrame,country);
                 irradianceData = table2array(irradianceData)';
                 irradianceData([1,end]) = 0.5*irradianceData([1,end]);
                 data.all.irradiance(ptpt) = sum(irradianceData);
