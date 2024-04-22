@@ -9,11 +9,6 @@ modelVars.sun = ["combHFP",...
 modelVars.irr = ["combHFP",... 
                  "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance"];
 
-validcats.ethnicGroup = ["white", "asian"];
-validcats.country = ["UK", "China"];
-validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
-validcats.sex = ["M", "F"];
-
 %% load data
 % studyPriorityOrder = ["Allie", "Dana", "Josh", "Mitch"];
 daylightPs = NaN(1,12);

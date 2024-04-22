@@ -33,7 +33,7 @@ modelVars.irr = ["combHFP",...
 
 validcats.ethnicGroup = ["white", "asian", "mixed-wa"];
 validcats.country = ["UK", "China"];
-%validcats.year = [1980 2005];
+validcats.year = [1980 2005];
 validcats.season = ["winter", "autumn", "summer", "spring"];
 %validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
 validcats.sex = ["M", "F"];
