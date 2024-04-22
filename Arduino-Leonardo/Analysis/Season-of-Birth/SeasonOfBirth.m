@@ -17,28 +17,32 @@ validcats = struct;
 
 % modelVars.control = ["combHFP",... 
 %                    "study", "sex", "ethnicGroup", "RLM_Leo_RG"];
-% modelVars.seasonCat = ["combHFP",... 
-%                  "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "season"];
 % modelVars.month = ["combHFP",... 
-%                    "study", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
+%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
+% modelVars.seasonCat = ["combHFP",... 
+%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "season"];
 % modelVars.season = ["combHFP",... 
-%                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
+%                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
 % modelVars.day = ["combHFP",... 
-%              "study", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
+%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
 % sunshine hours available for UK only!
 % modelVars.sun = ["combHFP",... 
 %                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
-modelVars.irr = ["combHFP",... 
-                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance"];
+modelVars.irr_pop = ["combHFP",... 
+                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_pop"];
+modelVars.irr_area = ["combHFP",... 
+                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
 
 validcats.ethnicGroup = ["white", "asian", "mixed-wa"];
-validcats.country = irrCountries;
-validcats.year = [1980 2005];
-validcats.season = ["winter", "autumn", "summer", "spring"];
-%validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
-validcats.sex = ["M", "F"];
+validcats.country = "UK";
+validcats.country = ["UK", "China"];
+validcats.year = [1980 2023];
+%validcats.season = ["spring", "summer", "autumn", "winter"];
+validcats.devCombHFP = ["uno", "leo_y"];
+validcats.sex = ["M","F"];
 
 LMEs;
+
 
 %%
 clear modelvars
@@ -60,7 +64,7 @@ for country = 1:length(countries)
 end
 
 c =array2table([countries countryCount], 'VariableNames', ["Country", "N"]);
-c = convertvars(c, "N", 'double')
+c = convertvars(c, "N", 'double');
 
 eths = unique(data.all.ethnicGroup);
 ethCount = NaN(length(eths), 1);
@@ -69,4 +73,34 @@ for eth = 1:length(eths)
 end
 
 e =array2table([eths ethCount], 'VariableNames', ["Ethnic Group", "N"]);
-e = convertvars(e, "N", 'double')
+e = convertvars(e, "N", 'double');
+
+%%
+s = struct;
+[s.Sine, s.Cosine] = SinCosMonth(1:12);
+cols = ['r', 'b'];
+vars = string(fieldnames(s));
+t = tiledlayout(1,length(vars));
+for var = 1:length(vars)
+    nexttile
+    plot(1:12, s.(vars(var)), 'LineWidth', 3, 'Color', cols(var))
+    xlim([1 12])
+    ylim([-1 1])
+    set(gca, 'XTick',(1:12), 'XTickLabel', monthVars)
+    title(strcat("Month ", vars(var), " Conversion"))
+end
+
+%%
+s = struct;
+[s.Sine, s.Cosine] = SinCosSeason(["spring"; "summer"; "autumn"; "winter"]);
+cols = ['r', 'b'];
+vars = string(fieldnames(s));
+t = tiledlayout(1,length(vars));
+for var = 1:length(vars)
+    nexttile
+    plot(1:4, s.(vars(var)), 'LineWidth', 3, 'Color', cols(var))
+    xlim([1 4])
+    ylim([-1 1])
+    set(gca, 'XTick',(1:4), 'XTickLabel', ["spring", "summer", "autumn", "winter"])
+    title(strcat("Season ", vars(var), " Conversion"))
+end

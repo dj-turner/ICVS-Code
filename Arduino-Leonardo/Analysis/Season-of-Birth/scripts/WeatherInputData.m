@@ -26,7 +26,9 @@ weatherData.sunshineHours.UK = readtable("SunshineHours.xlsx", 'Sheet', 'UK');
 
 % irradiance data
 % https://www.renewables.ninja/news/raw-weather-data
-irrData = load("IrradianceDataProcessed_pop.mat");
-weatherData.irradiance = irrData.irradianceData;
+irrDataPop = load("IrradianceDataProcessed_pop.mat"); 
+weatherData.irradiance.pop = irrDataPop.irradianceData;
+irrDataArea = load("IrradianceDataProcessed_area.mat"); 
+weatherData.irradiance.area = irrDataArea.irradianceData;
 
 end

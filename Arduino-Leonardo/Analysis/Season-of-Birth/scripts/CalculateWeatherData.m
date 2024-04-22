@@ -1,12 +1,12 @@
 %% weather data
 weatherData = WeatherInputData;
 
-weathers = string(fieldnames(weatherData));
+weathers = ["daylightHours", "sunshineHours", "irradiance_pop", "irradiance_area"];
 
 dayCountries = string(fieldnames(weatherData.daylightHours));
 sunCountries = string(fieldnames(weatherData.sunshineHours));
 
-headers = string(weatherData.irradiance.Properties.VariableNames);
+headers = string(weatherData.irradiance.pop.Properties.VariableNames);
 idxCell = isstrprop(headers,'upper');
 idx = NaN(1, numel(idxCell));
 for i = 1:numel(idxCell)
@@ -19,9 +19,12 @@ end
 idx = logical(idx);
 irrCountries = headers(idx);
 
-for weather = 1:length(weathers)
-    data.all.(weathers(weather)) = NaN(height(data.all),1);
-end
+
+data.all.daylightHours = NaN(height(data.all),1);
+data.all.sunshineHours = NaN(height(data.all),1);
+data.all.irradiance_pop = NaN(height(data.all),1);
+data.all.irradiance_area = NaN(height(data.all),1);
+
 
 %% sunshineData
 monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -30,6 +33,9 @@ daylightDataList = weatherData.daylightHours;
 for country = 1:length(dayCountries)
     daylightDataList.(dayCountries(country)) = repmat(daylightDataList.(dayCountries(country)), [1,2]);
 end
+
+irrDataTypes = string(fieldnames(weatherData.irradiance));
+
 %%
 
 for ptpt = 1:height(data.all)
@@ -52,21 +58,23 @@ for ptpt = 1:height(data.all)
         sunshineData = [sunshineData(1,:), sunshineData(2,:)];
         sunshineData = sunshineData(relevantMonths);
         sunshineData([1,end]) = 0.5*sunshineData([1,end]);
-        data.all.sunshineHours(ptpt) = sum(sunshineData)  / (length(sunshineData)-1);
+        data.all.sunshineHours(ptpt) = sum(sunshineData) / (length(sunshineData)-1);
     end
 
-    if ismember(country,irrCountries) && ~isnan(month) && ~isnan(year)
-        idxCell = find(weatherData.irradiance.month == month...
-              & weatherData.irradiance.year == year);
-        if ~isempty(idxCell)
-            irradianceData = weatherData.irradiance(idxCell:idxCell+monthTimeFrame,country);
-            irradianceData = table2array(irradianceData)';
-            irradianceData([1,end]) = 0.5*irradianceData([1,end]);
-            data.all.irradiance(ptpt) = sum(irradianceData) / (length(irradianceData)-1);
+    if ismember(country,irrCountries) && ~isnan(month) && ~isnan(year) 
+        for dataType = 1:length(irrDataTypes)
+            idxCell = find(weatherData.irradiance.(irrDataTypes(dataType)).month == month...
+                  & weatherData.irradiance.(irrDataTypes(dataType)).year == year);
+            if ~isempty(idxCell)
+                irradianceData = weatherData.irradiance.(irrDataTypes(dataType))(idxCell:idxCell+monthTimeFrame,country);
+                irradianceData = table2array(irradianceData)';
+                irradianceData([1,end]) = 0.5*irradianceData([1,end]);
+                data.all.(strcat("irradiance_", irrDataTypes(dataType)))(ptpt) = sum(irradianceData) / (length(irradianceData)-1);
+            end
         end
     end
 end
 
 %%
-dataVars = [dataVars, weathers'];
-numVars = [numVars, weathers'];
+dataVars = [dataVars, weathers];
+numVars = [numVars, weathers];

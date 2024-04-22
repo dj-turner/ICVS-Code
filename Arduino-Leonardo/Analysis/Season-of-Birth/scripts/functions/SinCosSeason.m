@@ -9,7 +9,7 @@ for row = 1:height(inputSeasons)
     end
 end
 
-sinSeasons = sin(2*pi*((seasonNums-1)/4));
-cosSeasons = cos(2*pi*((seasonNums-1)/4));
+sinSeasons = sin(2*pi*((seasonNums)/4));
+cosSeasons = cos(2*pi*((seasonNums)/4));
 
 end
