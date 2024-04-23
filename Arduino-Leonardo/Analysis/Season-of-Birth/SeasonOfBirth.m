@@ -18,27 +18,27 @@ validcats = struct;
 % modelVars.control = ["combHFP",... 
 %                    "study", "sex", "ethnicGroup", "RLM_Leo_RG"];
 % modelVars.month = ["combHFP",... 
-%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
+%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
 % modelVars.seasonCat = ["combHFP",... 
 %                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "season"];
 % modelVars.season = ["combHFP",... 
-%                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
+%               "study", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
 % modelVars.day = ["combHFP",... 
 %                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
 % sunshine hours available for UK only!
 % modelVars.sun = ["combHFP",... 
 %                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
-modelVars.irr_pop = ["combHFP",... 
-                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_pop"];
-modelVars.irr_area = ["combHFP",... 
-                 "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
+% modelVars.irr_pop = ["combHFP",... 
+%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_pop"];
+% modelVars.irr_area = ["combHFP",... 
+%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
 
-validcats.ethnicGroup = ["white", "asian", "mixed-wa"];
+validcats.ethnicGroup = ["asian", "white", "mixed-wa"];
 validcats.country = "UK";
-validcats.country = ["UK", "China"];
-validcats.year = [1980 2023];
-%validcats.season = ["spring", "summer", "autumn", "winter"];
-validcats.devCombHFP = ["uno", "leo_y"];
+%validcats.country = ["UK", "China"];
+%validcats.year = [1980 2023];
+%validcats.season = ["summer", "autumn", "winter", "spring"];
+%validcats.devCombHFP = ["uno", "leo_y"];
 validcats.sex = ["M","F"];
 
 LMEs;
@@ -83,11 +83,12 @@ vars = string(fieldnames(s));
 t = tiledlayout(1,length(vars));
 for var = 1:length(vars)
     nexttile
-    plot(1:12, s.(vars(var)), 'LineWidth', 3, 'Color', cols(var))
+    plot(1:12, s.(vars(var)), 'LineWidth', 5, 'Color', cols(var), 'Marker', 'x', 'MarkerEdgeColor', 'k')
     xlim([1 12])
     ylim([-1 1])
     set(gca, 'XTick',(1:12), 'XTickLabel', monthVars)
     title(strcat("Month ", vars(var), " Conversion"))
+    set(gca,'FontSize',26, 'FontName', 'Courier', 'FontWeight', 'bold')
 end
 
 %%
@@ -103,4 +104,8 @@ for var = 1:length(vars)
     ylim([-1 1])
     set(gca, 'XTick',(1:4), 'XTickLabel', ["spring", "summer", "autumn", "winter"])
     title(strcat("Season ", vars(var), " Conversion"))
+    set(gca,'FontSize',26, 'FontName', 'Courier', 'FontWeight', 'bold')
 end
+
+%%
+WorldHeatMap(c, "testVarName", "N", "countryVarName", "Country", "undefinedVarName", "", "scalingType", "count")

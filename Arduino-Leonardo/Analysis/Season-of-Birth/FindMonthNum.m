@@ -44,14 +44,15 @@ end
 %%
 hold on
 for var = 1:length(modelNames)
-    plot(1:12, pVals.(modelNames(var)), 'Marker', 'x', 'Color', cols(var,:), 'LineWidth', 3, 'MarkerSize', 10);
+    plot(1:12, pVals.(modelNames(var)), 'Marker', 'x', 'Color', cols(var,:), 'LineWidth', 5, 'MarkerSize', 10);
 end
-plot(1:12, repmat(.05, [1 12]), 'Marker', 'none', 'LineStyle', '--', 'Color', 'k');
+plot(1:12, repmat(.05, [1 12]), 'Marker', 'none', 'LineStyle', '--', 'Color', 'k', 'LineWidth', 5, 'Color', 'k');
 xlim([1 12]); ylim([0 1]);
 xlabel("Number of months after birth considered");
 ylabel("P-value of variable in lme");
+set(gca,'FontSize',26, 'FontName', 'Courier','FontWeight','bold')
 title("Significance of weather variables")
-legend(legendLabs, "Interpreter","none");
+legend(legendLabs, "Interpreter","none","Location","north");
 hold off
 
 for var = 1:length(modelNames)

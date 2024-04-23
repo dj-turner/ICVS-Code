@@ -1,6 +1,7 @@
 % violin plots
 violinData = struct;
 vars = dataVars(endsWith(dataVars, "_RG"));
+seasonVars = ["spring", "summer", "autumn", "winter"];
 
 seasonColours = [0 1 0; 1 1 0; 1 0 0; 0 0 1];
 
@@ -16,6 +17,7 @@ for var = 1:length(vars)
     violin(violinData.(vars(var)), 'xlabel', strcat(seasonVars), 'facecolor', seasonColours);
     title(vars(var),'Interpreter','none')
 end
+set(gca,'FontSize',26, 'FontName', 'Courier', 'FontWeight', 'bold')
 
 input("Press ENTER to continue");
 close all
