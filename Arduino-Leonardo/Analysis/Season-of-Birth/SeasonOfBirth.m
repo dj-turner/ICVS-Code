@@ -1,4 +1,4 @@
-%% clear up
+ %% clear up
 clc; clear; close all;
 cd(strcat('C:\Users\', getenv('USERNAME'), '\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Analysis\Season-of-Birth'));
 addpath('scripts\'); addpath('scripts\functions\');
