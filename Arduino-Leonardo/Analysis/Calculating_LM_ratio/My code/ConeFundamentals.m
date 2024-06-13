@@ -1,125 +1,100 @@
 function cone_fundamentals_struct = ConeFundamentals(age, field_size, pupil_size, graphs)
-
-cones = ['r', 'g', 'b'];
+%% INITIATION
+% Add data tables tp path
 addpath("tables\");
 
-if ~exist("field_size", 'var'), field_size = 2; end
+% Sets default parameterts for undefined variables
+if ~exist("age", 'var'), age = 32; disp("Age default used (32)"); end
+if ~exist("field_size", 'var'), field_size = 2; disp("Field size default used (2)"); end
+if ~exist("pupil_size", 'var'), pupil_size = "small"; disp("Pupil size default used (small)");end
+if ~exist("graphs", 'var'), graphs = "no"; disp("Graph default used (no)"); end
 
-% Importing density tables
+% Set default wavelength range
+wavelengths = 400:5:700;
+
+%% Importing density tables
+% Spectral absorbance
+% load table
 spectral_absorbance = table2array(readtable("ssabance_5.csv"));
-wavelengths = spectral_absorbance(:,1);
-spectral_absorbance = spectral_absorbance(:,2:end);
+% Separate wavelengths
+wavelengths_sa = spectral_absorbance(:,1);
+% Only include defined wavelengths
+spectral_absorbance = spectral_absorbance(ismember(wavelengths_sa, wavelengths),2:end);
+% Raise to the 10th power
 spectral_absorbance = 10 .^ spectral_absorbance; 
-for cone = 1:length(cones)
-    spectral_absorbance(:,cone) = spectral_absorbance(:,cone) ./ max(spectral_absorbance(:,cone));
-end
+% Scale so that max value = 1
+spectral_absorbance = spectral_absorbance ./ max(spectral_absorbance);
 
-macular_density = table2array(readtable("macPigRelative_5.csv")); % ask Allie
+% Macular density
+macular_density = table2array(readtable("macPigRelative_5.csv"));
 macular_density = macular_density(:,2:end);
 
-lens_density = table2array(readtable("lens2components.csv")); % ask Allie
+% Lens density
+lens_density = table2array(readtable("lens2components.csv"));
 lens_density = lens_density(:,2:end); 
 
-% Wavelengths
-idx = wavelengths >= 400 & wavelengths <= 700;
-wavelengths = wavelengths(idx,:);
-spectral_absorbance = spectral_absorbance(idx,:);
-
 % Lens density and pupil size
-if exist("pupil_size", 'var')
-    if strcmpi(pupil_size, "large") || strcmpi(pupil_size, "l")
-        lens_density = lens_density .* .86207;
-    elseif ~strcmpi(pupil_size, "small") && ~strcmpi(pupil_size, "s") && ~strcmpi(pupil_size, "default")
-        disp("Please set variable pupil_size to a valid string!");
-        disp("Valid string values: ""default"", ""small"", ""s"", ""large"", ""l""");
-        return;
-    end
+if sum(strcmpi(pupil_size, ["large","l"]))
+    lens_density = lens_density .* .86207;
+elseif ~sum(strcmpi(pupil_size, ["small","s"]))
+    error("Pupil size must be set as ""small"" (""s"") or ""large"" (""l"")!");
 end
 
 % 5.3 - Peak optical density & Field Size
 if field_size >= 1 && field_size <= 10
     Dt_max_macula = 0.485 .* exp(-field_size / 6.132);
 else
-    disp("Field size must be set between 1 and 10!");
-    return
+    error("Field size must be set between 1 and 10!");
 end
 
 % 5.6 - Spectral optical density & Age
-Dt_ocul = zeros(height(wavelengths),1);
-
 if age >= 20 && age <=60
-    for wavelength = 1:height(wavelengths)
-        Dt_ocul(wavelength) = (lens_density(wavelength,1) * (1 + (0.02 * (age - 32)))) + lens_density(wavelength,2);
-    end
-
+    Dt_ocul_constants = [1 .02 32];
 elseif age > 60 && age <= 80
-    for wavelength = 1:height(wavelengths)
-        Dt_ocul(wavelength) = (lens_density(wavelength,1) * (1.56 + (0.0667 * (age - 60)))) + lens_density(wavelength,2);
-    end
-
+    Dt_ocul_constants = [1.56 .0667 60];
 else
-    disp("Age must be set between 20 and 80!");
-    return
+    error("Age must be set between 20 and 80!");
 end
+
+Dt_ocul = (lens_density(:,1) * (Dt_ocul_constants(1) + (Dt_ocul_constants(2) * (age - Dt_ocul_constants(3))))) + lens_density(:,2);
 
 % 5.7 - Visual Pigments & Field Size
-Dt_max = zeros(1,length(cones));
-D_max_constants = [0.38, 0.54;... 
-                    0.38, 0.54;... 
-                    0.30, 0.45];
+Dt_max_constants = [0.38, 0.54; 0.38, 0.54; 0.30, 0.45];
 
-for cone = 1:length(cones)
-    Dt_max(cone) = D_max_constants(cone,1) + D_max_constants(cone,2) * exp(-field_size / 1.333);
-end
+Dt_max = Dt_max_constants(:,1) + Dt_max_constants(:,2) * exp(-field_size / 1.333);
 
 % 5.9 - Cone Fundamentals
-ai_tbl = zeros(height(wavelengths), length(cones));
-for wavelength = 1:height(wavelengths)
-    for cone = 1:length(cones)
-        ai_tbl(wavelength,cone) = 1 - (10 ^ (-Dt_max(cone) * spectral_absorbance(wavelength,cone)));
-    end
-end
-
-cone_fundamentals_tbl = zeros(height(wavelengths), length(cones));
-for wavelength = 1:height(wavelengths)
-    for cone = 1:length(cones)
-        cone_fundamentals_tbl(wavelength,cone) = ai_tbl(wavelength,cone) * (10 ^ (-Dt_max_macula * macular_density(wavelength) - Dt_ocul(wavelength)));
-    end
-end
-
-for cone = 1:length(cones)
-    cone_fundamentals_tbl(:,cone) = cone_fundamentals_tbl(:,cone) .* wavelengths;
-end
+ai_tbl = 1 - (10 .^ (-Dt_max' .* spectral_absorbance));
+cone_fundamentals_tbl = ai_tbl .* (10 .^ (-Dt_max_macula .* macular_density - Dt_ocul));
+cone_fundamentals_tbl = cone_fundamentals_tbl .* wavelengths';
 
 cone_fundamentals_tbl(isnan(cone_fundamentals_tbl)) = 0;
 
 % normalise so that all cones have the same area under curve
-for cone = 1:length(cones)
-    area = trapz(wavelengths, cone_fundamentals_tbl(:,cone));
-    cone_fundamentals_tbl(:,cone) = cone_fundamentals_tbl(:,cone) ./ area; 
-end
-
-cone_fundamentals_tbl = cone_fundamentals_tbl ./ max(cone_fundamentals_tbl, [], 'all');
+areas = trapz(wavelengths, cone_fundamentals_tbl);
+cone_fundamentals_tbl = cone_fundamentals_tbl ./ areas; 
 
 % Draw graph
-if exist("graphs", 'var')
-    if strcmpi(graphs, "yes") || strcmpi(graphs, "y")
-        for cone = 1:length(cones)
-            x = wavelengths;
-            y = cone_fundamentals_tbl(:,cone);
-            plot(x, y, "LineWidth", 2, "Color", cones(cone))
-            hold on
-        end
-        ylim([0, 1]);
-        xlim([min(x), max(x)]);
-        xlabel("Wavelength (nm)");
-        ylabel("Cone Fundamentals");
-        title("Chapter 5");
-        text(610, .9, strjoin(["Age = ", age, "," newline, "Field Size = ", field_size, "°"],''));
-        hold off
+if sum(strcmpi(graphs, ["yes","y"]))
+    cones = ['r', 'g', 'b'];
+    hold on
+    for cone = 1:length(cones)
+        plot(wavelengths, cone_fundamentals_tbl(:,cone), "LineWidth", 2, "Color", cones(cone))
     end
+    xlim([min(wavelengths), max(wavelengths)]);
+    xlabel("Wavelength (nm)");
+    ylabel("Cone Fundamentals");
+    title("Chapter 5");
+    text(610, .9, strjoin(["Age = ", age, ","... 
+        newline, "Field Size = ", field_size, "°,",...
+        newline, "Pupil Size = ", pupil_size],''));
+    hold off
+elseif ~sum(strcmpi(graphs, ["no","n"]))
+    disp("Graphs must be set as ""yes"" (""y"") or ""no"" (""n"")!");
+    disp("For this run, I'll assume you don't want graphs.");
 end
 
+% store data in structure
 cone_fundamentals_struct = struct("wavelengths", wavelengths,... 
     "lCones", cone_fundamentals_tbl(:,1),...
     "mCones", cone_fundamentals_tbl(:,2),...

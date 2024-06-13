@@ -2,7 +2,9 @@
 clc; clear; close all;
 
 % Load data
+warning('off','MATLAB:table:ModifiedAndSavedVarnames')
 data = LoadData;
+warning('on','MATLAB:table:ModifiedAndSavedVarnames')
 dataTbl = data.all;
 
 %%
@@ -42,7 +44,7 @@ for ptpt = 1:height(dataTbl)
     if isnan(age), age = defaultAge; elseif age < 20, age = 20; elseif age > 80, age = 80; end
 
     % use participant's age to estimate cone fundamentals (2 deg, small pupil)
-    coneFuns.(ptptID) = ConeFundamentals(age);
+    coneFuns.(ptptID) = ConeFundamentals(age,2,"small","no");
 
     % pulls device name to look up values
     device = dataTbl.devCombHFP(ptpt);
