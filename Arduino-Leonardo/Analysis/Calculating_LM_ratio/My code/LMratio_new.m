@@ -1,84 +1,80 @@
 %%
-% My code gives same values as allie's with same input
-% my values seem to be lower on avergae than allie's - different method?
-% where did the lms values come from? why are there 50 sets of them? how
-% were they calculated? what do they represent?
-
-% add folders
-addpath("tables");
+clc; clear; close all;
 
 % Load data
-dataTbl = readtable("Data-Pt1.2.xlsx", "Sheet", "MATLAB_Data", "VariableNamingRule", "preserve");
-% lumFunc = readtable("linCIE2008v2e_5.csv");
+data = LoadData;
+dataTbl = data.all;
 
-% Filter data for participants thatc did the HFP task, including only their best matches
-idx = dataTbl.HFP == 1 & dataTbl.Match_Type == 1;
-dataTbl = dataTbl(idx,:);
+%%
+% Make new variable to store LM ratio value in
+dataTbl.aVal = nan(height(dataTbl), 1);
 
-% Extract ptpt codes of relevant ptpts
-ptptCodes = string(unique(dataTbl.PPcode));
+% Sets default age to the rounded mean age, for ptpts where we don't have age data
+defaultAge = round(mean(dataTbl.age,'omitmissing'));
 
 % Device values
 deviceVals = struct;
-    % Lab-based device
-    deviceVals.lab.gLumMax = 594.3295;
-    deviceVals.lab.rLumMax =  962.7570;
-    deviceVals.lab.glambda = 545;
-    deviceVals.lab.rlambda = 630;
-    deviceVals.lab.rSettingVar = "HFP_Uno_Red_Mean";
+    % Lab-based device (from Allie's values)
+    deviceVals.uno.gLumMax = 594.3295;
+    deviceVals.uno.rLumMax = 962.7570;
+    deviceVals.uno.gLambda = 545;
+    deviceVals.uno.rLambda = 630;
+    % Yellow Arduino device (from Josh's calibration results)
+    deviceVals.leo_y.gLumMax = 54.92;
+    deviceVals.leo_y.rLumMax = 168.6;
+    deviceVals.leo_y.gLambda = 542;
+    deviceVals.leo_y.rLambda = 626; 
 
 % Cone Fundamentals and Cone Ratios
 coneFuns = struct;
-redSettings = nan(length(ptptCodes),1);
-aVals = nan(length(ptptCodes),1);
 
-% Calcualting cone ratio for each ptpt
-for ptpt = 1:length(ptptCodes)
+% Calculating cone ratio for each ptpt
+for ptpt = 1:height(dataTbl)
+    
+    % If the participant didn't do a HFP task, skips and continues to next ptpt
+    if strcmp(dataTbl.devCombHFP(ptpt), ""), continue; end
+
     % Extract participant code
-    ptptCode = ptptCodes(ptpt);
+    ptptID = dataTbl.ptptID(ptpt);
     
-    % create table containing only current ptpt's data
-    idx = strcmp(string(dataTbl.PPcode), ptptCode);
-    ptptTbl = dataTbl(idx,:);
-    
-    % use participant's age to estimate cone fundamentals
-    age = ptptTbl.Age_HFP(1);
-    if age < 20, age = 20; elseif age > 80, age = 80; end
-    [coneFuns.(ptptCode), wavelengths] = ConeFundamentals(age);
-        % coneFuns.(ptptCode) = load("multipleObservers.mat", "LMS_Std");
-        % coneFuns.(ptptCode) = coneFuns.(ptptCode).LMS_Std;
-        % wavelengths = 390:5:780;
+    % pulls age, defaults it or rounds it appropriately
+    age = dataTbl.age(ptpt);
+    if isnan(age), age = defaultAge; elseif age < 20, age = 20; elseif age > 80, age = 80; end
 
-    % Pull l&m cone spectal sensitivities
-    lSS = coneFuns.(ptptCode)(:,1);
-    mSS = coneFuns.(ptptCode)(:,2);
+    % use participant's age to estimate cone fundamentals (2 deg, small pupil)
+    coneFuns.(ptptID) = ConeFundamentals(age);
 
-    % Pull participant's mean red setting (a decimal of max setting)
-    redSettings(ptpt) = mean(ptptTbl.(deviceVals.lab.rSettingVar))/1024;
+    % pulls device name to look up values
+    device = dataTbl.devCombHFP(ptpt);
 
     % Allie's code to calculate a
-    aVals(ptpt) = FindaFromSetting(deviceVals.lab.rLumMax, deviceVals.lab.gLumMax,...
-        deviceVals.lab.rlambda, deviceVals.lab.glambda, wavelengths,...
-        lSS, mSS, redSettings(ptpt));
+    dataTbl.aVal(ptpt) = FindaFromSetting(deviceVals.(device).rLumMax, deviceVals.(device).gLumMax,...
+        deviceVals.(device).rLambda, deviceVals.(device).gLambda, coneFuns.(ptptID).wavelengths,...
+        coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
 end
 
 % Display mean cone ratio in sample (would expect a value of around 2!)
-disp(array2table([redSettings aVals], 'VariableNames', ["Red Settings", "Pred. Ratio"]));
+disp(dataTbl(:,["combHFP","aVal"]));
+% range = [mean(aVals,'omitmissing')-3*std(aVals), mean(aVals,'omitmissing')+3*std(aVals)];
+% histogram(aVals(aVals >= range(1) & aVals <= range(2)), 50);
 
 %%
 % ALLIE'S FUNCTION
-function a = FindaFromSetting(rLumMax, gLumMax, rlambda, glambda, lambdas, l, m, rSetting)
+function a = FindaFromSetting(rLumMax, gLumMax, rLambda, gLambda, lambdas, lSS, mSS, rgSetting)
 % specify rSetting
 % derive a that would have produced a luminance match
+stepSize = lambdas(2)-lambdas(1);
+rLambda = round(rLambda/stepSize)*stepSize;
+gLambda = round(gLambda/stepSize)*stepSize;
 
 % % VFe = (a .* l + m) ./ 2.87090767;
 
-VFss = (1.980647 .* l + m);
+VFss = (1.980647 .* lSS + mSS);
 
-sensToRFromM = rSetting.*m(lambdas == rlambda).*rLumMax.*VFss(lambdas == glambda);
-sensToGFromM = m(lambdas==glambda).*gLumMax.*VFss(lambdas==rlambda);
-sensToGFromL = l(lambdas==glambda).*gLumMax.*VFss(lambdas==rlambda);
-sensToRFromL = rSetting.*l(lambdas==rlambda).*rLumMax.*VFss(lambdas == glambda);
+sensToRFromM = rgSetting.*mSS(lambdas == rLambda).*rLumMax.*VFss(lambdas == gLambda);
+sensToGFromM = mSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
+sensToGFromL = lSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
+sensToRFromL = rgSetting.*lSS(lambdas==rLambda).*rLumMax.*VFss(lambdas == gLambda);
 
 a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
 

@@ -1,4 +1,4 @@
-close all; clear all; clc;
+% close all; clear all; clc;
 
 % laod data
 load('all_data.mat');

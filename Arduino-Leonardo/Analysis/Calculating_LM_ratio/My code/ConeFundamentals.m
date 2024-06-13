@@ -1,4 +1,4 @@
-function [cone_fundamentals_tbl, wavelengths] = ConeFundamentals(age, field_size, pupil_size, graphs)
+function cone_fundamentals_struct = ConeFundamentals(age, field_size, pupil_size, graphs)
 
 cones = ['r', 'g', 'b'];
 addpath("tables\");
@@ -89,10 +89,17 @@ end
 
 for cone = 1:length(cones)
     cone_fundamentals_tbl(:,cone) = cone_fundamentals_tbl(:,cone) .* wavelengths;
-    cone_fundamentals_tbl(:,cone) = cone_fundamentals_tbl(:,cone) ./ max(cone_fundamentals_tbl(:,cone));
 end
 
 cone_fundamentals_tbl(isnan(cone_fundamentals_tbl)) = 0;
+
+% normalise so that all cones have the same area under curve
+for cone = 1:length(cones)
+    area = trapz(wavelengths, cone_fundamentals_tbl(:,cone));
+    cone_fundamentals_tbl(:,cone) = cone_fundamentals_tbl(:,cone) ./ area; 
+end
+
+cone_fundamentals_tbl = cone_fundamentals_tbl ./ max(cone_fundamentals_tbl, [], 'all');
 
 % Draw graph
 if exist("graphs", 'var')
@@ -113,4 +120,8 @@ if exist("graphs", 'var')
     end
 end
 
+cone_fundamentals_struct = struct("wavelengths", wavelengths,... 
+    "lCones", cone_fundamentals_tbl(:,1),...
+    "mCones", cone_fundamentals_tbl(:,2),...
+    "sCones", cone_fundamentals_tbl(:,3));
 end
