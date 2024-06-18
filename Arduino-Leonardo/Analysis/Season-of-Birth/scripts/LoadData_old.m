@@ -1,14 +1,3 @@
-function data = LoadData
-
-addpath("data\");
-addpath("data\dataHFP-MT");
-addpath("scripts\");
-addpath("scripts\functions\");
-addpath("tables\");
-
-studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
-monthTimeFrame = 8;
-
 %%% Link data
 ptptIdTbl = readtable("Ptpt_ID_Links.xlsx");
 ptptIdTbl = convertvars(ptptIdTbl, ptptIdTbl.Properties.VariableNames, 'string');
@@ -29,8 +18,8 @@ monthNs = struct;
 seasonMeans = struct;
 seasonNs = struct;
 
-dataVars = ["study", "ptptID", "sex", "age", "month", "year", "ethnicity", "country", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev"];
-numVars = ["age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
+dataVars = ["study", "ptptID", "sex", "month", "year", "ethnicity", "country", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev"];
+numVars = ["month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
 strVars = ["study", "ptptID", "sex", "country", "leoDev"];
 
 %% Allie's data
@@ -42,7 +31,6 @@ ptptIDs = unique(string(aData.ptptID));
 data.Allie = strings(height(ptptIDs), length(dataVars));
 
 study = "A";
-age = NaN;
 rg1 = NaN;
 rg2 = NaN;
 rg3 = NaN;
@@ -62,7 +50,7 @@ for ptpt = 1:height(aData)
         if ~isempty(dob), year = str2double(dob(end-3:end)); else, year = NaN; end
         ethnicity = table2array(aDataDemo(idx1,"Ethnicity"));
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
-        data.Allie(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+        data.Allie(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -95,21 +83,14 @@ for ptpt = 1:length(ptptIDs)
         ptptData.Sex = [];
         ptptData = mean(ptptData(2:end,:), 'omitmissing');
         if ptptData.Study == 1.1, study = "D1"; else, study = "D2"; end
-        month = ptptData.Month;
+       month = ptptData.Month;
         year = ptptData.Year;
-        studyMonth = ptptData.RLM_Date2; if isnan(studyMonth), studyMonth = ptptData.HFP_Date2; end
-        studyYear = ptptData.RLM_Date1; if isnan(studyMonth), studyMonth = ptptData.HFP_Date1; end
-        if studyMonth == 0 || studyYear == 0 
-            age = NaN;
-        else
-            age = studyYear - year; if month > studyMonth, age = age - 1; end
-        end
         ethnicity = ptptData.Ethnicity;
         rg1 = ptptData.RLM_Red_1 / ptptData.RLM_Green_1;
         rg2 = ptptData.HFP_Leo_Red_1 ./ ptptData.HFP_Leo_Green_1;
         rg3 = ptptData.RLM_MixLight_1;
         rg4 = ptptData.HFP_Uno_Red_1 ./ 1024;
-        data.Dana(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+        data.Dana(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -145,13 +126,6 @@ for ptpt = 1:length(ptptIDs)
             sex = string(table2array(ptptData(1,"Sex")));
             month = ptptData.("Birth Month")(1);
             year = ptptData.("Birth Year")(1);
-            studyMonth = ptptData.HFP_DateTime_2(1);
-            studyYear = ptptData.HFP_DateTime_1(1);
-            if studyMonth == 0 || studyYear == 0
-                age = NaN;
-            else
-                age = studyYear - year; if month > studyMonth, age = age - 1; end
-            end
             ethnicity = ptptData.Ethnicity(1);
             country = string(ptptData.("Country of Birth")(1));
             
@@ -159,7 +133,7 @@ for ptpt = 1:length(ptptIDs)
             rg1 = ptptValueData.RLM_Red ./ ptptValueData.RLM_Green;
             rg2 = ptptValueData.HFP_RedValue ./ ptptValueData.HFP_GreenValue;
 
-            data.Josh(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+            data.Josh(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
         end
     end
 end
@@ -184,6 +158,7 @@ ptptIDs = ptptIDs(strlength(ptptIDs) == 3);
 
 % Mitch's HFP data
 mDataHFP_files=dir(fullfile('data\dataHFP-MT','*.mat'));
+mitchDataHFP = NaN(height(ptptIDs),1);
 for file = 1:length(mDataHFP_files)
     fileName = mDataHFP_files(file).name;
     currentFile = load(strcat(pwd, '\data\dataHFP-MT\', fileName));
@@ -224,21 +199,12 @@ for ptpt = 3:length(ptptIDs)
         ptptDataRLM = mean(mDataRLM(idx,["Red","Green"]),1);
         rg1 = ptptDataRLM.Red ./ ptptDataRLM.Green;
 
-        studyMonth = table2array(mDataRLM(idx,"DateTime"));
-        if isempty(studyMonth) | studyMonth == 0 
-            age = NaN;
-        else
-            studyMonth = studyMonth(1,2);
-            studyYear = table2array(mDataRLM(idx,"DateTime"));
-            studyYear = studyYear(1,1);
-            age = studyYear - year; if month > studyMonth, age = age - 1; end
-        end
-
         idx = strcmp(string(mDataHFP.trialID),ptptID)...
               & mDataHFP.trialNum > 1;
         ptptDataHFP = table2array(mean(mDataHFP(idx,"meanTestAmpSetting")));
         rg4 = ptptDataHFP ./ 1024;
-        data.Mitch(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+
+        data.Mitch(ptpt,:) = [study, ptptID, sex, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -251,17 +217,15 @@ data.Mitch = convertvars(data.Mitch, numVars, 'double');
 
 %% log data
 resNames = string(fieldnames(monthMeans));
-newVars = strcat(taskNames, "_rawRG");
-newLogVars = strcat(taskNames, "_logRG");
+newVars = strcat(taskNames, "_logRG");
 % log values
 for task = 1:length(taskNames)
-    for res = 1:length(resNames)
-        data.(resNames(res)).(newVars(task)) = data.(resNames(res)).(strcat(taskNames(task),"_RG"));
-        data.(resNames(res)).(newLogVars(task)) = log(data.(resNames(res)).(strcat(taskNames(task),"_RG")));
+    for res = 1:length(resNames) 
+        data.(resNames(res)).(newVars(task)) = log(data.(resNames(res)).(strcat(taskNames(task),"_RG")));
     end
 end
-dataVars = [dataVars, newVars, newLogVars];
-numVars = [numVars, newVars, newLogVars];
+dataVars = [dataVars, newVars];
+numVars = [numVars, newVars];
 
 %% Season and ethnicity categories
 newCats = ["season", "month"; "ethnicGroup", "ethnicity"];
@@ -298,6 +262,8 @@ for i = 1:length(resNames)
     data.all = [data.all; data.(resNames(i))];
 end
 
+studyIDs = unique(data.all.study);
+
 % uk terms
 ukTerms = ["United Kingdom", "UK", "England"];
 idx = ismember(data.all.country, ukTerms);
@@ -315,7 +281,7 @@ for task = 1:height(combTasks)
     data.all.(devCombVar) = strings(height(data.all), 1);
     
     for var = 2:width(combTasks)
-        varName = strcat(combTasks(task,1), "_", combTasks(task,var), "_rawRG");
+        varName = strcat(combTasks(task,1), "_", combTasks(task,var), "_logRG");
         idx = ~isnan(data.all.(varName));
         data.all.(combVar)(idx) = data.all.(varName)(idx);
         devName = lower(combTasks(task,var));
@@ -331,6 +297,19 @@ for task = 1:height(combTasks)
     strVars = [strVars, devCombVar]; %#ok<AGROW>
 end
 
-CalculateWeatherData;
+%% study stats
+studies = unique(data.all.study);
+studyStats = NaN(length(studies),4);
 
+for i = 1:length(studies)
+    idx = strcmp(data.all.study, studies(i)) & ~isnan(data.all.combHFP);
+    studyTbl = data.all(idx,:);
+    studyN = height(studyTbl);
+    studyMean = mean(studyTbl.combHFP);
+    studyStd = std(studyTbl.combHFP);
+    studySe = studyStd / sqrt(studyN);
+    studyStats(i,:) = [studyN, studyMean, studyStd, studySe];
 end
+studyStats = array2table(studyStats, "RowNames", studies, "VariableNames", ["n", "mean", "std", "se"]);
+
+CalculateWeatherData;

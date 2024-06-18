@@ -1,5 +1,6 @@
  %% clear up
 clc; clear; close all;
+
 cd(strcat('C:\Users\', getenv('USERNAME'), '\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Analysis\Season-of-Birth'));
 addpath('scripts\'); addpath('scripts\functions\');
 addpath('data\'); addpath('data\dataHFP-MT');
@@ -7,35 +8,40 @@ addpath('data\'); addpath('data\dataHFP-MT');
 %% load data
 % studyPriorityOrder = ["Allie", "Dana", "Josh", "Mitch"];
 studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
-monthTimeFrame = 8;
-LoadData; 
+monthTimeFrame = 6;
+LoadData_old; 
+
+load(strcat('C:\Users\', getenv('USERNAME'), '\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Analysis\Calculating_LM_ratio\My code\LMratioData.mat'));
+data.all = dataTbl;
+data.all.combHFP = log(data.all.combHFP);
 
 %% models
 clc;
 modelVars = struct;
 validcats = struct;
 
-% modelVars.control = ["combHFP",... 
-%                    "study", "sex", "ethnicGroup", "RLM_Leo_RG"];
-% modelVars.month = ["combHFP",... 
-%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "monthSin", "monthCos"];
-% modelVars.seasonCat = ["combHFP",... 
-%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "season"];
-% modelVars.season = ["combHFP",... 
-%               "study", "sex", "ethnicGroup", "RLM_Leo_RG", "seasonSin", "seasonCos"];
-% modelVars.day = ["combHFP",... 
-%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
+% modelVars.control = ["foveaDensityL",... 
+%                  "sex", "ethnicGroup", "RLM_Leo_logRG"];
+% modelVars.month = ["foveaDensityL",... 
+%                "sex", "ethnicGroup", "RLM_Leo_logRG", "monthSin", "monthCos"];
+% modelVars.seasonCat = ["foveaDensityL",... 
+%                "sex", "ethnicGroup", "RLM_Leo_logRG", "season"];
+% modelVars.season = ["foveaDensityL",... 
+%               "sex", "ethnicGroup", "RLM_Leo_logRG", "seasonSin", "seasonCos"];
+modelVars.day = ["foveaDensityL",... 
+               "sex", "ethnicGroup", "RLM_Leo_logRG", "daylightHours"];
 % sunshine hours available for UK only!
-% modelVars.sun = ["combHFP",... 
-%                "study", "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
-% modelVars.irr_pop = ["combHFP",... 
-%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_pop"];
-% modelVars.irr_area = ["combHFP",... 
-%                  "study", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
+% modelVars.sun = ["foveaDensityL",... 
+%                "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
+% modelVars.irr_pop = ["foveaDensityL",... 
+%                  "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_pop"];
+% modelVars.irr_area = ["foveaDensityL",... 
+%                  "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
 
-validcats.ethnicGroup = ["asian", "white", "mixed-wa"];
-validcats.country = "UK";
-%validcats.country = ["UK", "China"];
+validcats.ethnicGroup = ["asian", "mixed-wa", "white", "mixed-o"]; %, 
+%validcats.devCombRLM = ["leo_y", "leo_g"];
+%validcats.country = "UK";
+validcats.country = ["UK", "China"];
 %validcats.year = [1980 2023];
 %validcats.season = ["summer", "autumn", "winter", "spring"];
 %validcats.devCombHFP = ["uno", "leo_y"];
@@ -43,6 +49,11 @@ validcats.sex = ["M","F"];
 
 LMEs;
 
+%%
+for group = 1:length(validcats.ethnicGroup)
+    disp(validcats.ethnicGroup(group));
+    disp(sum(strcmp(string(modelData.ethnicGroup),validcats.ethnicGroup(group)) & ~isnan(modelData.foveaDensityL)));
+end
 
 %%
 clear modelvars
@@ -109,3 +120,24 @@ end
 
 %%
 WorldHeatMap(c, "testVarName", "N", "countryVarName", "Country", "undefinedVarName", "", "scalingType", "count")
+
+%%
+ethnicities = unique(data.all.ethnicGroup);
+ethnicities(strcmp(ethnicities,"")) = [];
+means = NaN(height(ethnicities),1);
+ns = means;
+stds = means;
+stes = means;
+for i = 1:height(ethnicities)
+    idx = strcmp(data.all.ethnicGroup, ethnicities(i));
+    means(i) = mean(data.all.foveaDensityL(idx),'omitmissing');
+    stds(i) = std(data.all.foveaDensityL(idx),'omitmissing');
+    ns(i) = height(data.all.foveaDensityL(idx));
+    stes(i) = stds(i) / ns(i);
+end
+
+idx = ns >= 5;
+
+hold on
+bar(ethnicities(idx), means(idx))
+errorbar(1:height(ethnicities(idx)), means(idx), stds(idx), stds(idx), 'LineStyle', 'none')

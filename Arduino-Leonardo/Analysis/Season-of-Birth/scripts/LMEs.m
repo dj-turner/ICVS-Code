@@ -34,6 +34,12 @@ for model = 1:numel(modelFields)
             modelData.(modelStrVars(var)) = reordercats(modelData.(modelStrVars(var)), validcats.(modelStrVars(var))(idx));
         end
     end
+
+
+   % modelData.ethnicGroup = string(modelData.ethnicGroup);
+   % idx = strcmp(modelData.ethnicGroup, "mixed-o");
+   % modelData.ethnicGroup(idx) = categorical("white");
+   % modelData.ethnicGroup = categorical(modelData.ethnicGroup);
     
     % try
         lmes.(modelFields(model)) = fitlme(modelData,modelStr);
@@ -42,4 +48,23 @@ for model = 1:numel(modelFields)
     %     disp("Failed to run lme!")
     %     lmes.(modelFields(model)) = "error";
     % end
+
+    % seasons = unique(modelData.season);
+    % for season = 1:numel(seasons)
+    %     idx = strcmp(string(modelData.season), string(seasons(season))) & ~isnan(modelData.foveaDensityL);
+    %     disp(string(seasons(season)));
+    %     disp(height(modelData(idx,:)));
+    %     disp(" ");
+    % end
+
+    ethnicities = unique(modelData.ethnicGroup);
+    for eth = 1:numel(ethnicities)
+        idx = strcmp(string(modelData.ethnicGroup), string(ethnicities(eth))) & ~isnan(modelData.foveaDensityL);
+        disp(string(ethnicities(eth)));
+        disp(height(modelData(idx,:)));
+        disp(" ");
+    end
+
+
+    
 end

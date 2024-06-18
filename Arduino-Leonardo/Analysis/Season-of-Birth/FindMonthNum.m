@@ -2,19 +2,19 @@
 modelVars = struct;
 validcats = struct;
 
-modelVars.day = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "daylightHours"];
-modelVars.sun = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "sunshineHours"];
-modelVars.irr_pop = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_pop"];
-modelVars.irr_area = ["combHFP",... 
-                 "devCombHFP", "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
+modelVars.day = ["foveaDensityL",... 
+                 "sex", "ethnicGroup", "RLM_Leo_logRG", "daylightHours"];
+modelVars.sun = ["foveaDensityL",... 
+                 "sex", "ethnicGroup", "RLM_Leo_logRG", "sunshineHours"];
+modelVars.irr_pop = ["foveaDensityL",... 
+                 "sex", "ethnicGroup", "RLM_Leo_logRG", "irradiance_pop"];
+modelVars.irr_area = ["foveaDensityL",... 
+                 "sex", "ethnicGroup", "RLM_Leo_logRG", "irradiance_area"];
 
-validcats.ethnicGroup = ["white", "asian", "mixed-wa"];
+validcats.ethnicGroup = ["asian", "white", "mixed-wa", "mixed-o"];
 validcats.country = ["UK", "China"];
-validcats.year = [1980 2023];
-validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
+%validcats.year = [1980 2023];
+%validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
 validcats.sex = ["M", "F"];
 
 
