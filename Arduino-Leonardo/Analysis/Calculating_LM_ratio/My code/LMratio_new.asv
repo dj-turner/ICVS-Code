@@ -24,8 +24,6 @@ defaultAge = round(mean(dataTbl.age,'omitmissing'));
 % Device values
 deviceVals = LoadDeviceValues; 
 
-%%
-
 % Cone Fundamentals and Cone Ratios
 coneFuns = struct;
 
@@ -88,8 +86,8 @@ devVals = struct;
     devVals.uno.gRadMin = 10 ^ 2.77;
     devVals.uno.gRadMax = devVals.uno.gRadMin;
     devVals.uno.gRadStd = 10 * fwhm2stddev;
-    devVals.uno.rMaxGaussian = normpdf(wavelengths, devVals.uno.rLambda, devVals.uno.rRadStd);
-    devVals.uno.gMaxGaussian = normpdf(wavelengths, devVals.uno.gLambda, devVals.uno.gRadStd);
+    devVals.uno.rGaussian = normpdf(wavelengths, devVals.uno.rLambda, devVals.uno.rRadStd);
+    devVals.uno.gGaussian = normpdf(wavelengths, devVals.uno.rLambda, devVals.uno.rRadStd);
         % Yellow Arduino device (from Josh's calibration results)
         devVals.leo_y.gLumMax = 54.92;
         devVals.leo_y.rLumMax = 168.6;
