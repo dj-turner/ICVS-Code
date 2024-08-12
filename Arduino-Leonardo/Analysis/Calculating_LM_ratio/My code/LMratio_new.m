@@ -33,17 +33,21 @@ coneFuns = struct;
 for ptpt = 1:height(dataTbl)
     
     % If the participant didn't do a HFP task, skips and continues to next ptpt
-    if strcmp(dataTbl.devCombHFP(ptpt), ""), continue; end
+    if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
 
     % Extract participant code
     ptptID = dataTbl.ptptID(ptpt);
     
     % pulls age, defaults it or rounds it appropriately
-    age = dataTbl.age(ptpt);
-    if isnan(age), age = defaultAge; elseif age < 20, age = 20; elseif age > 80, age = 80; end
+    ptptAge = dataTbl.age(ptpt);
+    if isnan(ptptAge), ptptAge = defaultAge; elseif ptptAge < 20, ptptAge = 20; elseif ptptAge > 80, ptptAge = 80; end
 
-    % use participant's age to estimate cone fundamentals (2 deg, small pupil)
-    coneFuns.(ptptID) = ConeFundamentals(age,2,"small","no");
+    % Pulls L180 Gene Opsin
+    opsin = char(dataTbl.geneOpsin(ptpt));
+    if ~isempty(opsin), opsin = opsin(1); end
+
+    % use participant's age to estimate cone fundamentals (small pupil)
+    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 1, normalisation = "area");
 
     % pulls device name to look up values
     device = dataTbl.devCombHFP(ptpt);
@@ -90,17 +94,17 @@ devVals = struct;
     devVals.uno.gRadStd = 10 * fwhm2stddev;
     devVals.uno.rMaxGaussian = normpdf(wavelengths, devVals.uno.rLambda, devVals.uno.rRadStd);
     devVals.uno.gMaxGaussian = normpdf(wavelengths, devVals.uno.gLambda, devVals.uno.gRadStd);
-        % Yellow Arduino device (from Josh's calibration results)
-        devVals.leo_y.gLumMax = 54.92;
-        devVals.leo_y.rLumMax = 168.6;
-        devVals.leo_y.gLambda = 542;
-        devVals.leo_y.rLambda = 626;
-        devVals.leo_y.rRadMin = NaN;
-        devVals.leo_y.rRadMax = NaN;
-        devVals.leo_y.rRadStd = NaN;
-        devVals.leo_y.gRadMin = NaN;
-        devVals.leo_y.gRadMax = NaN;
-        devVals.leo_y.gRadStd = NaN;
+    % Yellow Arduino device (from Josh's calibration results)
+    devVals.leo_y.gLumMax = 54.92;
+    devVals.leo_y.rLumMax = 168.6;
+    devVals.leo_y.gLambda = 542;
+    devVals.leo_y.rLambda = 626;
+    devVals.leo_y.rRadMin = NaN;
+    devVals.leo_y.rRadMax = NaN;
+    devVals.leo_y.rRadStd = NaN;
+    devVals.leo_y.gRadMin = NaN;
+    devVals.leo_y.gRadMax = NaN;
+    devVals.leo_y.gRadStd = NaN;
 end
 
 %%

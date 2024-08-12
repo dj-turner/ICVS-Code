@@ -1,102 +1,130 @@
-function cone_fundamentals_struct = ConeFundamentals(age, field_size, pupil_size, graphs)
+function [coneFunStruct, inputStruct] = ConeFundamentals(varargin)
 %% INITIATION
 % Add data tables tp path
 addpath("tables\");
 
-% Sets default parameterts for undefined variables
-if ~exist("age", 'var'), age = 32; disp("Age default used (32)"); end
-if ~exist("field_size", 'var'), field_size = 2; disp("Field size default used (2)"); end
-if ~exist("pupil_size", 'var'), pupil_size = "small"; disp("Pupil size default used (small)");end
-if ~exist("graphs", 'var'), graphs = "no"; disp("Graph default used (no)"); end
+% Sets default parameters for undefined variables
+defaultStruct = struct('age', 32,... 
+                       'fieldSize', 2,... 
+                       'normalisation', "none",...
+                       'pupilSize', "small",... 
+                       'graphs', "yes");
+
+% Extract defined parameters from varargin
+inputStruct = struct;
+for i = 1:2:length(varargin)-1
+    var = string(varargin(i+1));
+    if ~isnan(str2double(var)), try var = str2double(var); catch; end; end
+    inputStruct.(string(varargin(i))) = var;
+end
+
+% List fields in both structs
+allFields = fieldnames(defaultStruct); 
+% List fields missing in inputStruct
+idx = find(~ismember(allFields,fieldnames(inputStruct)));
+% Assign missing fields to inputStruct
+for i = 1:length(idx), inputStruct.(allFields{idx(i)}) = defaultStruct.(allFields{idx(i)}); end
 
 % Set default wavelength range
-wavelengths = 400:5:700;
+measuredWavelengths = (400:5:700)';
 
 %% Importing density tables
 % Spectral absorbance
 % load table
-spectral_absorbance = table2array(readtable("ssabance_5.csv"));
+spectralAbsorbance = table2array(readtable("ssabance_5.csv"));
 % Separate wavelengths
-wavelengths_sa = spectral_absorbance(:,1);
+saWavelengths = spectralAbsorbance(:,1);
 % Only include defined wavelengths
-spectral_absorbance = spectral_absorbance(ismember(wavelengths_sa, wavelengths),2:end);
+spectralAbsorbance = spectralAbsorbance(ismember(saWavelengths, measuredWavelengths),2:end);
 % Raise to the 10th power
-spectral_absorbance = 10 .^ spectral_absorbance; 
+spectralAbsorbance = 10 .^ spectralAbsorbance; 
 % Scale so that max value = 1
-spectral_absorbance = spectral_absorbance ./ max(spectral_absorbance);
+spectralAbsorbance = spectralAbsorbance ./ max(spectralAbsorbance);
 
 % Macular density
-macular_density = table2array(readtable("macPigRelative_5.csv"));
-macular_density = macular_density(:,2:end);
+macularDensity = table2array(readtable("macPigRelative_5.csv"));
+macularDensity = macularDensity(:,2:end);
 
 % Lens density
-lens_density = table2array(readtable("lens2components.csv"));
-lens_density = lens_density(:,2:end); 
+lensDensity = table2array(readtable("lens2components.csv"));
+lensDensity = lensDensity(:,2:end); 
 
 % Lens density and pupil size
-if sum(strcmpi(pupil_size, ["large","l"]))
-    lens_density = lens_density .* .86207;
-elseif ~sum(strcmpi(pupil_size, ["small","s"]))
-    error("Pupil size must be set as ""small"" (""s"") or ""large"" (""l"")!");
+if strcmpi(inputStruct.pupilSize, "large")
+    lensDensity = lensDensity .* .86207;
+elseif ~strcmpi(inputStruct.pupilSize, "small")
+    error("Pupil size must be set as ""small"" or ""large""!");
 end
 
 % 5.3 - Peak optical density & Field Size
-if field_size >= 1 && field_size <= 10
-    Dt_max_macula = 0.485 .* exp(-field_size / 6.132);
+if inputStruct.fieldSize >= 1 && inputStruct.fieldSize <= 10
+    dtMaxMacula = 0.485 .* exp(-inputStruct.fieldSize / 6.132);
 else
     error("Field size must be set between 1 and 10!");
 end
 
 % 5.6 - Spectral optical density & Age
-if age >= 20 && age <=60
-    Dt_ocul_constants = [1 .02 32];
-elseif age > 60 && age <= 80
-    Dt_ocul_constants = [1.56 .0667 60];
+if inputStruct.age >= 20 && inputStruct.age <=60
+    dtOculConstants = [1 .02 32];
+elseif inputStruct.age > 60 && inputStruct.age <= 80
+    dtOculConstants = [1.56 .0667 60];
 else
     error("Age must be set between 20 and 80!");
 end
 
-Dt_ocul = (lens_density(:,1) * (Dt_ocul_constants(1) + (Dt_ocul_constants(2) * (age - Dt_ocul_constants(3))))) + lens_density(:,2);
+dtOcul = (lensDensity(:,1) * (dtOculConstants(1) + (dtOculConstants(2) * (inputStruct.age - dtOculConstants(3))))) + lensDensity(:,2);
 
 % 5.7 - Visual Pigments & Field Size
-Dt_max_constants = [0.38, 0.54; 0.38, 0.54; 0.30, 0.45];
+dtMaxConstants = [0.38, 0.54; 0.38, 0.54; 0.30, 0.45];
 
-Dt_max = Dt_max_constants(:,1) + Dt_max_constants(:,2) * exp(-field_size / 1.333);
+dtMax = dtMaxConstants(:,1) + dtMaxConstants(:,2) * exp(-inputStruct.fieldSize / 1.333);
 
 % 5.9 - Cone Fundamentals
-ai_tbl = 1 - (10 .^ (-Dt_max' .* spectral_absorbance));
-cone_fundamentals_tbl = ai_tbl .* (10 .^ (-Dt_max_macula .* macular_density - Dt_ocul));
-cone_fundamentals_tbl = cone_fundamentals_tbl .* wavelengths';
+aiTbl = 1 - (10 .^ (-dtMax' .* spectralAbsorbance));
+coneFunTbl = aiTbl .* (10 .^ (-dtMaxMacula .* macularDensity - dtOcul));
+coneFunTbl = coneFunTbl .* measuredWavelengths;
 
-cone_fundamentals_tbl(isnan(cone_fundamentals_tbl)) = 0;
+coneFunTbl(isnan(coneFunTbl)) = 0;
 
-% normalise so that all cones have the same area under curve
-areas = trapz(wavelengths, cone_fundamentals_tbl);
-cone_fundamentals_tbl = cone_fundamentals_tbl ./ areas; 
+% Lambda max adjustment using RLM data
+
+% normalise so that all cones have the same area under curve / same height
+switch inputStruct.normalisation
+    case "area"
+        areas = trapz(measuredWavelengths, coneFunTbl);
+        coneFunTbl = coneFunTbl ./ areas; 
+    case "height"
+        coneFunTbl = coneFunTbl ./ max(coneFunTbl);
+end
 
 % Draw graph
-if sum(strcmpi(graphs, ["yes","y"]))
+if strcmpi(inputStruct.graphs,"yes")
     cones = ['r', 'g', 'b'];
     hold on
     for cone = 1:length(cones)
-        plot(wavelengths, cone_fundamentals_tbl(:,cone), "LineWidth", 2, "Color", cones(cone))
+        plot(measuredWavelengths, coneFunTbl(:,cone), "LineWidth", 2, "Color", cones(cone),...
+            'Marker', 'o', 'MarkerEdgeColor', 'w', 'MarkerSize', .5)
     end
-    xlim([min(wavelengths), max(wavelengths)]);
+    xlim([min(measuredWavelengths), max(measuredWavelengths)]);
     xlabel("Wavelength (nm)");
-    ylabel("Cone Fundamentals");
-    title("Chapter 5");
-    text(610, .9, strjoin(["Age = ", age, ","... 
-        newline, "Field Size = ", field_size, "°,",...
-        newline, "Pupil Size = ", pupil_size],''));
+    ylabel("Reltive Spectral Sensitivities");
+    title("Cone Fundamentals");
+    text(.9*max(measuredWavelengths), .9*max(coneFunTbl,[],"all"), strjoin([...
+                 "Age = ", inputStruct.age, ","... 
+        newline, "Field Size = ", inputStruct.fieldSize, "°,",...
+        newline, "Pupil Size = ", inputStruct.pupilSize, ",",...
+        newline, "Normalisation = ", inputStruct.normalisation
+        ],''));
     hold off
-elseif ~sum(strcmpi(graphs, ["no","n"]))
-    disp("Graphs must be set as ""yes"" (""y"") or ""no"" (""n"")!");
+elseif ~strcmpi(inputStruct.graphs,"no")
+    disp("Graphs must be set as ""yes"" or ""no""!");
     disp("For this run, I'll assume you don't want graphs.");
 end
 
 % store data in structure
-cone_fundamentals_struct = struct("wavelengths", wavelengths,... 
-    "lCones", cone_fundamentals_tbl(:,1),...
-    "mCones", cone_fundamentals_tbl(:,2),...
-    "sCones", cone_fundamentals_tbl(:,3));
+coneFunStruct = struct("wavelengths", measuredWavelengths,... 
+    "lCones", coneFunTbl(:,1),...
+    "mCones", coneFunTbl(:,2),...
+    "sCones", coneFunTbl(:,3));
+
 end

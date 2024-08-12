@@ -11,8 +11,8 @@ modelVars.irr_pop = ["foveaDensityL",...
 modelVars.irr_area = ["foveaDensityL",... 
                  "sex", "ethnicGroup", "RLM_Leo_logRG", "irradiance_area"];
 
-validcats.ethnicGroup = ["asian", "white", "mixed-wa", "mixed-o"];
-validcats.country = ["UK", "China"];
+validcats.ethnicGroup = ["asian", "white"];
+%validcats.country = ["UK", "China"];
 %validcats.year = [1980 2023];
 %validcats.devCombHFP = ["uno", "leo_y", "leo_g"];
 validcats.sex = ["M", "F"];

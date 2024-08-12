@@ -3,7 +3,7 @@ weatherData = WeatherInputData;
 
 weathers = ["daylightHours", "sunshineHours", "irradiance_pop", "irradiance_area"];
 
-dayCountries = string(fieldnames(weatherData.daylightHours));
+dayCountries = string(weatherData.daylightHours.Country);
 sunCountries = string(fieldnames(weatherData.sunshineHours));
 
 headers = string(weatherData.irradiance.pop.Properties.VariableNames);
@@ -29,11 +29,6 @@ data.all.irradiance_area = NaN(height(data.all),1);
 %% sunshineData
 monthVars = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-daylightDataList = weatherData.daylightHours;
-for country = 1:length(dayCountries)
-    daylightDataList.(dayCountries(country)) = repmat(daylightDataList.(dayCountries(country)), [1,2]);
-end
-
 irrDataTypes = string(fieldnames(weatherData.irradiance));
 
 %%
@@ -45,7 +40,8 @@ for ptpt = 1:height(data.all)
     country = data.all.country(ptpt);
 
     if ismember(country,dayCountries) && ~isnan(month)
-        daylightData = daylightDataList.(country);
+        daylightData = table2array(weatherData.daylightHours(strcmp(string(weatherData.daylightHours.Country),country), 2:end));
+        daylightData = repmat(daylightData, [1 2]);
         daylightData = daylightData(relevantMonths);
         daylightData([1,end]) = 0.5*daylightData([1,end]);
         data.all.daylightHours(ptpt) = sum(daylightData) / (length(daylightData)-1);

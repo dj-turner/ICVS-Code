@@ -20,6 +20,10 @@ ptptIdTbl = ptptIdTbl(:,varOrder);
 keyTbl = readtable("KeyData.xlsx");
 keyTbl = convertvars(keyTbl, ["Type", "Category"], 'string');
 
+%% Genetics Data
+geneTbl = readtable("GeneticsData.xlsx");
+geneTbl = convertvars(geneTbl, ["OPN1LWExon3", "ptptID", "OPN1LW180Prediction"], 'string');
+
 %% Possible var names
 taskNames = ["RLM_Leo", "HFP_Leo", "RLM_Anom", "HFP_Uno"];
 
@@ -29,9 +33,9 @@ monthNs = struct;
 seasonMeans = struct;
 seasonNs = struct;
 
-dataVars = ["study", "ptptID", "sex", "age", "month", "year", "ethnicity", "country", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev"];
+dataVars = ["study", "ptptID", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev"];
 numVars = ["age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
-strVars = ["study", "ptptID", "sex", "country", "leoDev"];
+strVars = ["study", "ptptID", "sex", "country", "geneOpsin", "leoDev"];
 
 %% Allie's data
 aData = load("data-A.mat"); aData = aData.hfpTable;
@@ -47,6 +51,7 @@ rg1 = NaN;
 rg2 = NaN;
 rg3 = NaN;
 country = "";
+geneOpsin = "";
 leoDev = "n/a";
 
 for ptpt = 1:height(aData)
@@ -62,7 +67,7 @@ for ptpt = 1:height(aData)
         if ~isempty(dob), year = str2double(dob(end-3:end)); else, year = NaN; end
         ethnicity = table2array(aDataDemo(idx1,"Ethnicity"));
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
-        data.Allie(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+        data.Allie(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -105,11 +110,13 @@ for ptpt = 1:length(ptptIDs)
             age = studyYear - year; if month > studyMonth, age = age - 1; end
         end
         ethnicity = ptptData.Ethnicity;
+        geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
+        if ~isempty(geneRow), geneOpsin = geneTbl(geneRow,"OPN1LW180Prediction"); else, geneOpsin = ""; end
         rg1 = ptptData.RLM_Red_1 / ptptData.RLM_Green_1;
         rg2 = ptptData.HFP_Leo_Red_1 ./ ptptData.HFP_Leo_Green_1;
         rg3 = ptptData.RLM_MixLight_1;
         rg4 = ptptData.HFP_Uno_Red_1 ./ 1024;
-        data.Dana(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+        data.Dana(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -154,12 +161,13 @@ for ptpt = 1:length(ptptIDs)
             end
             ethnicity = ptptData.Ethnicity(1);
             country = string(ptptData.("Country of Birth")(1));
-            
+            geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
+            if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
             ptptValueData = mean(ptptData(2:end,["RLM_Red","RLM_Green","HFP_RedValue","HFP_GreenValue"]),1,"omitmissing");
             rg1 = ptptValueData.RLM_Red ./ ptptValueData.RLM_Green;
             rg2 = ptptValueData.HFP_RedValue ./ ptptValueData.HFP_GreenValue;
 
-            data.Josh(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+            data.Josh(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
         end
     end
 end
@@ -217,6 +225,8 @@ for ptpt = 3:length(ptptIDs)
             ethnicity = ptptDataDemo.Ethnicity;
             country = string(ptptDataDemo.CountryOfBirth);
         end
+        geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
+        if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
 
         idx = strcmp(string(mDataRLM.ParticipantCode),ptptID)...
               & strcmp(string(mDataRLM.MatchType), "Best")...
@@ -238,7 +248,7 @@ for ptpt = 3:length(ptptIDs)
               & mDataHFP.trialNum > 1;
         ptptDataHFP = table2array(mean(mDataHFP(idx,"meanTestAmpSetting")));
         rg4 = ptptDataHFP ./ 1024;
-        data.Mitch(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, rg1, rg2, rg3, rg4, leoDev];
+        data.Mitch(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -332,5 +342,8 @@ for task = 1:height(combTasks)
 end
 
 CalculateWeatherData;
+
+%% Genetics Data
+
 
 end

@@ -8,7 +8,7 @@ addpath('data\'); addpath('data\dataHFP-MT');
 %% load data
 % studyPriorityOrder = ["Allie", "Dana", "Josh", "Mitch"];
 studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
-monthTimeFrame = 6;
+monthTimeFrame = 8;
 LoadData_old; 
 
 load(strcat('C:\Users\', getenv('USERNAME'), '\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Analysis\Calculating_LM_ratio\My code\LMratioData.mat'));
@@ -38,10 +38,10 @@ modelVars.day = ["foveaDensityL",...
 % modelVars.irr_area = ["foveaDensityL",... 
 %                  "sex", "ethnicGroup", "RLM_Leo_RG", "irradiance_area"];
 
-validcats.ethnicGroup = ["asian", "mixed-wa", "white", "mixed-o"]; %, 
+validcats.ethnicGroup = ["white", "asian"]; %, 
 %validcats.devCombRLM = ["leo_y", "leo_g"];
 %validcats.country = "UK";
-validcats.country = ["UK", "China"];
+%validcats.country = ["UK", "China"];
 %validcats.year = [1980 2023];
 %validcats.season = ["summer", "autumn", "winter", "spring"];
 %validcats.devCombHFP = ["uno", "leo_y"];
