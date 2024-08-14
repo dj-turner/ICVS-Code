@@ -1,135 +1,161 @@
-clc; clear; close;
+%%
+clc; clear; close all;
 
-% Define variables
-hfpVar = "HFP_Uno_Red_Mean";
-graphDim = [4,4];
+% sarah's thesis have a reference: work out cone density X
+% radiance not luminance!
+% use LED curve instead of rLumMax, etc.
 
 % Load data
-wavelengths = (400:5:700)';
-data = struct; 
+warning('off','MATLAB:table:ModifiedAndSavedVarnames')
+data = LoadData;
+warning('on','MATLAB:table:ModifiedAndSavedVarnames')
+dataTbl = data.all;
 
-dataTbl = readtable("Data-Pt1.2.xlsx", "Sheet", "MATLAB_Data", "VariableNamingRule", "preserve");
+%%
+% Make new variable to store LM ratio value in
+newVars = ["aVal", "conePercentL", "conePercentM", "foveaDensityL", "foveaDensityM"];
+for var = 1:length(newVars), dataTbl.(newVars(var)) = nan(height(dataTbl), 1); end
 
-% lumFunc = readtable("tables\linCIE2008v2e_5.csv");
-% lumFunc.Properties.VariableNames = ["Wavelength", "Vlambda"];
-% lumFunc = lumFunc(lumFunc.Wavelength >= min(wavelengths) & lumFunc.Wavelength <= max(wavelengths), :);
+% Sets default age to the rounded mean age, for ptpts where we don't have age data
+defaultAge = round(mean(dataTbl.age,'omitmissing'));
 
-PPno = max(table2array(dataTbl(:,"PPno")));
-PPcodes = [(1:PPno)', unique(string(table2array(dataTbl(:,"PPcode"))), 'stable')];
+% Device values
+deviceVals = LoadDeviceValues; 
 
-dataTbl.PPcode = [];
+%%
 
-% Calculate best match means for each participant
-meanTbl = zeros(PPno, width(dataTbl));
+% Cone Fundamentals and Cone Ratios
+coneFuns = struct;
 
-for ptpt = 1:PPno
-    idx = dataTbl.PPno == ptpt & dataTbl.Match_Type == 1;
-    meanTbl(ptpt,:) = mean(table2array(dataTbl(idx,:)), 1);
+% Calculating cone ratio for each ptpt
+for ptpt = 1:height(dataTbl)
+    
+    % If the participant didn't do a HFP task, skips and continues to next ptpt
+    if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
+
+    % Extract participant code
+    ptptID = dataTbl.ptptID(ptpt);
+    
+    % pulls age, defaults it or rounds it appropriately
+    ptptAge = dataTbl.age(ptpt);
+    if isnan(ptptAge), ptptAge = defaultAge; elseif ptptAge < 20, ptptAge = 20; elseif ptptAge > 80, ptptAge = 80; end
+
+    % pulls Rayleigh match data
+    rlmVals = [dataTbl.rlmRed(ptpt), dataTbl.rlmGreen(ptpt), dataTbl.rlmYellow(ptpt)];
+    rlmDev = dataTbl.leoDev(ptpt);
+
+    % use participant's age to estimate cone fundamentals (small pupil)
+    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 1, normalisation = "area",...
+        rlmRGY = rlmVals, rlmDevice = rlmDev);
+
+    % pulls device name to look up values
+    hfpDev = dataTbl.devCombHFP(ptpt);
+
+    % Allie's code to calculate a
+    aVal = FindLMratio(deviceVals.(hfpDev).rLumMax, deviceVals.(hfpDev).gLumMax,...
+        deviceVals.(hfpDev).rLambda, deviceVals.(hfpDev).gLambda, coneFuns.(ptptID).wavelengths,...
+        coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
+
+    % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
+    [conePercent, foveaDensity] = FindConePercentagesAndDensities(aVal);
+    
+    % save values to data table
+    dataTbl.aVal(ptpt) = aVal;
+    dataTbl.conePercentL(ptpt) = conePercent.l;
+    dataTbl.conePercentM(ptpt) = conePercent.m;
+    dataTbl.foveaDensityL(ptpt) = foveaDensity.l;
+    dataTbl.foveaDensityM(ptpt) = foveaDensity.m;
 end
 
-meanTbl = array2table(meanTbl, "VariableNames", dataTbl.Properties.VariableNames);
+save("LMratioData.mat", "dataTbl");
+%%
+idx = dataTbl.aVal>0 & dataTbl.aVal <=5;
+validAVals = dataTbl.aVal(idx);
+percentValid = round(100 * (numel(validAVals) / numel(dataTbl.aVal)),1);
+histogram(validAVals,'BinWidth',.2)
 
-% Remove ptpts that didnt do Uno HFP
-idx = ~isnan(meanTbl.(hfpVar));
-meanTbl = meanTbl(idx,:);
-PPcodes = PPcodes(idx,:);
-PPno = height(meanTbl);
+%%
+% Display mean cone ratio in sample (would expect a value of around 2!)
+disp(dataTbl(:,["ptptID", "devCombHFP", "combHFP", "aVal", "conePercentL", "conePercentM"]));
 
-% Calculate cone fundamentals for each participant
-for ptpt = 1:PPno
-    age = table2array(meanTbl(ptpt, "Age_HFP"));
-    if age < 20
-        age = 20;
-    elseif age > 80
-        age = 80;
-    end
-    coneFunArray = ConeFundamentals(age, 2, "default", "no");
-    data.(PPcodes(ptpt,2)).coneFun = array2table([wavelengths, coneFunArray], "VariableNames", ["Wavelength", "L", "M", "S"]);
+%%
+function devVals = LoadDeviceValues
+% Conversion constant: full width half maximum to standard deviation
+fwhm2stddev = 1 / 2.35482004503;
+wavelengths = 400:5:700;
+% Device value stucture
+devVals = struct;
+    % Lab-based device (from Allie's values)
+    devVals.uno.gLumMax = 594.3295;
+    devVals.uno.rLumMax = 962.7570;
+    devVals.uno.gLambda = 545;
+    devVals.uno.rLambda = 630;
+    devVals.uno.rRadMin = 10 ^ 2.39;
+    devVals.uno.rRadMax = 10 ^ 2.99;
+    devVals.uno.rRadStd = 10 * fwhm2stddev;
+    devVals.uno.gRadMin = 10 ^ 2.77;
+    devVals.uno.gRadMax = devVals.uno.gRadMin;
+    devVals.uno.gRadStd = 10 * fwhm2stddev;
+    devVals.uno.rMaxGaussian = normpdf(wavelengths, devVals.uno.rLambda, devVals.uno.rRadStd);
+    devVals.uno.gMaxGaussian = normpdf(wavelengths, devVals.uno.gLambda, devVals.uno.gRadStd);
+    % Yellow Arduino device (from Josh's calibration results)
+    devVals.yellow.gLumMax = 54.92;
+    devVals.yellow.rLumMax = 168.6;
+    devVals.yellow.gLambda = 542;
+    devVals.yellow.rLambda = 626;
+    devVals.yellow.rRadMin = NaN;
+    devVals.yellow.rRadMax = NaN;
+    devVals.yellow.rRadStd = NaN;
+    devVals.yellow.gRadMin = NaN;
+    devVals.yellow.gRadMax = NaN;
+    devVals.yellow.gRadStd = NaN;
+    % Green Arduino Device (from Mitch's calibration results)
+    devVals.green.gLumMax = NaN;
+    devVals.green.rLumMax = NaN;
+    devVals.green.gLambda = NaN;
+    devVals.green.rLambda = NaN;
+    devVals.green.rRadMin = NaN;
+    devVals.green.rRadMax = NaN;
+    devVals.green.rRadStd = NaN;
+    devVals.green.gRadMin = NaN;
+    devVals.green.gRadMax = NaN;
+    devVals.green.gRadStd = NaN;
 end
 
-% Constants from Allie's thesis
-redMinTrolansPower = 10 ^ 2.39;
-redMaxTrolansPower = 10 ^ 2.99;
-redPeakWavelength = 630;
-redFWHM = 10;
+%%
+% ALLIE'S FUNCTION
+function a = FindLMratio(rLumMax, gLumMax, rLambda, gLambda, lambdas, lSS, mSS, rgSetting)
+% specify rSetting
+% derive a that would have produced a luminance match
+stepSize = lambdas(2)-lambdas(1);
+rLambda = round(rLambda/stepSize)*stepSize;
+gLambda = round(gLambda/stepSize)*stepSize;
 
-greenMaxTrolansPower = 10 ^ 2.77; 
-greenPeakWavelength = 545;
-greenFWHM = 10;
+VFss = (1.980647 .* lSS + mSS);
 
-% Full width half maximum to SD conversion
-fwhm2sigma = 1 / 2.35482004503;
+sensToRFromM = rgSetting.*mSS(lambdas == rLambda).*rLumMax.*VFss(lambdas == gLambda);
+sensToGFromM = mSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
+sensToGFromL = lSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
+sensToRFromL = rgSetting.*lSS(lambdas==rLambda).*rLumMax.*VFss(lambdas == gLambda);
 
-% Generating normalised LED gaussian curves
-redGaussian = normpdf(wavelengths, redPeakWavelength, (redFWHM * fwhm2sigma));
-redGaussian = (redGaussian - min(redGaussian)) ./ max(redGaussian);
-greenGaussian = normpdf(wavelengths, greenPeakWavelength, (greenFWHM * fwhm2sigma));
-greenGaussian = (greenGaussian - min(greenGaussian)) ./ max(greenGaussian);
-
-% Convert raw HFP Uno data to trolans
-fig = 0;
-
-for ptpt = 1:PPno
-    rawValue = table2array(meanTbl(ptpt, hfpVar)) / 1024;
-    data.(PPcodes(ptpt,2)).redSetting = rawValue;
-
-    redTrolans = redPeakWavelength * redMaxTrolansPower;
-    greenTrolans = greenPeakWavelength * greenMaxTrolansPower;
-
-    data.(PPcodes(ptpt,2)).trolans.red = redTrolans;
-    data.(PPcodes(ptpt,2)).trolans.green = greenTrolans;
-    data.(PPcodes(ptpt,2)).trolans.rg_ratio = redTrolans / greenTrolans;
-    
-    % Scale red LED gaussian curve using ptpt's mean settings
-    redGaussianPtpt = redGaussian;
-    greenGaussianPtpt = greenGaussian;
-    
-    % Store variables
-    l = table2array(data.(PPcodes(ptpt,2)).coneFun(:,"L"))';
-    m = table2array(data.(PPcodes(ptpt,2)).coneFun(:,"M"))';
-    R = redGaussianPtpt';
-    G = greenGaussianPtpt';
-
-    vLambda = (1.980647 .* l + m);
-
-    % Use trapezium method to find area under both curves
-    lR = trapz(wavelengths, min([l; R])) * redMaxTrolansPower * vLambda(wavelengths == greenPeakWavelength) * data.(PPcodes(ptpt, 2)).redSetting;
-    lG = trapz(wavelengths, min([l; G])) * greenMaxTrolansPower * vLambda(wavelengths == redPeakWavelength);
-    mR = trapz(wavelengths, min([m; R])) * redMaxTrolansPower * vLambda(wavelengths == greenPeakWavelength) * data.(PPcodes(ptpt, 2)).redSetting;
-    mG = trapz(wavelengths, min([m; G])) * greenMaxTrolansPower * vLambda(wavelengths == greenPeakWavelength);
-    
-    data.(PPcodes(ptpt, 2)).sens.lR = lR;
-    data.(PPcodes(ptpt, 2)).sens.lG = lG;
-    data.(PPcodes(ptpt, 2)).sens.mR = mR;
-    data.(PPcodes(ptpt, 2)).sens.mG = mG;
-
-    % Calculate L:M ratio
-    LM_ratio = (mG - mR) / (lR - lG);
-    data.(PPcodes(ptpt,2)).LM_ratio = LM_ratio;
-
-    disp(strjoin(["(", PPcodes(ptpt,1), ") " PPcodes(ptpt,2), " = ", sprintfc('%0.2f', LM_ratio), ":1"],''));
-
-    %Graph
-    if rem(ptpt,prod(graphDim)) == 1
-        fig = fig + 1;
-        figure(fig);
-        tiledlayout(graphDim(1), graphDim(2));
-    end
-    nexttile
-    hold on
-    plot(wavelengths, R, "Color", 'r');
-    plot(wavelengths, G, "Color", 'g');
-    plot(wavelengths, l, "Color", 'r');
-    plot(wavelengths, m, "Color", 'g');
-
-    plot(wavelengths, min([l;R]), "LineStyle", "--", "Color", "k");
-    plot(wavelengths, min([l;G]), "LineStyle", "--", "Color", "k");
-    plot(wavelengths, min([m;R]), "LineStyle", "--", "Color", "k");
-    plot(wavelengths, min([m;G]), "LineStyle", "--", "Color", "k");
-    
-    xlabel("Wavelength")
-    ylabel("Relative Values")
-    title(strjoin(["(", PPcodes(ptpt,1), ") ", PPcodes(ptpt,2)],''))
-    text(650, max([R; G], [], "all"), strjoin([sprintfc('%0.2f', LM_ratio), ":1"],''));
-    hold off    
+a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
 end
+
+%%
+function [cPercent, cDensity] = FindConePercentagesAndDensities(a)
+cPercent = struct;
+cPercent.s = .05;
+cPercent.l = (a/(a+1))*(1-cPercent.s);
+cPercent.m = (1/(a+1))*(1-cPercent.s);
+
+% From Sarah Regan's DPhil Thesis:
+% "This can be calculated for an observer by taking a published estimate 
+% of foveal cone density (168,162 cones/mm2)
+% (Zhang, Godara, Blanco, Griffin, Wang, Curcio & Zhang, 2015)"
+foveaConeDensityZhang = 168162;
+cDensity = struct;
+cDensity.l = cPercent.l * foveaConeDensityZhang;
+cDensity.m = cPercent.m * foveaConeDensityZhang;
+cDensity.s = cPercent.s * foveaConeDensityZhang;
+end
+

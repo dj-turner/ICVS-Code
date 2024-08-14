@@ -33,8 +33,8 @@ monthNs = struct;
 seasonMeans = struct;
 seasonNs = struct;
 
-dataVars = ["study", "ptptID", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev", "rlmRed", "rlmGreen", "rlmYellow"];
-numVars = ["age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow"];
+dataVars = ["study", "ptptID", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev"];
+numVars = ["age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG"];
 strVars = ["study", "ptptID", "sex", "country", "geneOpsin", "leoDev"];
 
 %% Allie's data
@@ -53,9 +53,6 @@ rg3 = NaN;
 country = "";
 geneOpsin = "";
 leoDev = "n/a";
-r = NaN;
-g = NaN;
-y = NaN;
 
 for ptpt = 1:height(aData)
     donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
@@ -70,7 +67,7 @@ for ptpt = 1:height(aData)
         if ~isempty(dob), year = str2double(dob(end-3:end)); else, year = NaN; end
         ethnicity = table2array(aDataDemo(idx1,"Ethnicity"));
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
-        data.Allie(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev, r, g, y];
+        data.Allie(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -87,7 +84,7 @@ ptptIDs = unique(string(dData.PPcode));
 data.Dana = strings(length(ptptIDs), length(dataVars));
 
 country = "";
-leoDev = "yellow";
+leoDev = "y";
 
 for ptpt = 1:length(ptptIDs)
     donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
@@ -119,10 +116,7 @@ for ptpt = 1:length(ptptIDs)
         rg2 = ptptData.HFP_Leo_Red_1 ./ ptptData.HFP_Leo_Green_1;
         rg3 = ptptData.RLM_MixLight_1;
         rg4 = ptptData.HFP_Uno_Red_1 ./ 1024;
-        r = ptptData.RLM_Red_1;
-        g = ptptData.RLM_Green_1;
-        y = ptptData.RLM_Yellow_1;
-        data.Dana(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev, r, g, y];
+        data.Dana(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -143,7 +137,7 @@ data.Josh = strings(length(ptptIDs), length(dataVars));
 study = "J";
 rg3 = NaN;
 rg4 = NaN;
-leoDev = "yellow";
+leoDev = "y";
 
 for ptpt = 1:length(ptptIDs)
     donePreviousStudy = CheckPreviousParticipation(ptptIDs(ptpt), ptptIdTbl);
@@ -169,13 +163,11 @@ for ptpt = 1:length(ptptIDs)
             country = string(ptptData.("Country of Birth")(1));
             geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
             if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
-            ptptValueData = mean(ptptData(2:end,["RLM_Red","RLM_Green","RLM_Yellow","HFP_RedValue","HFP_GreenValue"]),1,"omitmissing");
+            ptptValueData = mean(ptptData(2:end,["RLM_Red","RLM_Green","HFP_RedValue","HFP_GreenValue"]),1,"omitmissing");
             rg1 = ptptValueData.RLM_Red ./ ptptValueData.RLM_Green;
             rg2 = ptptValueData.HFP_RedValue ./ ptptValueData.HFP_GreenValue;
-            r = ptptValueData.RLM_Red;
-            g = ptptValueData.RLM_Green;
-            y = ptptValueData.RLM_Yellow;
-            data.Josh(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev, r, g, y];
+
+            data.Josh(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
         end
     end
 end
@@ -218,7 +210,7 @@ data.Mitch = strings(length(ptptIDs), length(dataVars));
 study = "M";
 rg2 = NaN;
 rg3 = NaN;
-leoDev = "green";
+leoDev = "g";
 
 for ptpt = 3:length(ptptIDs)
     ptptID = ptptIDs(ptpt);
@@ -239,7 +231,7 @@ for ptpt = 3:length(ptptIDs)
         idx = strcmp(string(mDataRLM.ParticipantCode),ptptID)...
               & strcmp(string(mDataRLM.MatchType), "Best")...
               & mDataRLM.Trial > 1;
-        ptptDataRLM = mean(mDataRLM(idx,["Red","Green","Yellow"]),1);
+        ptptDataRLM = mean(mDataRLM(idx,["Red","Green"]),1);
         rg1 = ptptDataRLM.Red ./ ptptDataRLM.Green;
 
         studyMonth = table2array(mDataRLM(idx,"DateTime"));
@@ -256,10 +248,7 @@ for ptpt = 3:length(ptptIDs)
               & mDataHFP.trialNum > 1;
         ptptDataHFP = table2array(mean(mDataHFP(idx,"meanTestAmpSetting")));
         rg4 = ptptDataHFP ./ 1024;
-        r = ptptDataRLM.Red;
-        g = ptptDataRLM.Green;
-        y = ptptDataRLM.Yellow;
-        data.Mitch(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev, r, g, y];
+        data.Mitch(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev];
     end
 end
 
@@ -341,7 +330,7 @@ for task = 1:height(combTasks)
         data.all.(combVar)(idx) = data.all.(varName)(idx);
         devName = lower(combTasks(task,var));
         if strcmp(devName, "leo")
-            data.all.(devCombVar)(idx) = data.all.leoDev(idx);
+            data.all.(devCombVar)(idx) = strcat(devName, "_", data.all.leoDev(idx));
         else
             data.all.(devCombVar)(idx) = devName;
         end
@@ -353,6 +342,8 @@ for task = 1:height(combTasks)
 end
 
 CalculateWeatherData;
+
+%% Genetics Data
 
 
 end
