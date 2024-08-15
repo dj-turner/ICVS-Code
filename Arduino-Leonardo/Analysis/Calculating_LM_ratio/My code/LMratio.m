@@ -2,8 +2,12 @@
 clc; clear; close all;
 
 % sarah's thesis have a reference: work out cone density X
+% add RLM to cone funs X
 % radiance not luminance!
 % use LED curve instead of rLumMax, etc.
+
+% Set valid aVal Range
+validAValRange = [0,5];
 
 % Load data
 warning('off','MATLAB:table:ModifiedAndSavedVarnames')
@@ -18,9 +22,6 @@ for var = 1:length(newVars), dataTbl.(newVars(var)) = nan(height(dataTbl), 1); e
 
 % Sets default age to the rounded mean age, for ptpts where we don't have age data
 defaultAge = round(mean(dataTbl.age,'omitmissing'));
-
-% Device values
-deviceVals = LoadDeviceValues; 
 
 %%
 
@@ -52,9 +53,18 @@ for ptpt = 1:height(dataTbl)
     hfpDev = dataTbl.devCombHFP(ptpt);
 
     % Allie's code to calculate a
-    aVal = FindLMratio(deviceVals.(hfpDev).rLumMax, deviceVals.(hfpDev).gLumMax,...
-        deviceVals.(hfpDev).rLambda, deviceVals.(hfpDev).gLambda, coneFuns.(ptptID).wavelengths,...
+    deviceVals = LoadDeviceValues;
+    aVal = FindLMratioAllie(deviceVals.(hfpDev).r.LumMax, deviceVals.(hfpDev).g.LumMax,...
+        deviceVals.(hfpDev).r.Lambda, deviceVals.(hfpDev).g.Lambda, coneFuns.(ptptID).wavelengths,...
         coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
+
+    % My code to calculate a (NOT WORKING YET...)
+    if strcmp(dataTbl.devCombHFP(ptpt),"uno")
+        aValDana = FindLMratioDana(coneFuns.(ptptID),... 
+            [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],... 
+            dataTbl.devCombHFP(ptpt));
+        disp("aValAllie = " + aVal + ", aValDana = " +aValDana);
+    end
 
     % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
     [conePercent, foveaDensity] = FindConePercentagesAndDensities(aVal);
@@ -69,62 +79,23 @@ end
 
 save("LMratioData.mat", "dataTbl");
 %%
-idx = dataTbl.aVal>0 & dataTbl.aVal <=5;
+idx = dataTbl.aVal > validAValRange(1) & dataTbl.aVal <= validAValRange(2);
 validAVals = dataTbl.aVal(idx);
+invalidAVals = dataTbl.aVal(~idx);
 percentValid = round(100 * (numel(validAVals) / numel(dataTbl.aVal)),1);
+validDataTbl = dataTbl(idx,:);
+
+disp(percentValid + "% valid")
+disp("Mean(a) = " + mean(validAVals) + ", Std(a) = " + std(validAVals));
+
 histogram(validAVals,'BinWidth',.2)
 
 %%
 % Display mean cone ratio in sample (would expect a value of around 2!)
-disp(dataTbl(:,["ptptID", "devCombHFP", "combHFP", "aVal", "conePercentL", "conePercentM"]));
+% disp(dataTbl(:,["ptptID", "devCombHFP", "combHFP", "aVal", "conePercentL", "conePercentM"]));
 
-%%
-function devVals = LoadDeviceValues
-% Conversion constant: full width half maximum to standard deviation
-fwhm2stddev = 1 / 2.35482004503;
-wavelengths = 400:5:700;
-% Device value stucture
-devVals = struct;
-    % Lab-based device (from Allie's values)
-    devVals.uno.gLumMax = 594.3295;
-    devVals.uno.rLumMax = 962.7570;
-    devVals.uno.gLambda = 545;
-    devVals.uno.rLambda = 630;
-    devVals.uno.rRadMin = 10 ^ 2.39;
-    devVals.uno.rRadMax = 10 ^ 2.99;
-    devVals.uno.rRadStd = 10 * fwhm2stddev;
-    devVals.uno.gRadMin = 10 ^ 2.77;
-    devVals.uno.gRadMax = devVals.uno.gRadMin;
-    devVals.uno.gRadStd = 10 * fwhm2stddev;
-    devVals.uno.rMaxGaussian = normpdf(wavelengths, devVals.uno.rLambda, devVals.uno.rRadStd);
-    devVals.uno.gMaxGaussian = normpdf(wavelengths, devVals.uno.gLambda, devVals.uno.gRadStd);
-    % Yellow Arduino device (from Josh's calibration results)
-    devVals.yellow.gLumMax = 54.92;
-    devVals.yellow.rLumMax = 168.6;
-    devVals.yellow.gLambda = 542;
-    devVals.yellow.rLambda = 626;
-    devVals.yellow.rRadMin = NaN;
-    devVals.yellow.rRadMax = NaN;
-    devVals.yellow.rRadStd = NaN;
-    devVals.yellow.gRadMin = NaN;
-    devVals.yellow.gRadMax = NaN;
-    devVals.yellow.gRadStd = NaN;
-    % Green Arduino Device (from Mitch's calibration results)
-    devVals.green.gLumMax = NaN;
-    devVals.green.rLumMax = NaN;
-    devVals.green.gLambda = NaN;
-    devVals.green.rLambda = NaN;
-    devVals.green.rRadMin = NaN;
-    devVals.green.rRadMax = NaN;
-    devVals.green.rRadStd = NaN;
-    devVals.green.gRadMin = NaN;
-    devVals.green.gRadMax = NaN;
-    devVals.green.gRadStd = NaN;
-end
-
-%%
-% ALLIE'S FUNCTION
-function a = FindLMratio(rLumMax, gLumMax, rLambda, gLambda, lambdas, lSS, mSS, rgSetting)
+%% ALLIE'S FUNCTION
+function a = FindLMratioAllie(rLumMax, gLumMax, rLambda, gLambda, lambdas, lSS, mSS, rgSetting)
 % specify rSetting
 % derive a that would have produced a luminance match
 stepSize = lambdas(2)-lambdas(1);
@@ -139,6 +110,26 @@ sensToGFromL = lSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
 sensToRFromL = rgSetting.*lSS(lambdas==rLambda).*rLumMax.*VFss(lambdas == gLambda);
 
 a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
+end
+
+%% MY FUNCTION
+function a = FindLMratioDana(coneFuns, hfpRG, hfpDevice)
+% Load device values
+devCal = LoadDeviceValues; devCal = devCal.(hfpDevice);
+% VFss
+VFss = 1.980647 .* coneFuns.lCones + coneFuns.mCones;
+
+hfpRad_r = hfpRG(1) .* (devCal.r.RadMax - devCal.r.RadMin) + devCal.r.RadMin;
+hfpRad_g = hfpRG(2) .* (devCal.g.RadMax - devCal.g.RadMin) + devCal.g.RadMin;
+
+% Sens to LED from cone
+rL = hfpRad_r .* devCal.r.Spd .* coneFuns.lCones .* VFss;
+gL = hfpRad_g .* devCal.g.Spd .* coneFuns.lCones .* VFss;
+rM = hfpRad_r .* devCal.r.Spd .* coneFuns.mCones .* VFss;
+gM = hfpRad_g .* devCal.g.Spd .* coneFuns.mCones .* VFss;
+
+a = sum(rM) - sum(gM) ./ sum(gL) - sum(rL);
+
 end
 
 %%

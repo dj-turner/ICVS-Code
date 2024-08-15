@@ -17,20 +17,7 @@ unnormalisedSpectAbs = spectAbs;
 spectAbs = CurveNormalisation(spectAbs,"height");
 
 %% LOAD DEVICE CALIBRATION DATA
-% load calibration data
-addpath("data\");
-calTbl = load("CalibrationResults.mat");
-calTbl = calTbl.calibrationTable;
-
-% save most recent SPD data from the correct device and max. device setting in a structure
-primarySpds = struct;
-for led = 1:length(LEDs)
-    idx = strcmpi(calTbl.Device, device+" band") & calTbl.InputValue == 255 & calTbl.LED == LEDs(led);
-    ledTbl = calTbl(idx,:);
-    ledVals = table2array(ledTbl(end,"LambdaSpectrum"))';
-    wvlVals = table2array(ledTbl(end,"Lambdas"))';
-    primarySpds.(LEDs(led)) = ledVals(ismember(wvlVals,wvls));
-end
+primarySpds = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
 
 %% TESTING SHIFTED L-CONES
 lConeSpectAbsFits = NaN(testNum,1);
@@ -47,12 +34,12 @@ if strcmp(graphs,"yes")
 end
 for i = 1:testNum
     % Shifting the l-cone
-    testExpLSpectAbs = (pchip(wvls+testInts(i),spectAbs(:,1),wvls))';
+    testLSpectAbs = (pchip(wvls+testInts(i),spectAbs(:,1),wvls))';
     for led = 1:length(LEDs)
         % Thomas and mollon method for predictin excictation to l- and M-
         % cones caused by each LED
         auc.(LEDsChar(led)) = primarySpds.(LEDs(led)) .* rgy(led)... 
-            .* spectAbs(:,2) .* testExpLSpectAbs;
+            .* spectAbs(:,2) .* testLSpectAbs;
     end
     % Total excitation values
     valY = sum(auc.Y);
@@ -63,7 +50,7 @@ for i = 1:testNum
     % Plotting shifted L-cone curve on a plot
     if strcmp(graphs,"yes")
         hold on
-        plot(wvls,testExpLSpectAbs,'LineWidth',1,'Color',[0 1 1 .3])
+        plot(wvls,testLSpectAbs,'LineWidth',1,'Color',[0 1 1 .3])
         hold off
     end
 end
@@ -102,6 +89,5 @@ if strcmp(graphs,"yes")
     legend(lgdlabs,'Location','northeastoutside','TextColor','w','FontSize',12);
     hold off
 end
-
 
 end

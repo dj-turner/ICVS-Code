@@ -172,7 +172,7 @@ if strcmp(parameterStruct.graphs,"yes")
     hold off
     NiceGraphs
     lgdLabs = ["L-cone", "M-cone", "S-cone", "Unadj. L-Cone"];
-    legend(lgdLabs(1:width(coneFunTbl)),'Location','northeast','TextColor','w','FontSize',30);
+    legend(lgdLabs(1:width(coneFunTbl)),'Location','northeastoutside','TextColor','w','FontSize',30);
 elseif ~strcmp(parameterStruct.graphs,"no")
     disp("Graphs must be set as ""yes"" or ""no""!");
     disp("For this run, I'll assume you don't want graphs.");
