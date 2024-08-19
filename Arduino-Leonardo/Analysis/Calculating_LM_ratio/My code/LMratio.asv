@@ -116,6 +116,8 @@ end
 %% MY FUNCTION
 function a = FindLMratioDana(coneFuns, hfpRG, devVals, graphs)
 
+leds = ['']
+
 % VFss
 VFss = 1.980647 .* coneFuns.lCones + coneFuns.mCones;
 
