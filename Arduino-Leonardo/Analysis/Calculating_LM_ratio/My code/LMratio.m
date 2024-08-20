@@ -24,12 +24,11 @@ dataTbl = data.all;
 defaultAge = round(mean(dataTbl.age,'omitmissing'));
 
 %%
-
-% Cone Fundamentals and Cone Ratios
-coneFuns = struct;
+% Load Device Values
+deviceVals = LoadDeviceValues;
 
 % Calculating cone ratio for each ptpt
-for ptpt = 1%:height(dataTbl)
+for ptpt = 1:height(dataTbl)
     
     % If the participant didn't do a HFP task, skips and continues to next ptpt
     if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
@@ -53,15 +52,18 @@ for ptpt = 1%:height(dataTbl)
     hfpDev = dataTbl.devCombHFP(ptpt);
 
     % Allie's code to calculate a
-    deviceVals = LoadDeviceValues;
     aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.LumMax, deviceVals.(hfpDev).g.LumMax,...
         deviceVals.(hfpDev).r.Lambda, deviceVals.(hfpDev).g.Lambda, coneFuns.(ptptID).wavelengths,...
         coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
 
     % My code to calculate a (NOT WORKING YET...)
+    if ptpt == 1, graphs = "yes"; else, graphs = "no"; end
+
     aValDana = FindLMratioDana(coneFuns.(ptptID),... 
         [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],... 
-         deviceVals.(hfpDev), "yes");
+         deviceVals.(hfpDev),... 
+         graphs);
+
     %disp("aValAllie = " + aVal + ", aValDana = " +aValDana);
 
     % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
@@ -77,6 +79,9 @@ for ptpt = 1%:height(dataTbl)
 end
 
 save("LMratioData.mat", "dataTbl");
+
+aVals = [dataTbl.ptptID, dataTbl.aValAllie, dataTbl.aValDana, dataTbl.hfpRed, dataTbl.hfpGreen];
+disp(aVals);
 %%
 idx = dataTbl.aValAllie > validAValRange(1) & dataTbl.aValAllie <= validAValRange(2);
 validAVals = dataTbl.aValAllie(idx);
@@ -84,10 +89,22 @@ invalidAVals = dataTbl.aValAllie(~idx);
 percentValid = round(100 * (numel(validAVals) / numel(dataTbl.aValAllie)),1);
 validDataTbl = dataTbl(idx,:);
 
-disp(percentValid + "% valid")
-disp("Mean(a) = " + mean(validAVals) + ", Std(a) = " + std(validAVals));
+%disp(percentValid + "% valid")
+%disp("Mean(a) = " + mean(validAVals) + ", Std(a) = " + std(validAVals));
 
-histogram(validAVals,'BinWidth',.2)
+% f = NewFigWindow;
+% t = tiledlayout(1,2);
+% nexttile
+% histogram(dataTbl.aValAllie,'BinWidth',.2,'EdgeColor','w','FaceColor','c');
+% title("Allie's L:M Ratio Predictions");
+% xlim([0,5]);
+% NiceGraphs(f);
+% 
+% nexttile
+% histogram(dataTbl.aValDana,'BinWidth',.2,'EdgeColor','w','FaceColor','m');
+% title("Dana's L:M Ratio Predictions");
+% xlim([0,5]);
+% NiceGraphs(f);
 
 %%
 % Display mean cone ratio in sample (would expect a value of around 2!)
@@ -111,13 +128,11 @@ sensToRFromL = rgSetting.*lSS(lambdas==rLambda).*rLumMax.*VFss(lambdas == gLambd
 %disp([sensToRFromL, sensToRFromM, sensToGFromL, sensToGFromM]);
 
 a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
+%disp("aValAllie = " + a);
 end
 
 %% MY FUNCTION
 function a = FindLMratioDana(coneFuns, hfpRG, devVals, graphs)
-
-% VFss
-VFss = 1.980647 .* coneFuns.lCones + coneFuns.mCones;
 
 hfpRad.r = hfpRG(1) .* (devVals.r.RadMax - devVals.r.RadMin) + devVals.r.RadMin;
 hfpRad.g = hfpRG(2) .* (devVals.g.RadMax - devVals.g.RadMin) + devVals.g.RadMin;
@@ -125,37 +140,38 @@ hfpRad.g = hfpRG(2) .* (devVals.g.RadMax - devVals.g.RadMin) + devVals.g.RadMin;
 spd.r = hfpRad.r .* devVals.r.Spd;
 spd.g = hfpRad.g .* devVals.g.Spd;
 
+% Sens to LED from cone
+rL = trapz(spd.r .* coneFuns.lCones);
+gL = trapz(spd.g .* coneFuns.lCones);
+rM = trapz(spd.r .* coneFuns.mCones);
+gM = trapz(spd.g .* coneFuns.mCones);
+
+a = (rM-gM)./(gL-rL);
+%disp("aValDana = " + a);
+
+%graphs
 if strcmpi(graphs, "yes")
-    x = coneFuns.wavelengths;
-    NewFigWindow;
+    f = NewFigWindow;
+
     hold on
+    title("Spectral Sensitivities");
+    x = coneFuns.wavelengths;
     xlabel("Wavelength (nm)");
 
     yyaxis left
     plot(x, coneFuns.lCones, "LineWidth", 3, "LineStyle", '-', "Color", 'r');
     plot(x, coneFuns.mCones, "LineWidth", 3, "LineStyle", '-', "Color", 'g');
-    plot(x, VFss, "LineWidth", 3, "LineStyle", '-', "Color", 'w');
     ylabel("Cone Fundamentals");
 
     yyaxis right
     plot(x, spd.r, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
     plot(x, spd.g, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
-    ylabel("LED SPDs");
+    ylabel("LEDs");
 
     hold off
-    legend(["L-Cones", "M-Cones", "VFss", "Red LED", "Green LED"]);
-    NiceGraphs;
+    l = legend(["L-Cones", "M-Cones", "Red LED", "Green LED"]);
+    NiceGraphs(f,l);
 end
-
-% Sens to LED from cone
-rL = trapz(spd.r .* coneFuns.lCones .* VFss);
-gL = trapz(spd.g .* coneFuns.lCones .* VFss);
-rM = trapz(spd.r .* coneFuns.mCones .* VFss);
-gM = trapz(spd.g .* coneFuns.mCones .* VFss);
-
-%disp([rM, gM, gL, rL]);
-
-a = (rM - gM) ./ (gL - rL);
 
 end
 

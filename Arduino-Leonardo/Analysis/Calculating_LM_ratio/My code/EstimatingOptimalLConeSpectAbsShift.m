@@ -8,7 +8,7 @@ testMaxVal = ((testNum-1)/2)*testStep;       % Max. shift to be tested
 testInts = -testMaxVal:testStep:testMaxVal;  % Array of shift values to be tested
 
 LEDs = ["red","green","yellow"];   % LEDs
-LEDsChar = ['R','G','Y'];          % Character labels for each LED
+LEDsChar = ['r','g','y'];          % Character labels for each LED
 coneCols = ['m','g','b'];
 wvls = 400:5:700;             % Wavelengths data tested
 
@@ -17,7 +17,7 @@ unnormalisedSpectAbs = spectAbs;
 spectAbs = CurveNormalisation(spectAbs,"height");
 
 %% LOAD DEVICE CALIBRATION DATA
-primarySpds = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
+[primarySpds,~] = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
 
 %% TESTING SHIFTED L-CONES
 lConeSpectAbsFits = NaN(testNum,1);
@@ -38,12 +38,12 @@ for i = 1:testNum
     for led = 1:length(LEDs)
         % Thomas and mollon method for predictin excictation to l- and M-
         % cones caused by each LED
-        auc.(LEDsChar(led)) = primarySpds.(LEDs(led)) .* rgy(led)... 
+        auc.(LEDsChar(led)) = primarySpds.(LEDsChar(led)) .* rgy(led)... 
             .* spectAbs(:,2) .* testLSpectAbs;
     end
     % Total excitation values
-    valY = sum(auc.Y);
-    valRG = sum(auc.R) + sum(auc.G);
+    valY = sum(auc.y);
+    valRG = sum(auc.r) + sum(auc.g);
     % Difference between Y excitation and R+G excitation (perfect match
     % should be 0!)
     lConeSpectAbsFits(i) = valY-valRG;

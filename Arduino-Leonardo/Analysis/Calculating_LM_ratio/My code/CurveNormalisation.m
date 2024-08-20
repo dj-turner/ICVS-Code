@@ -1,13 +1,13 @@
-function coneFuns = CurveNormalisation(coneFuns, type)
+function y = CurveNormalisation(y, type)
 
 wvls = 400:5:700;
 
 switch type
     case "none"
     case "height"
-        coneFuns = coneFuns ./ max(coneFuns);
+        y = y ./ max(y);
     case "area"
-        coneFuns = coneFuns ./ trapz(wvls, coneFuns); 
+        y = y ./ trapz(wvls, y); 
     otherwise
         error("""normalisation"" parameter must be set to ""none"", ""height"", or ""area""!");
 end
