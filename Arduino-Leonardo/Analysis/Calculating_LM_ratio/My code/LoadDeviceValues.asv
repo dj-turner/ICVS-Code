@@ -28,7 +28,7 @@ for device = 1:length(arduinoDevices)
     devVals.(d).r.LumMax = lumMax.(d).r;
     devVals.(d).g.LumMax = lumMax.(d).g;
     devVals.(d).r.Spd = ledLambda.(d).r;
-    devVals.(d).g.Spd = ledLambda.(d).g;
+    devVals.(d).g.Spd = CurveNormalisation(ledLambda.(d).g,"area");
 
     devVals.(d).r.Lambda = wavelengths(ledLambda.(d).r == max(ledLambda.(d).r));
     devVals.(d).g.Lambda = wavelengths(ledLambda.(d).g == max(ledLambda.(d).g));

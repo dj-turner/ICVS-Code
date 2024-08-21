@@ -1,5 +1,7 @@
 function data = LoadData
 
+warning('off','MATLAB:table:ModifiedAndSavedVarnames')
+
 addpath("data\");
 addpath("data\dataHFP-MT");
 addpath("scripts\");
@@ -362,5 +364,6 @@ end
 
 CalculateWeatherData;
 
+warning('on','MATLAB:table:ModifiedAndSavedVarnames');
 
 end

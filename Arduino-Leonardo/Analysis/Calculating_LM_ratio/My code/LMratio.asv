@@ -129,20 +129,11 @@ groupID.Mitch = ["M","T"];
 
 groups = string(fieldnames(groupID));
 
-cols = ['b','m','r','g'];
-
-f = NewFigWindow;
-tiledlayout(2,2);
 for group = 1:length(groups), g = groupID.(groups(group));
     idx = startsWith(aValTbl.ptptID,g);
-    groupData = aValTbl.aValDana(idx);
-    groupMeans.(groups(group)) = mean(groupData,'omitmissing');
+    groupMeans.(g) = mean(aValTbl.aValDana(idx),'omitmissing')
 
-    nexttile
-    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(group),'FaceAlpha',.25);
-    xlabel("a Value"); ylabel("Count");
-    NiceGraphs(f);
-end
+
 
 %% ALLIE'S FUNCTION
 function a = FindLMratioAllie(rLumMax, gLumMax, rLambda, gLambda, lambdas, lSS, mSS, rgSetting)

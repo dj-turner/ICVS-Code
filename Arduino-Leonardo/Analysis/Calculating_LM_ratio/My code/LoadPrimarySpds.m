@@ -15,8 +15,8 @@ for device = 1:numel(devices)
         idx = strcmpi(calTbl.Device, devices(device)+" band") & calTbl.InputValue == 255 & calTbl.LED == LEDs(led);
         ledTbl = calTbl(idx,:);
 
-        ledVals = table2array(calTbl(end,"LambdaSpectrum"))';
-        wvlVals = table2array(calTbl(end,"Lambdas"))';
+        ledVals = table2array(ledTbl(end,"LambdaSpectrum"))';
+        wvlVals = table2array(ledTbl(end,"Lambdas"))';
         primarySpds.(devices(device)).(LEDlabs(led)) = ledVals(ismember(wvlVals,wvls));
 
         maxLums.(devices(device)).(LEDlabs(led)) = ledTbl.Luminance(end);

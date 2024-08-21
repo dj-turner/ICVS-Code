@@ -146,7 +146,7 @@ coneFunTbl(isnan(coneFunTbl)) = 0;
 % end
 
 %% Normalise curves
-coneFunTbl = CurveNormalisation(coneFunTbl, parameterStruct.normalisation);
+coneFunTbl = CurveNormalisation(coneFunTbl, parameterStruct.normalisation, 1, measuredWavelengths);
 
 %% Draw graph
 if strcmp(parameterStruct.graphs,"yes")
