@@ -72,10 +72,9 @@ for r = 1:repeats
     % Initialise graphs
     % Graph window
     fig = figure('WindowState', 'minimized');
-    figNum = fig.Number;
     tiledGraph = tiledlayout(2, length(lights));
     % Calculate date and time
-    dtString = string(datetime) + " Repeat " + r;
+    dtString = string(datetime) + " (Repeat " + r + "/" + repeats + ")";
     % Reformat into valid file name
     charRep = [":", "."; "-", "."; " ", "_"];
     for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
@@ -161,36 +160,37 @@ for r = 1:repeats
         % Luminance
         % ROW 1: x = input value, y = luminance
         nexttile(light)
-        plot(levels, plotLuminance(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+        plot(levels, plotLuminance(:,light), 'Color', 'w', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
         xlim([0, max(levels)]);
         xlabel("Input Value");
         ylim([0, max(plotLuminance(:,light))]);
         ylabel("Luminance");
         title(strcat("Luminance: ", upper(lights(light))));
+        NiceGraphs(r);
     
         % Spectrum
         % ROW 2: x = wavelengths, y = spectral sensitivity at final input value
         nexttile(light + length(lights))
-        plot(plotSpectrum(1,:), plotSpectrum(2,:), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+        plot(plotSpectrum(1,:), plotSpectrum(2,:), 'Color', 'w', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
         xlim([min(plotSpectrum(1,:)), max(plotSpectrum(1,:))]);
         xlabel("Lambda (nm)");
         ylim([0, max(plotSpectrum(2,:))]);
         ylabel("Spectral Sensitivity");
         title(strcat("Spectrum: ", upper(lights(light))));
+        NiceGraphs(r);
     
         %----------------------------------------------------------------------
         % ENDING MESSAGE
         if light < length(lights)
             disp("Next light starting!..."); 
-        elseif r < repeats
-            disp("Next repeat starting!...")
+        elseif light == length(lights) && r < repeats
+            disp("Next re")
         else
-            disp("All finished!")
-        end
+            disp("All finished!"); end
     end
     
     %--------------------------------------------------------------------------
-    % SAVING GRAPHS
+    % SAVING GRAPHS & EXITING
     % maximises figure
     fig.WindowState = 'maximized';
     % saves graphs as .JPG file
@@ -199,7 +199,6 @@ for r = 1:repeats
     % generates and saves "over time" graph
     if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
 end
-
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
