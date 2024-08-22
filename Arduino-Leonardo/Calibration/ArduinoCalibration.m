@@ -1,4 +1,4 @@
-function ArduinoCalibration(repeats)
+function ArduinoCalibration
 %--------------------------------------------------------------------------
 % MATLAB RESET
 warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
@@ -64,142 +64,129 @@ while ~ismember(deviceNum, validDeviceNums)
 end
 
 %--------------------------------------------------------------------------
-% REPEAT LOOP
-if ~exist("repeats", 'var'), repeats = 1; end
-for r = 1:repeats
-    %--------------------------------------------------------------------------
-    % GRAPH SETUP
-    % Initialise graphs
-    % Graph window
-    fig = figure('WindowState', 'minimized');
-    figNum = fig.Number;
-    tiledGraph = tiledlayout(2, length(lights));
-    % Calculate date and time
-    dtString = string(datetime) + " Repeat " + r;
-    % Reformat into valid file name
-    charRep = [":", "."; "-", "."; " ", "_"];
-    for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
-    % Set device and date and time as tiled chart title
-    title(tiledGraph, deviceLabel, 'Interpreter', 'none');
-    subtitle(tiledGraph, dtString, 'Interpreter', 'none');
-    
-    %--------------------------------------------------------------------------
-    % TESTING LOOP
-    % For each of the LEDs...
-    for light = 1:length(lights)
-        %----------------------------------------------------------------------
-        % LED SETUP AND ALIGNMENT
-        % Set all light values to 0 in the LED value structure
-        for i = 1:length(lights), LEDs.(lights(i)) = 0; end
-        % Display which light we're currently calibrating
-        disp(" ");
-        disp(strcat("Current testing light: ", lights(light)));
-        % Set current test light value to max
-        LEDs.(lights(light)) = 255;
-        % Write LED values to the arduino device
+% GRAPH SETUP
+% Initialise graphs
+% Graph window
+fig = figure('WindowState', 'minimized');
+tiledGraph = tiledlayout(2, length(lights));
+% Calculate date and time
+dtString = string(datetime);
+% Reformat into valid file name
+charRep = [":", "."; "-", "."; " ", "_"];
+for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
+% Set device and date and time as tiled chart title
+title(tiledGraph, deviceLabel, 'Interpreter', 'none');
+subtitle(tiledGraph, dtString, 'Interpreter', 'none');
+
+%--------------------------------------------------------------------------
+% TESTING LOOP
+% For each of the LEDs...
+for light = 1:length(lights)
+    %----------------------------------------------------------------------
+    % LED SETUP AND ALIGNMENT
+    % Set all light values to 0 in the LED value structure
+    for i = 1:length(lights), LEDs.(lights(i)) = 0; end
+    % Display which light we're currently calibrating
+    disp(" ");
+    disp(strcat("Current testing light: ", lights(light)));
+    % Set current test light value to max
+    LEDs.(lights(light)) = 255;
+    % Write LED values to the arduino device
+    WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
+    % Wait for user to press RETURN to continue (for light alignment) if
+    % positions either haven't been set or if it changes
+    if ~exist("lightPositions", 'var') || length(lights) ~= length(lightPositions)...
+        || light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
+        beep
+        input("Alignment light on! Please press RETURN when you are ready to start.");
+    end
+    % For each input level...
+    for level = 1:length(levels)
+        %------------------------------------------------------------------
+        % LED SETUP
+        % Set the current testing light to the current level value in in the struct
+        LEDs.(lights(light)) = levels(level);
+        % Write defined LED values to the device
         WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
-        % Wait for user to press RETURN to continue (for light alignment) if
-        % positions either haven't been set or if it changes
-        if ~exist("lightPositions", 'var') || length(lights) ~= length(lightPositions)...
-            || light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
-            beep
-            input("Alignment light on! Please press RETURN when you are ready to start.");
-        end
-        % For each input level...
-        for level = 1:length(levels)
-            %------------------------------------------------------------------
-            % LED SETUP
-            % Set the current testing light to the current level value in in the struct
-            LEDs.(lights(light)) = levels(level);
-            % Write defined LED values to the device
-            WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
-            % Tells the user which LED and level we're currently testing
-            disp(strcat("Current ", lights(light), " value: ", num2str(levels(level))));
-            % Pauses to make sure the LEDs have had time to change
-            pause(.5);
-    
-            %------------------------------------------------------------------
-            % PR670 MEASUREMENTS
-            % Turns off the monitor
-            MonitorPower('off', debugMode)
-            % Tries to take PR670 measurements using defined port
-            try
-                [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
-            % if this doesn't work, displays error and quits
-            catch
-                %turns on the monitor
-                MonitorPower('on', debugMode);
-                disp(lasterror); %#ok<LERR>
-                PrepareToExit(arduino);
-                return
-            end
-            % turns monitor back on
+        % Tells the user which LED and level we're currently testing
+        disp(strcat("Current ", lights(light), " value: ", num2str(levels(level))));
+        % Pauses to make sure the LEDs have had time to change
+        pause(.5);
+
+        %------------------------------------------------------------------
+        % PR670 MEASUREMENTS
+        % Turns off the monitor
+        MonitorPower('off', debugMode)
+        % Tries to take PR670 measurements using defined port
+        try
+            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
+        % if this doesn't work, displays error and quits
+        catch
+            %turns on the monitor
             MonitorPower('on', debugMode);
-    
-            %------------------------------------------------------------------
-            % SAVE RESULTS 
-            % Saves results to .mat file
-            SaveCalibrationResults(debugMode, deviceLabel, lights(light), levels(level), luminance, spectrum, spectrumPeak);
-            % saves luminance values for plotting
-            plotLuminance(level, light) = luminance;
-            % saves spectrum data if this is the max luminance in the list to plot
-            if levels(level) == max(levels), plotSpectrum = spectrum; end
-    
-            %------------------------------------------------------------------
-            % EXITING PROGRAM (DEBUG MODE ONLY)
-            % if on test mode, gives option to exit program (otherwise automatically continues)
-            if debugMode == 1
-                % asks for input
-                i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
-                % if exit is typed, exits program
-                if strcmpi(i, "exit"), PrepareToExit(arduino); return; end
-            end
+            disp(lasterror); %#ok<LERR>
+            PrepareToExit(arduino);
+            return
         end
-    
-        %----------------------------------------------------------------------
-        % DRAWING GRAPHS
-        % Luminance
-        % ROW 1: x = input value, y = luminance
-        nexttile(light)
-        plot(levels, plotLuminance(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
-        xlim([0, max(levels)]);
-        xlabel("Input Value");
-        ylim([0, max(plotLuminance(:,light))]);
-        ylabel("Luminance");
-        title(strcat("Luminance: ", upper(lights(light))));
-    
-        % Spectrum
-        % ROW 2: x = wavelengths, y = spectral sensitivity at final input value
-        nexttile(light + length(lights))
-        plot(plotSpectrum(1,:), plotSpectrum(2,:), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
-        xlim([min(plotSpectrum(1,:)), max(plotSpectrum(1,:))]);
-        xlabel("Lambda (nm)");
-        ylim([0, max(plotSpectrum(2,:))]);
-        ylabel("Spectral Sensitivity");
-        title(strcat("Spectrum: ", upper(lights(light))));
-    
-        %----------------------------------------------------------------------
-        % ENDING MESSAGE
-        if light < length(lights)
-            disp("Next light starting!..."); 
-        elseif r < repeats
-            disp("Next repeat starting!...")
-        else
-            disp("All finished!")
+        % turns monitor back on
+        MonitorPower('on', debugMode);
+
+        %------------------------------------------------------------------
+        % SAVE RESULTS 
+        % Saves results to .mat file
+        SaveCalibrationResults(debugMode, deviceLabel, lights(light), levels(level), luminance, spectrum, spectrumPeak);
+        % saves luminance values for plotting
+        plotLuminance(level, light) = luminance;
+        % saves spectrum data if this is the max luminance in the list to plot
+        if levels(level) == max(levels), plotSpectrum = spectrum; end
+
+        %------------------------------------------------------------------
+        % EXITING PROGRAM (DEBUG MODE ONLY)
+        % if on test mode, gives option to exit program (otherwise automatically continues)
+        if debugMode == 1
+            % asks for input
+            i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
+            % if exit is typed, exits program
+            if strcmpi(i, "exit"), PrepareToExit(arduino); return; end
         end
     end
-    
-    %--------------------------------------------------------------------------
-    % SAVING GRAPHS
-    % maximises figure
-    fig.WindowState = 'maximized';
-    % saves graphs as .JPG file
-    if debugMode == 0, graphPrefix = "Graph"; elseif debugMode == 1, graphPrefix = "TestGraph"; end
-    exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
-    % generates and saves "over time" graph
-    if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
+
+    %----------------------------------------------------------------------
+    % DRAWING GRAPHS
+    % Luminance
+    % ROW 1: x = input value, y = luminance
+    nexttile(light)
+    plot(levels, plotLuminance(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+    xlim([0, max(levels)]);
+    xlabel("Input Value");
+    ylim([0, max(plotLuminance(:,light))]);
+    ylabel("Luminance");
+    title(strcat("Luminance: ", upper(lights(light))));
+
+    % Spectrum
+    % ROW 2: x = wavelengths, y = spectral sensitivity at final input value
+    nexttile(light + length(lights))
+    plot(plotSpectrum(1,:), plotSpectrum(2,:), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+    xlim([min(plotSpectrum(1,:)), max(plotSpectrum(1,:))]);
+    xlabel("Lambda (nm)");
+    ylim([0, max(plotSpectrum(2,:))]);
+    ylabel("Spectral Sensitivity");
+    title(strcat("Spectrum: ", upper(lights(light))));
+
+    %----------------------------------------------------------------------
+    % ENDING MESSAGE
+    if light < length(lights), disp("Next light starting!..."); else, disp("All finished!"); end
 end
 
+%--------------------------------------------------------------------------
+% SAVING GRAPHS
+% maximises figure
+fig.WindowState = 'maximized';
+% saves graphs as .JPG file
+if debugMode == 0, graphPrefix = "Graph"; elseif debugMode == 1, graphPrefix = "TestGraph"; end
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
+% generates and saves "over time" graph
+if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished

@@ -4,7 +4,7 @@ fwhm2std = 1 / 2.35482004503;
 wavelengths = 400:5:700;
 
 %% MAXWELLIAN-VIEW DEVICE
-radStd = 10 * fwhm2std;
+lumStd = 10 * fwhm2std;
 
 devVals.uno.r.Lambda = 630;
 devVals.uno.g.Lambda = 545;
@@ -13,25 +13,38 @@ devVals.uno.g.LumMin = 10 ^ 2.77;
 devVals.uno.r.LumMax = 10 ^ 2.99;
 devVals.uno.g.LumMax = 10 ^ 2.77;
 
-devVals.uno.r.Spd = normpdf(wavelengths,devVals.uno.r.Lambda,radStd)';
-devVals.uno.g.Spd = normpdf(wavelengths,devVals.uno.g.Lambda,radStd)';
+devVals.uno.r.Spd = normpdf(wavelengths,devVals.uno.r.Lambda,lumStd)';
+devVals.uno.g.Spd = normpdf(wavelengths,devVals.uno.g.Lambda,lumStd)';
 
 %% ARDUINO DEVICES
 arduinoDevices = ["yellow","green"];
 [ledLambda,lumMax] = LoadPrimarySpds(arduinoDevices);
 
-for device = 1:length(arduinoDevices)
-    d = arduinoDevices(device);
+for device = 1:length(arduinoDevices), d = arduinoDevices(device);
+    lights = string(fieldnames(ledLambda.(d)));
+    for light = 1:length(lights), l = lights(light);
+        devVals.(d).(l).LumMin = 0;
+        devVals.(d).(l).LumMax = lumMax.(d).(l);
+        devVals.(d).(l).Spd = ledLambda.(d).(l);
+        devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
+    end
+end
 
-    devVals.(d).r.LumMin = 0;
-    devVals.(d).g.LumMin = 0;
-    devVals.(d).r.LumMax = lumMax.(d).r;
-    devVals.(d).g.LumMax = lumMax.(d).g;
-    devVals.(d).r.Spd = ledLambda.(d).r;
-    devVals.(d).g.Spd = CurveNormalisation(ledLambda.(d).g,"area");
+%% ALL DEVICES: RADIANCE
+wavelengths = 400:5:700;
+vLambda = table2array(readtable("CIE_sle_photopic.csv"));
+vLambda = vLambda(ismember(vLambda(:,1),wavelengths),2);
 
-    devVals.(d).r.Lambda = wavelengths(ledLambda.(d).r == max(ledLambda.(d).r));
-    devVals.(d).g.Lambda = wavelengths(ledLambda.(d).g == max(ledLambda.(d).g));
+allDevices = string(fieldnames(devVals));
+
+for device = 1:length(allDevices), d = allDevices(device);
+    lights = string(fieldnames(devVals.(d)));
+    for light = 1:length(lights), l = lights(light);
+        devVals.(d).(l).k = devVals.(d).(l).LumMax / sum(vLambda .* devVals.(d).(l).Spd);
+        devVals.(d).(l).RadMax = sum(devVals.(d).(l).k .* devVals.(d).(l).Spd);
+        if ismember(d,arduinoDevices)
+            devVals.(d).(l).
+    end
 end
 
 end
