@@ -10,7 +10,7 @@ close all;
 % levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
 levels = [255, 192, 128, 64, 0];
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
-lightPositions = ["right", "right", "left"];            % Position of LEDs in the device (in order!)
+lightPositions = ["test", "test", "ref"];            % Position of LEDs in the device (in order!)
 
 %--------------------------------------------------------------------------
 % ADD PATHS
@@ -186,7 +186,7 @@ fig.WindowState = 'maximized';
 if debugMode == 0, graphPrefix = "Graph"; elseif debugMode == 1, graphPrefix = "TestGraph"; end
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
 % generates and saves "over time" graph
-if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
+if debugMode == 0, CalibrationOverTime(deviceLabel,dtString); end
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
