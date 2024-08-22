@@ -34,8 +34,8 @@ for ptpt = 1:height(dataTbl)
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    if strcmpi(ptptID,"JAA"), g = "yes"; else, g = "no"; end
-    %g = "no";
+    %if strcmpi(ptptID,"JAA"), g = "yes"; else, g = "no"; end
+    g = "no";
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = dataTbl.age(ptpt);
@@ -60,8 +60,7 @@ for ptpt = 1:height(dataTbl)
     % My code to calculate a (NOT WORKING YET...)
     aValDana = FindLMratioDana(... 
         [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
-         coneFuns.(ptptID), deviceVals.(hfpDev), vLambda,... 
-         g);
+         deviceVals.(hfpDev), coneFuns.(ptptID), g);
 
     % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
     [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValAllie);
@@ -101,7 +100,6 @@ xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
 title("Allie");
 NiceGraphs(f);
-ax = gca; ax.Title.Color = 'c';
 
 nexttile(3,[1 1])
 histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
@@ -109,7 +107,6 @@ xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
 title("Dana");
 NiceGraphs(f);
-ax = gca; ax.Title.Color = 'm';
 
 nexttile(2,[2 1])
 hold on
@@ -141,6 +138,7 @@ for group = 1:length(groups), g = groupID.(groups(group));
     nexttile
     histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(group),'FaceAlpha',1);
     xlabel("a Value"); ylabel("Count");
+    xlim([0 5]);
     NiceGraphs(f);
 end
 
@@ -163,17 +161,24 @@ a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
 end
 
 %% MY FUNCTION
-function a = FindLMratioDana(hfpRG, coneFuns, devVals, vLambda, graphs)
+function a = FindLMratioDana(hfpRG, devVals, coneFuns, graphs)
 
+% Use default values is vars have not been entered
+if ~exist("coneFuns",'var'), [coneFuns,~] = ConeFundamentals(normalisation = "area"); end
+if ~exist("graphs",'var'), graphs = "no"; end
+
+% Set constants
 LEDs = ['r','g'];
 cones = ['L','M'];
+x = coneFuns.wavelengths;
 
 for light = 1:length(LEDs), l = LEDs(light);
-    % Calculate cone sensitivities to the light
+    % Calculate radiance of light at given setting
+    lightRadiance = hfpRG(light) .* (devVals.(l).RadMax - devVals.(l).RadMin) + devVals.(l).RadMin;
+    lightSpd = CurveNormalisation(devVals.(l).SpdMax,"area",lightRadiance);
     for cone = 1:length(cones), c = cones(cone);
-        x = coneFuns.wavelengths;
-        y = hfpRG(light) .* devVals.(l).RadMax .* vLambda .* coneFuns.(lower(c)+"Cones");
-        sens.(strcat(l,c)) = trapz(x,y);
+        y = lightSpd .* coneFuns.(lower(c)+"Cones");
+        sens.(strcat(l,c)) = sum(y);
     end
 end
 
@@ -185,7 +190,6 @@ if strcmpi(graphs, "yes")
 
     hold on
     title("Spectral Sensitivities");
-    x = coneFuns.wavelengths;
     xlabel("Wavelength (nm)");
 
     yyaxis left
@@ -195,8 +199,8 @@ if strcmpi(graphs, "yes")
     ylabel("Cone Fundamentals");
 
     yyaxis right
-    plot(x, devVals.r.Spd, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
-    plot(x, devVals.g.Spd, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
+    plot(x, devVals.(l).SpdAdj, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
+    plot(x, devVals.(l).SpdAdj, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
     ylabel("LEDs");
 
     hold off
