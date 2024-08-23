@@ -25,7 +25,7 @@ validAValRange = [0,5];
 
 %% CONE RATIO
 % Calculating cone ratio for each ptpt
-for ptpt = 1:height(dataTbl)
+for ptpt = 1%:height(dataTbl)
     
     % If the participant didn't do the HFP task, skips and continues to next ptpt
     if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
@@ -34,8 +34,9 @@ for ptpt = 1:height(dataTbl)
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    %if strcmpi(ptptID,"JAA"), g = "yes"; else, g = "no"; end
-    g = "no";
+    %if ismember(ptptID,["AAA","JAA"]), g = "yes"; else, g = "no"; end
+    %g = "no";
+    g = "yes";
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = dataTbl.age(ptpt);
@@ -174,7 +175,7 @@ x = coneFuns.wavelengths;
 
 for light = 1:length(LEDs), l = LEDs(light);
     % Calculate radiance of light at given setting
-    lightRadiance = hfpRG(light) .* (devVals.(l).RadMax - devVals.(l).RadMin) + devVals.(l).RadMin;
+    lightRadiance = hfpRG(light) .* devVals.(l).RadMax;
     lightSpd = CurveNormalisation(devVals.(l).SpdMax,"area",lightRadiance);
     for cone = 1:length(cones), c = cones(cone);
         y = lightSpd .* coneFuns.(lower(c)+"Cones");
@@ -199,8 +200,8 @@ if strcmpi(graphs, "yes")
     ylabel("Cone Fundamentals");
 
     yyaxis right
-    plot(x, devVals.(l).SpdAdj, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
-    plot(x, devVals.(l).SpdAdj, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
+    plot(x, devVals.r.SpdMax, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
+    plot(x, devVals.g.SpdMax, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
     ylabel("LEDs");
 
     hold off

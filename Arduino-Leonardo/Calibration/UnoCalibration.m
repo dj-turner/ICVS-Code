@@ -20,7 +20,7 @@ end
 s = strcat("cal",string(trialNum));
 calUno.(s).dt = string(datetime);
 
-LEDs = ["red","green"];
+LEDs = ["r","g","none"];
 
 for light = 1:length(LEDs), l = LEDs(light);
     input("LED = " + l + ", press RETURN to start!");
@@ -44,7 +44,7 @@ for light = 1:length(LEDs), l = LEDs(light);
 
     % Save Results
     calUno.(s).(l).Lum = luminance;
-    calUno.(s).(l).Spect = spectrum;
+    calUno.(s).(l).Spect = spectrum';
     calUno.(s).(l).Peak = spectrumPeak;
 end
 
