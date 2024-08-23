@@ -13,7 +13,7 @@ data = LoadData; dataTbl = data.all;
 deviceVals = LoadDeviceValues;
 
 % Load Vlambda
-vLambda = table2array(readtable("linCIE2008v2e_5.csv"));
+vLambda = table2array(readtable("CIE_sle_photopic.csv"));
 vLambda = vLambda(ismember(vLambda(:,1),400:5:700),2);
 
 %% SET CONSTANTS
@@ -27,15 +27,15 @@ validAValRange = [0,5];
 % Calculating cone ratio for each ptpt
 for ptpt = 1:height(dataTbl)
     
-    % If the participant didn't do a HFP task, skips and continues to next ptpt
+    % If the participant didn't do the HFP task, skips and continues to next ptpt
     if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
 
     % Extract participant code
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    if strcmpi(ptptID,"JAA"), g = "yes"; else, g = "no"; end
-    %g = "no";
+    %if strcmpi(ptptID,"JAA"), g = "yes"; else, g = "no"; end
+    g = "no";
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = dataTbl.age(ptpt);
@@ -46,7 +46,7 @@ for ptpt = 1:height(dataTbl)
     rlmDev = dataTbl.leoDev(ptpt);
 
     % use participant's age to estimate cone fundamentals (small pupil)
-    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2, normalisation = "area",...
+    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 1, normalisation = "area",...
         graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev);
 
     % pulls device name to look up values
@@ -58,19 +58,18 @@ for ptpt = 1:height(dataTbl)
         coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
 
     % My code to calculate a (NOT WORKING YET...)
-    aValDana = FindLMratioDana(coneFuns.(ptptID),... 
-        [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],... 
-         deviceVals.(hfpDev),... 
-         g);
+    aValDana = FindLMratioDana(... 
+        [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
+         deviceVals.(hfpDev), coneFuns.(ptptID), g);
 
     % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
-    [conePercent, foveaDensity] = FindConePercentagesAndDensities(aValAllie);
+    [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValAllie);
     
     % save values to data table
     dataTbl.aValAllie(ptpt) = aValAllie;
     dataTbl.aValDana(ptpt) = aValDana;
-    dataTbl.conePercentL(ptpt) = conePercent.l;
-    dataTbl.conePercentM(ptpt) = conePercent.m;
+    dataTbl.coneProportionL(ptpt) = coneProportion.l;
+    dataTbl.coneProportionM(ptpt) = coneProportion.m;
     dataTbl.foveaDensityL(ptpt) = foveaDensity.l;
     dataTbl.foveaDensityM(ptpt) = foveaDensity.m;
 end
@@ -82,7 +81,7 @@ validAValsDana = dataTbl.aValDana(idx);
 
 disp(newline +... 
     "Dana Valid aVals..." + newline +... 
-    "Percent Valid = " + (100 * (numel(validAValsDana)/height(dataTbl))) + "%" + newline +...
+    "Percent Valid = " + round(100*(numel(validAValsDana)/height(dataTbl)),1) + "%" + newline +...
     "Mean = " + round(mean(validAValsDana),2) + newline +...
     "Std = " + round(std(validAValsDana),2));
 
@@ -101,7 +100,6 @@ xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
 title("Allie");
 NiceGraphs(f);
-ax = gca; ax.Title.Color = 'c';
 
 nexttile(3,[1 1])
 histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
@@ -109,7 +107,6 @@ xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
 title("Dana");
 NiceGraphs(f);
-ax = gca; ax.Title.Color = 'm';
 
 nexttile(2,[2 1])
 hold on
@@ -139,8 +136,9 @@ for group = 1:length(groups), g = groupID.(groups(group));
     groupMeans.(groups(group)) = mean(groupData,'omitmissing');
 
     nexttile
-    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(group),'FaceAlpha',.25);
+    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(group),'FaceAlpha',1);
     xlabel("a Value"); ylabel("Count");
+    xlim([0 5]);
     NiceGraphs(f);
 end
 
@@ -160,38 +158,31 @@ sensToGFromL = lSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
 sensToRFromL = rgSetting.*lSS(lambdas==rLambda).*rLumMax.*VFss(lambdas == gLambda);
 
 a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
-%disp("aValAllie = " + a);
 end
 
 %% MY FUNCTION
-function a = FindLMratioDana(coneFuns, hfpRG, devVals, graphs)
+function a = FindLMratioDana(hfpRG, devVals, coneFuns, graphs)
 
-% vLambda
-vLambda = (1.980647 .* coneFuns.lCones) + coneFuns.mCones;
-vLambda = CurveNormalisation(vLambda,"height");
+% Use default values is vars have not been entered
+if ~exist("coneFuns",'var'), [coneFuns,~] = ConeFundamentals(normalisation = "area"); end
+if ~exist("graphs",'var'), graphs = "no"; end
 
+% Set constants
 LEDs = ['r','g'];
 cones = ['L','M'];
+x = coneFuns.wavelengths;
 
 for light = 1:length(LEDs), l = LEDs(light);
-    % Find luminance values at match setting
-    hfpLum.(l) = hfpRG(light) .* (devVals.(l).LumMax - devVals.(l).LumMin) + devVals.(l).LumMin;
-    
-    %Convert luminance values to radiance values
-    k.(l) = hfpLum.(l) / sum(vLambda .* devVals.(l).Spd);
-    hfpRad.(l) = sum(k.(l) .* devVals.(l).Spd);
-
-    %Scale SPD so area = radiance
-    spd.(l) = CurveNormalisation(devVals.(l).Spd, "area", hfpRad.(l), coneFuns.wavelengths);
-
-    % Calculate cone sensitivities to the light
+    % Calculate radiance of light at given setting
+    lightRadiance = hfpRG(light) .* (devVals.(l).RadMax - devVals.(l).RadMin) + devVals.(l).RadMin;
+    lightSpd = CurveNormalisation(devVals.(l).SpdMax,"area",lightRadiance);
     for cone = 1:length(cones), c = cones(cone);
-        sens.(strcat(l,c)) = trapz(coneFuns.wavelengths, spd.(l) .* coneFuns.(lower(c)+"Cones"));
+        y = lightSpd .* coneFuns.(lower(c)+"Cones");
+        sens.(strcat(l,c)) = sum(y);
     end
 end
 
 a = (sens.rM-sens.gM)./(sens.gL-sens.rL);
-%disp("aValDana = " + a);
 
 %graphs
 if strcmpi(graphs, "yes")
@@ -199,7 +190,6 @@ if strcmpi(graphs, "yes")
 
     hold on
     title("Spectral Sensitivities");
-    x = coneFuns.wavelengths;
     xlabel("Wavelength (nm)");
 
     yyaxis left
@@ -209,23 +199,22 @@ if strcmpi(graphs, "yes")
     ylabel("Cone Fundamentals");
 
     yyaxis right
-    plot(x, spd.r, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
-    plot(x, spd.g, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
+    plot(x, devVals.(l).SpdAdj, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
+    plot(x, devVals.(l).SpdAdj, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
     ylabel("LEDs");
 
     hold off
     l = legend(["L-Cones", "M-Cones", "S-Cones", "Red LED", "Green LED"]);
     NiceGraphs(f,l);
 end
-
 end
 
 %%
-function [cPercent, cDensity] = FindConePercentagesAndDensities(a)
-cPercent = struct;
-cPercent.s = .05;
-cPercent.l = (a/(a+1))*(1-cPercent.s);
-cPercent.m = (1/(a+1))*(1-cPercent.s);
+function [cProp, cDensity] = FindConeProportionsAndDensities(a)
+cProp = struct;
+cProp.s = .05;
+cProp.l = (a/(a+1))*(1-cProp.s);
+cProp.m = (1/(a+1))*(1-cProp.s);
 
 % From Sarah Regan's DPhil Thesis:
 % "This can be calculated for an observer by taking a published estimate 
@@ -233,8 +222,8 @@ cPercent.m = (1/(a+1))*(1-cPercent.s);
 % (Zhang, Godara, Blanco, Griffin, Wang, Curcio & Zhang, 2015)"
 foveaConeDensityZhang = 168162;
 cDensity = struct;
-cDensity.l = cPercent.l * foveaConeDensityZhang;
-cDensity.m = cPercent.m * foveaConeDensityZhang;
-cDensity.s = cPercent.s * foveaConeDensityZhang;
+cDensity.l = cProp.l * foveaConeDensityZhang;
+cDensity.m = cProp.m * foveaConeDensityZhang;
+cDensity.s = cProp.s * foveaConeDensityZhang;
 end
 
