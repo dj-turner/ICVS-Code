@@ -70,7 +70,7 @@ int potVal = 123; // was int potVal;
 double testAmp;
 double refAmp;
 double testPhase;
-long int refLevelSetting = 1024; //0 for calibration, 1023 for HFP
+long int refLevelSetting = 0; //0 for calibration, 1023 for HFP
 int testPhaseSetting = 180;
 byte option;
 byte wform;
