@@ -1,54 +1,54 @@
-function devVals = LoadDeviceValues
+function devVals = LoadDeviceValues(devices,lumVals)
 
 wavelengths = 400:5:700;
+if ~exist("devices",'var'), devices = ["uno","yellow","green"]; end
+lumRGY = ones(1,3); try lumRGY(1:length(lumVals)) = lumVals; catch; end
 
 %% MAXWELLIAN-VIEW DEVICE
-load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\CalResultsUno.mat'));
-fns = string(fieldnames(calUno));
-idx = max(str2double(extractAfter(fns,"cal")));
-cal = calUno.(fns(idx));
+if sum(ismember(devices,"uno"))
 
-idx = ismember(cal.none.Spect(:,1),wavelengths);
-backgroundLight = (cal.none.Spect(idx,2));
-
-lights = ['r','g'];
-
-for light = 1:length(lights), l = lights(light);
-    devVals.uno.(l).Lambda = cal.(l).Peak;
-    devVals.uno.(l).LumMax = cal.(l).Lum;
+    load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\CalResultsUno.mat'));
+    fns = string(fieldnames(calUno)); 
+    cal = calUno.(fns(end));
     
-    devVals.uno.(l).SpdMax = (cal.(l).Spect(idx,2)) - backgroundLight;
-    devVals.uno.(l).SpdMax(devVals.uno.(l).SpdMax < 0) = 0;
+    idx = ismember(cal.r.Spect(:,1),wavelengths);   
+    lights = ['r','g'];
+    
+    for light = 1:length(lights), l = lights(light);
+        devVals.uno.(l).Lambda = cal.(l).Peak;
+        devVals.uno.(l).Lum = cal.(l).Lum * lumRGY(light);
+        devVals.uno.(l).Spd = CurveNormalisation(cal.(l).Spect(idx,2),"area");
+    end
+
 end
 
 %% ARDUINO DEVICES
-arduinoDevices = ["yellow","green"];
-[ledLambda,lumMax] = LoadPrimarySpds(arduinoDevices);
+arduinoDevices = devices(~strcmp(devices,"uno"));
+lights = ['r','g','y'];
 
-for device = 1:length(arduinoDevices), d = arduinoDevices(device);
-    lights = string(fieldnames(ledLambda.(d)));
-    for light = 1:length(lights), l = lights(light);
-        devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
-        devVals.(d).(l).LumMax = lumMax.(d).(l);
-        devVals.(d).(l).SpdMax = ledLambda.(d).(l);
+if ~isempty(arduinoDevices)
+    [ledLambda,lumMax] = LoadPrimarySpds(arduinoDevices);
+    for device = 1:length(arduinoDevices), d = arduinoDevices(device);
+        for light = 1:length(lights), l = lights(light);
+            devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
+            devVals.(d).(l).Lum = lumMax.(d).(l) * lumRGY(light);
+            devVals.(d).(l).Spd = CurveNormalisation(ledLambda.(d).(l),"area"); 
+        end
     end
 end
 
 %% ALL DEVICES: RADIANCE
-wavelengths = 400:5:700;
-
 addpath("tables\");
 vLambda = table2array(readtable("CIE_sle_photopic.csv"));
 vLambda = vLambda(ismember(vLambda(:,1),wavelengths),2);
 
-allDevices = string(fieldnames(devVals));
-
-for device = 1:length(allDevices), d = allDevices(device);
+for device = 1:length(devices), d = devices(device);
     lights = string(fieldnames(devVals.(d)));
     for light = 1:length(lights), l = lights(light);
-        devVals.(d).(l).k = devVals.(d).(l).LumMax / sum(vLambda .* devVals.(d).(l).SpdMax);
-        devVals.(d).(l).RadMax = sum(devVals.(d).(l).k .* devVals.(d).(l).SpdMax);
+        devVals.(d).(l).k = devVals.(d).(l).Lum / sum(vLambda .* devVals.(d).(l).Spd);
+        devVals.(d).(l).Rad = devVals.(d).(l).k * sum(devVals.(d).(l).Spd);
     end
+    devVals.(d).kRG = devVals.(d).r.k / devVals.(d).g.k;
 end
 
 end

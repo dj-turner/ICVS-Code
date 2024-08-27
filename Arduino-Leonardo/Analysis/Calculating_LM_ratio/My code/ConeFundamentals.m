@@ -134,19 +134,8 @@ coneFunTbl = coneFunTbl .* measuredWavelengths;
 
 coneFunTbl(isnan(coneFunTbl)) = 0;
 
-% %% Adjustment of L-cone peak spectral sensitivity using RLM
-% if sum(isnan(parameterStruct.rlmRGY)) == 0 & ~strcmp(parameterStruct.rlmDevice,"N/A")
-%     [optLConeSS, optLConeShift] = EstimatingOptimalLConeSpectSensShift(coneFunTbl, parameterStruct.rlmRGY, parameterStruct.rlmDevice, parameterStruct.graphs);
-%     coneFunTbl(:,4) = coneFunTbl(:,1);
-%     coneFunTbl(:,1) = optLConeSS;
-%     rlmAdj = 1;
-% else
-%     % disp("Variables ""rlmRGY"" and/or ""rlmDevice"" are either default values or have missing data: skipping L-Cone spectral sensitivity adjustment...");
-%     rlmAdj = 0;
-% end
-
 %% Normalise curves
-coneFunTbl = CurveNormalisation(coneFunTbl, parameterStruct.normalisation, 1, measuredWavelengths);
+coneFunTbl = CurveNormalisation(coneFunTbl, parameterStruct.normalisation);
 
 %% Draw graph
 if strcmp(parameterStruct.graphs,"yes")

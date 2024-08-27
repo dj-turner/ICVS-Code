@@ -12,7 +12,7 @@ wvls = 400:5:700;
 for device = 1:numel(devices)
     for led = 1:length(LEDs)
         idx = strcmpi(calibrationTable.Device, devices(device)+" band")... 
-            & calibrationTable.InputValue == 255 & calibrationTable.LED == LEDs(led);
+            & calibrationTable.InputValue == 255 & calibrationTable.LED == LEDs(led); %#ok<USENS>
         ledTbl = calibrationTable(idx,:);
 
         ledVals = table2array(ledTbl(end,"LambdaSpectrum"))';

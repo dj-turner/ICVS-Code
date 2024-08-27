@@ -24,8 +24,9 @@ defaultAge = round(mean(dataTbl.age,'omitmissing'));
 validAValRange = [0,5];
 
 %% CONE RATIO
+rlmShifts = nan(height(dataTbl),1);
 % Calculating cone ratio for each ptpt
-for ptpt = 1%:height(dataTbl)
+for ptpt = 1:height(dataTbl)
     
     % If the participant didn't do the HFP task, skips and continues to next ptpt
     if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
@@ -34,9 +35,9 @@ for ptpt = 1%:height(dataTbl)
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    %if ismember(ptptID,["AAA","JAA"]), g = "yes"; else, g = "no"; end
+    if ismember(ptptID,"JAA"), g = "yes"; else, g = "no"; end
     %g = "no";
-    g = "yes";
+    %g = "yes";
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = dataTbl.age(ptpt);
@@ -44,27 +45,27 @@ for ptpt = 1%:height(dataTbl)
 
     % pulls Rayleigh match data
     rlmVals = [dataTbl.rlmRed(ptpt), dataTbl.rlmGreen(ptpt), dataTbl.rlmYellow(ptpt)];
-    rlmDev = dataTbl.leoDev(ptpt);
+    rlmDev = dataTbl.devCombRLM(ptpt);
 
     % use participant's age to estimate cone fundamentals (small pupil)
     [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 1, normalisation = "area",...
-        graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev);
+        graphs = g);%, rlmRGY = rlmVals, rlmDevice = rlmDev);
 
     % pulls device name to look up values
     hfpDev = dataTbl.devCombHFP(ptpt);
 
     % Allie's code to calculate a
-    aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.LumMax, deviceVals.(hfpDev).g.LumMax,...
+    aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.Lum, deviceVals.(hfpDev).g.Lum,...
         deviceVals.(hfpDev).r.Lambda, deviceVals.(hfpDev).g.Lambda, coneFuns.(ptptID).wavelengths,...
         coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
 
     % My code to calculate a (NOT WORKING YET...)
     aValDana = FindLMratioDana(... 
         [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
-         deviceVals.(hfpDev), coneFuns.(ptptID), g);
+         hfpDev, coneFuns.(ptptID), g);
 
     % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
-    [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValAllie);
+    [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValDana);
     
     % save values to data table
     dataTbl.aValAllie(ptpt) = aValAllie;
@@ -159,31 +160,29 @@ sensToGFromL = lSS(lambdas==gLambda).*gLumMax.*VFss(lambdas==rLambda);
 sensToRFromL = rgSetting.*lSS(lambdas==rLambda).*rLumMax.*VFss(lambdas == gLambda);
 
 a = (sensToRFromM-sensToGFromM)./(sensToGFromL-sensToRFromL);
-end
+end 
 
 %% MY FUNCTION
-function a = FindLMratioDana(hfpRG, devVals, coneFuns, graphs)
+function a = FindLMratioDana(hfpRG, hfpDev, coneFuns, graphs)
 
 % Use default values is vars have not been entered
 if ~exist("coneFuns",'var'), [coneFuns,~] = ConeFundamentals(normalisation = "area"); end
 if ~exist("graphs",'var'), graphs = "no"; end
 
+devVals = LoadDeviceValues(hfpDev,hfpRG);
+
 % Set constants
-LEDs = ['r','g'];
-cones = ['L','M'];
 x = coneFuns.wavelengths;
 
-for light = 1:length(LEDs), l = LEDs(light);
-    % Calculate radiance of light at given setting
-    lightRadiance = hfpRG(light) .* devVals.(l).RadMax;
-    lightSpd = CurveNormalisation(devVals.(l).SpdMax,"area",lightRadiance);
-    for cone = 1:length(cones), c = cones(cone);
-        y = lightSpd .* coneFuns.(lower(c)+"Cones");
-        sens.(strcat(l,c)) = sum(y);
-    end
-end
+rSpd = CurveNormalisation(devVals.(hfpDev).r.Spd, "area", devVals.(hfpDev).r.Rad);
+gSpd = CurveNormalisation(devVals.(hfpDev).g.Spd, "area", devVals.(hfpDev).g.Rad);
 
-a = (sens.rM-sens.gM)./(sens.gL-sens.rL);
+sens.gM = gSpd .* coneFuns.mCones;
+sens.gL = gSpd .* coneFuns.lCones;
+sens.rM = rSpd .* coneFuns.mCones;
+sens.rL = rSpd .* coneFuns.lCones;
+
+a = (sum(sens.rM)-sum(sens.gM))./(sum(sens.gL)-sum(sens.rL));
 
 %graphs
 if strcmpi(graphs, "yes")
@@ -198,11 +197,13 @@ if strcmpi(graphs, "yes")
     plot(x, coneFuns.mCones, "LineWidth", 3, "LineStyle", '-', "Color", 'g');
     plot(x, coneFuns.sCones, "LineWidth", 3, "LineStyle", '-', "Color", 'b');
     ylabel("Cone Fundamentals");
+    ylim([0, max([coneFuns.lCones;coneFuns.mCones;coneFuns.sCones])]);
 
     yyaxis right
-    plot(x, devVals.r.SpdMax, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
-    plot(x, devVals.g.SpdMax, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
+    plot(x, rSpd, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
+    plot(x, gSpd, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
     ylabel("LEDs");
+    ylim([0, max([rSpd;gSpd])]);
 
     hold off
     l = legend(["L-Cones", "M-Cones", "S-Cones", "Red LED", "Green LED"]);

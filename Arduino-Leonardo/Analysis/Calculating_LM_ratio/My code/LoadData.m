@@ -347,20 +347,29 @@ for task = 1:height(combTasks)
     
     for var = 2:width(combTasks)
         varName = strcat(combTasks(task,1), "_", combTasks(task,var), "_rawRG");
-        idx = ~isnan(data.all.(varName));
+        idx_data = ~isnan(data.all.(varName));
+        idx_empty = isnan(data.all.(combVar));
+        idx = idx_data & idx_empty;
         data.all.(combVar)(idx) = data.all.(varName)(idx);
-        devName = lower(combTasks(task,var));
-        if strcmp(devName, "leo")
-            data.all.(devCombVar)(idx) = data.all.leoDev(idx);
-        else
-            data.all.(devCombVar)(idx) = devName;
-        end
+        data.all.(devCombVar)(idx) = lower(combTasks(task,var));    
     end
     
     dataVars = [dataVars, combVar, devCombVar]; %#ok<AGROW>
     numVars = [numVars, combVar]; %#ok<AGROW>
     strVars = [strVars, devCombVar]; %#ok<AGROW>
 end
+
+% labelling correct leo deivces
+yellowStudies = ["D1","D2","J"];
+greenStudies = "M";
+idx = ismember(data.all.study,yellowStudies) & strcmp(data.all.devCombRLM,"leo");
+data.all.devCombRLM(idx) = "yellow";
+idx = ismember(data.all.study,yellowStudies) & strcmp(data.all.devCombHFP,"leo");
+data.all.devCombHFP(idx) = "yellow";
+idx = ismember(data.all.study,greenStudies) & strcmp(data.all.devCombRLM,"leo");
+data.all.devCombRLM(idx) = "green";
+idx = ismember(data.all.study,greenStudies) & strcmp(data.all.devCombHFP,"leo");
+data.all.devCombHFP(idx) = "green";
 
 CalculateWeatherData;
 
