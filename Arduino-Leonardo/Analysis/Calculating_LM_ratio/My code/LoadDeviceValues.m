@@ -17,7 +17,7 @@ if sum(ismember(devices,"uno"))
     for light = 1:length(lights), l = lights(light);
         devVals.uno.(l).Lambda = cal.(l).Peak;
         devVals.uno.(l).Lum = cal.(l).Lum * lumRGY(light);
-        devVals.uno.(l).Spd = CurveNormalisation(cal.(l).Spect(idx,2),"area");
+        devVals.uno.(l).Spd = CurveNormalisation(cal.(l).Spect(idx,2),"height");
     end
 
 end
@@ -32,7 +32,7 @@ if ~isempty(arduinoDevices)
         for light = 1:length(lights), l = lights(light);
             devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
             devVals.(d).(l).Lum = lumMax.(d).(l) * lumRGY(light);
-            devVals.(d).(l).Spd = CurveNormalisation(ledLambda.(d).(l),"area"); 
+            devVals.(d).(l).Spd = CurveNormalisation(ledLambda.(d).(l),"height"); 
         end
     end
 end

@@ -126,7 +126,7 @@ for g = min(groups):max(groups)
     groupData = aValTbl.aValDana(idx);
 
     nexttile
-    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+(1-min(groups))),'FaceAlpha',1);
+    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+),'FaceAlpha',1);
     xlabel("a Value"); ylabel("Count");
     xlim([0 5]);
     NiceGraphs(f);

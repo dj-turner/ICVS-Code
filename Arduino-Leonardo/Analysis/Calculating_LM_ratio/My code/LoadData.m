@@ -36,8 +36,8 @@ seasonMeans = struct;
 seasonNs = struct;
 
 dataVars = ["study", "ptptID", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "leoDev", "rlmRed", "rlmGreen", "rlmYellow", "hfpRed", "hfpGreen"];
-numVars = ["age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow", "hfpRed", "hfpGreen"];
-strVars = ["study", "ptptID", "sex", "country", "geneOpsin", "leoDev"];
+numVars = ["study", "age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow", "hfpRed", "hfpGreen"];
+strVars = ["ptptID", "sex", "country", "geneOpsin", "leoDev"];
 
 %% Allie's data
 aData = load("data-A.mat"); aData = aData.hfpTable;
@@ -47,7 +47,7 @@ ptptIDs = unique(string(aData.ptptID));
 
 data.Allie = strings(height(ptptIDs), length(dataVars));
 
-study = "A";
+study = 0;
 age = NaN;
 rg1 = NaN;
 rg2 = NaN;
@@ -105,7 +105,7 @@ for ptpt = 1:length(ptptIDs)
         sex = string(table2array(ptptData(1,"Sex")));
         ptptData.Sex = [];
         ptptData = mean(ptptData(2:end,:), 'omitmissing');
-        if ptptData.Study == 1.1, study = "D1"; else, study = "D2"; end
+        study = ptptData.Study;
         month = ptptData.Month;
         year = ptptData.Year;
         studyMonth = ptptData.RLM_Date2; if isnan(studyMonth), studyMonth = ptptData.HFP_Date2; end
@@ -146,7 +146,7 @@ ptptIDs = unique(jData.Code);
 
 data.Josh = strings(length(ptptIDs), length(dataVars));
 
-study = "J";
+study = 2;
 rg3 = NaN;
 rg4 = NaN;
 leoDev = "yellow";
@@ -224,7 +224,7 @@ end
 % Combine
 data.Mitch = strings(length(ptptIDs), length(dataVars));
 
-study = "M";
+study = 3;
 rg2 = NaN;
 rg3 = NaN;
 leoDev = "green";
@@ -360,16 +360,10 @@ for task = 1:height(combTasks)
 end
 
 % labelling correct leo deivces
-yellowStudies = ["D1","D2","J"];
-greenStudies = "M";
-idx = ismember(data.all.study,yellowStudies) & strcmp(data.all.devCombRLM,"leo");
-data.all.devCombRLM(idx) = "yellow";
-idx = ismember(data.all.study,yellowStudies) & strcmp(data.all.devCombHFP,"leo");
-data.all.devCombHFP(idx) = "yellow";
-idx = ismember(data.all.study,greenStudies) & strcmp(data.all.devCombRLM,"leo");
-data.all.devCombRLM(idx) = "green";
-idx = ismember(data.all.study,greenStudies) & strcmp(data.all.devCombHFP,"leo");
-data.all.devCombHFP(idx) = "green";
+idx = strcmp(data.all.devCombRLM,"leo");
+data.all.devCombRLM(idx) = data.all.leoDev(idx);
+idx = strcmp(data.all.devCombHFP,"leo");
+data.all.devCombHFP(idx) = data.all.leoDev(idx);
 
 CalculateWeatherData;
 
