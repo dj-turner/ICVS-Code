@@ -1,7 +1,7 @@
 function [optimalLConeSpectAbsShift, optimalShift] = EstimatingOptimalLConeSpectAbsShift(spectAbs,rgy,device,graphs)
 %% INITIALISATION
 % set constants
-testNum = 101; % number of shifts to test
+testNum = 41; % number of shifts to test
 testStep = 1; % step between tested shifts
 
 testMaxVal = ((testNum-1)/2)*testStep;       % Max. shift to be tested
@@ -36,7 +36,7 @@ for i = 1:testNum
     % Shifting the l-cone
     testLSpectAbs = (pchip(wvls+testInts(i),spectAbs(:,1),wvls))';
     for led = 1:length(LEDs)
-        % Thomas and mollon method for predictin excictation to l- and M-
+        % Thomas and mollon method for predicting excictation to l- and M-
         % cones caused by each LED
         auc.(LEDsChar(led)) = primarySpds.(LEDsChar(led)) .* rgy(led)... 
             .* spectAbs(:,2) .* testLSpectAbs;

@@ -43,14 +43,14 @@ for ptpt = 1:height(dataTbl)
     rlmDev = dataTbl.devCombRLM(ptpt);
 
     % use participant's age to estimate cone fundamentals (small pupil)
-    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 1, normalisation = "area",...
+    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2, normalisation = "area",...
         graphs = g);%, rlmRGY = rlmVals, rlmDevice = rlmDev);
 
     % pulls device name to look up values
     hfpDev = dataTbl.devCombHFP(ptpt);
 
     % Allie's code to calculate a
-    aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.Lum, deviceVals.(hfpDev).g.Lum,...
+    aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.LumMax, deviceVals.(hfpDev).g.LumMax,...
         deviceVals.(hfpDev).r.Lambda, deviceVals.(hfpDev).g.Lambda, coneFuns.(ptptID).wavelengths,...
         coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
 
@@ -58,7 +58,7 @@ for ptpt = 1:height(dataTbl)
     aValDana = FindLMratioDana(... 
         [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
          hfpDev, coneFuns.(ptptID), g);
-
+  
     % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
     [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValDana);
     
@@ -161,16 +161,15 @@ devVals = LoadDeviceValues(hfpDev,hfpRG);
 
 % Set constants
 x = coneFuns.wavelengths;
+rSpd = CurveNormalisation(devVals.(hfpDev).r.Spd,"area",devVals.(hfpDev).r.Rad);
+gSpd = CurveNormalisation(devVals.(hfpDev).g.Spd,"area",devVals.(hfpDev).g.Rad);
 
-rSpd = CurveNormalisation(devVals.(hfpDev).r.Spd, "height", devVals.(hfpDev).r.Rad);
-gSpd = CurveNormalisation(devVals.(hfpDev).g.Spd, "height", devVals.(hfpDev).g.Rad);
+sens.rM = trapz(rSpd .* coneFuns.mCones);
+sens.rL = trapz(rSpd .* coneFuns.lCones);
+sens.gM = trapz(gSpd .* coneFuns.mCones);
+sens.gL = trapz(gSpd .* coneFuns.lCones);
 
-sens.rM = rSpd .* coneFuns.mCones;
-sens.rL = rSpd .* coneFuns.lCones;
-sens.gM = gSpd .* coneFuns.mCones;
-sens.gL = gSpd .* coneFuns.lCones;
-
-a = (sum(sens.rM)-sum(sens.gM))./(sum(sens.gL)-sum(sens.rL));
+a = (sens.rM-sens.gM)./(sens.gL-sens.rL);
 
 %graphs
 if strcmpi(graphs, "yes")

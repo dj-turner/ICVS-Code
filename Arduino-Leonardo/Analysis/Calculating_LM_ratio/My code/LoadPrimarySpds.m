@@ -15,11 +15,11 @@ for device = 1:numel(devices)
             & calibrationTable.InputValue == 255 & calibrationTable.LED == LEDs(led); %#ok<USENS>
         ledTbl = calibrationTable(idx,:);
 
-        ledVals = table2array(ledTbl(end,"LambdaSpectrum"))';
+        ledVals = table2array(mean(ledTbl(:,"LambdaSpectrum")))';
         wvlVals = table2array(ledTbl(end,"Lambdas"))';
         primarySpds.(devices(device)).(LEDlabs(led)) = ledVals(ismember(wvlVals,wvls));
 
-        maxLums.(devices(device)).(LEDlabs(led)) = ledTbl.Luminance(end);
+        maxLums.(devices(device)).(LEDlabs(led)) = mean(ledTbl.Luminance);
     end
 end
 

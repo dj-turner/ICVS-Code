@@ -122,9 +122,9 @@ for ptpt = 1:length(ptptIDs)
         rg2 = ptptData.HFP_Leo_Red_1 ./ ptptData.HFP_Leo_Green_1;
         rg3 = ptptData.RLM_MixLight_1;
         rg4 = ptptData.HFP_Uno_Red_1 ./ 1024;
-        rlmR = ptptData.RLM_Red_1;
-        rlmG = ptptData.RLM_Green_1;
-        rlmY = ptptData.RLM_Yellow_1;
+        rlmR = ptptData.RLM_Red_1 ./ 256;
+        rlmG = ptptData.RLM_Green_1 ./ 256;
+        rlmY = ptptData.RLM_Yellow_1 ./ 256;
         hfpR = ptptData.HFP_Leo_Red_1 ./ 256;
         hfpG = ptptData.HFP_Leo_Green_1 ./ 256;
         if isnan(hfpR) || isnan(hfpG), hfpR = rg4; hfpG = 1; end
@@ -178,9 +178,9 @@ for ptpt = 1:length(ptptIDs)
             ptptValueData = mean(ptptData(2:end,["RLM_Red","RLM_Green","RLM_Yellow","HFP_RedValue","HFP_GreenValue"]),1,"omitmissing");
             rg1 = ptptValueData.RLM_Red ./ ptptValueData.RLM_Green;
             rg2 = ptptValueData.HFP_RedValue ./ ptptValueData.HFP_GreenValue;
-            rlmR = ptptValueData.RLM_Red;
-            rlmG = ptptValueData.RLM_Green;
-            rlmY = ptptValueData.RLM_Yellow;
+            rlmR = ptptValueData.RLM_Red ./ 256;
+            rlmG = ptptValueData.RLM_Green ./ 256;
+            rlmY = ptptValueData.RLM_Yellow ./ 256;
             hfpR = ptptValueData.HFP_RedValue ./ 256;
             hfpG = ptptValueData.HFP_GreenValue ./ 256;
             if isnan(hfpR) || isnan(hfpG), hfpR = rg4; hfpG = 1; end
@@ -265,9 +265,9 @@ for ptpt = 3:length(ptptIDs)
               & mDataHFP.trialNum > 1;
         ptptDataHFP = table2array(mean(mDataHFP(idx,"meanTestAmpSetting")));
         rg4 = ptptDataHFP ./ 1024;
-        rlmR = ptptDataRLM.Red;
-        rlmG = ptptDataRLM.Green;
-        rlmY = ptptDataRLM.Yellow;
+        rlmR = ptptDataRLM.Red ./ 256;
+        rlmG = ptptDataRLM.Green ./ 256;
+        rlmY = ptptDataRLM.Yellow ./ 256;
         hfpR = rg4; hfpG = 1;
         data.Mitch(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin, rg1, rg2, rg3, rg4, leoDev, rlmR, rlmG, rlmY, hfpR, hfpG];
     end

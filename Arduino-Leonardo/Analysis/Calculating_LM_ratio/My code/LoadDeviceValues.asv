@@ -9,17 +9,16 @@ if sum(ismember(devices,"uno"))
 
     load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\CalResultsUno.mat'));
     fns = string(fieldnames(calUno)); 
-    cal = calUno.(fns(end)); 
-    %cal.r.Spect = cal.r.Spect';
-    %cal.g.Spect = cal.g.Spect';
+    cal = calUno.(fns(2)); 
+    
     idx = ismember(cal.r.Spect(:,1),wavelengths);   
     lights = ['r','g'];
-    allieLums = [962.7570, 594.3295];
+    %allieLums = [962.7570, 594.3295];
     
     for light = 1:length(lights), l = lights(light);
         devVals.uno.(l).Lambda = cal.(l).Peak;
-        %devVals.uno.(l).LumMax = cal.(l).Lum;
-        devVals.uno.(l).LumMax = allieLums(light);
+        devVals.uno.(l).LumMax = cal.(l).Lum;
+        %devVals.uno.(l).LumMax = allieLums(light);
         devVals.uno.(l).Lum = devVals.uno.(l).LumMax .* lumRGY(light);
         devVals.uno.(l).Spd = cal.(l).Spect(idx,2) .* lumRGY(light);
     end
