@@ -81,15 +81,15 @@ lensDensity = table2array(readtable("lens2components.csv"));
 lensDensity = lensDensity(:,2:end); 
 
 %% Adjusting L-cone Spectral Absorbance using RLM Data
-if sum(isnan(parameterStruct.rlmRGY)) == 0 & ~strcmpi(parameterStruct.rlmDevice,"N/A")
+rlmAdj = sum(isnan(parameterStruct.rlmRGY)) == 0 & ~strcmpi(parameterStruct.rlmDevice,"N/A");
+
+if rlmAdj
     [optLConeSA, optLConeShift] = EstimatingOptimalLConeSpectAbsShift(spectralAbsorbance, parameterStruct.rlmRGY,... 
         parameterStruct.rlmDevice, parameterStruct.graphs);
     spectralAbsorbance(:,4) = spectralAbsorbance(:,1);
     spectralAbsorbance(:,1) = optLConeSA;
-    rlmAdj = 1;
 else
     % disp("Variables ""rlmRGY"" and/or ""rlmDevice"" are either default values or have missing data: skipping L-Cone spectral absorbance adjustment...");
-    rlmAdj = 0;
 end
 
 %% Lens density and pupil size

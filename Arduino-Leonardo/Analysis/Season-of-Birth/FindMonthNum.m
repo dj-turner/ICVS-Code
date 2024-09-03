@@ -3,13 +3,13 @@ modelVars = struct;
 validcats = struct;
 
 modelVars.day = ["foveaDensityL",... 
-                 "sex", "ethnicGroup", "RLM_Leo_logRG", "daylightHours"];
+                 "sex", "ethnicGroup", "daylightHours"];
 modelVars.sun = ["foveaDensityL",... 
-                 "sex", "ethnicGroup", "RLM_Leo_logRG", "sunshineHours"];
+                 "sex", "ethnicGroup", "sunshineHours"];
 modelVars.irr_pop = ["foveaDensityL",... 
-                 "sex", "ethnicGroup", "RLM_Leo_logRG", "irradiance_pop"];
+                 "sex", "ethnicGroup", "irradiance_pop"];
 modelVars.irr_area = ["foveaDensityL",... 
-                 "sex", "ethnicGroup", "RLM_Leo_logRG", "irradiance_area"];
+                 "sex", "ethnicGroup", "irradiance_area"];
 
 validcats.ethnicGroup = ["asian", "white"];
 %validcats.country = ["UK", "China"];

@@ -30,7 +30,7 @@ for ptpt = 1:height(dataTbl)
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    if ismember(ptptID,"AAA"), g = "yes"; else, g = "no"; end
+    if ismember(ptptID,"MAD"), g = "yes"; else, g = "no"; end
     %g = "no";
     %g = "yes";
     
@@ -43,8 +43,8 @@ for ptpt = 1:height(dataTbl)
     rlmDev = dataTbl.devCombRLM(ptpt);
 
     % use participant's age to estimate cone fundamentals (small pupil)
-    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2, normalisation = "area",...
-        graphs = g);%, rlmRGY = rlmVals, rlmDevice = rlmDev);
+    [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2,... 
+        normalisation = "area", graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev);
 
     % pulls device name to look up values
     hfpDev = dataTbl.devCombHFP(ptpt);
@@ -59,12 +59,12 @@ for ptpt = 1:height(dataTbl)
         [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
          hfpDev, coneFuns.(ptptID), g);
   
-    % work out percentage of fovea that is l/ms/s-cones based on pred. ratio
+    % work out percentage of fovea that is l/m/s-cones based on pred. ratio
     [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValDana);
     
     % save values to data table
     dataTbl.aValAllie(ptpt) = aValAllie;
-    dataTbl.aValDana(ptpt) = aValDana;
+    dataTbl.aVal(ptpt) = aValDana;
     dataTbl.coneProportionL(ptpt) = coneProportion.l;
     dataTbl.coneProportionM(ptpt) = coneProportion.m;
     dataTbl.foveaDensityL(ptpt) = foveaDensity.l;
@@ -73,8 +73,8 @@ end
 
 save("LMratioData.mat", "dataTbl");
 
-idx = dataTbl.aValDana >= 0 & dataTbl.aValDana <= 5;
-validAValsDana = dataTbl.aValDana(idx);
+idx = dataTbl.aVal >= 0 & dataTbl.aVal <= 5;
+validAValsDana = dataTbl.aVal(idx);
 
 disp(newline +... 
     "Dana Valid aVals..." + newline +... 
@@ -84,7 +84,7 @@ disp(newline +...
 
 %% HISTOGRAMS
 idx = ~strcmp(dataTbl.devCombHFP,"");
-vars = ["study","ptptID","aValAllie","aValDana","hfpRed","hfpGreen"];
+vars = ["study","ptptID","aValAllie","aVal","hfpRed","hfpGreen"];
 aValTbl = dataTbl(idx,vars);
 %disp(aValTbl);
 
@@ -99,7 +99,7 @@ title("Allie");
 NiceGraphs(f);
 
 nexttile(3,[1 1])
-histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
+histogram(aValTbl.aVal,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
 xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
 title("Dana");
@@ -108,7 +108,7 @@ NiceGraphs(f);
 nexttile(2,[2 1])
 hold on
 histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c','FaceAlpha',.5);
-histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m','FaceAlpha',.5);
+histogram(aValTbl.aVal,'BinWidth',.1,'EdgeColor','w','FaceColor','m','FaceAlpha',.5);
 hold off
 xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
@@ -123,7 +123,7 @@ tiledlayout(2,2);
 groups = unique(floor(aValTbl.study));
 for g = min(groups):max(groups)
     idx = floor(aValTbl.study) == g;
-    groupData = aValTbl.aValDana(idx);
+    groupData = aValTbl.aVal(idx);
 
     nexttile
     histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+(1-min(groups))),'FaceAlpha',1);
@@ -161,6 +161,7 @@ devVals = LoadDeviceValues(hfpDev,hfpRG);
 
 % Set constants
 x = coneFuns.wavelengths;
+
 rSpd = CurveNormalisation(devVals.(hfpDev).r.Spd,"area",devVals.(hfpDev).r.Rad);
 gSpd = CurveNormalisation(devVals.(hfpDev).g.Spd,"area",devVals.(hfpDev).g.Rad);
 
@@ -189,7 +190,7 @@ if strcmpi(graphs, "yes")
     yyaxis right
     plot(x, rSpd, "LineWidth", 1, "LineStyle", '-', "Color", 'r');
     plot(x, gSpd, "LineWidth", 1, "LineStyle", '-', "Color", 'g');
-    ylabel("LEDs");
+    ylabel("LEDs"); 
     ylim([0, max([rSpd;gSpd])]);
 
     hold off
