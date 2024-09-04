@@ -30,7 +30,7 @@ for ptpt = 1:height(dataTbl)
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    if ismember(ptptID,"JAA"), g = "yes"; else, g = "no"; end
+    if ismember(ptptID,"MAD"), g = "yes"; else, g = "no"; end
     %g = "no";
     %g = "yes";
     
@@ -44,7 +44,7 @@ for ptpt = 1:height(dataTbl)
 
     % use participant's age to estimate cone fundamentals (small pupil)
     [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2,... 
-        normalisation = "area", graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev);
+        normalisation = "area", graphs = g);%, rlmRGY = rlmVals, rlmDevice = rlmDev);
 
     % pulls device name to look up values
     hfpDev = dataTbl.devCombHFP(ptpt);
@@ -111,7 +111,7 @@ hold on
 histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c','FaceAlpha',.5);
 histogram(aValTbl.aVal,'BinWidth',.1,'EdgeColor','w','FaceColor','m','FaceAlpha',.5);
 hold off
-xlim([min(validAValRange),max(validAValRange)]);
+xlim([0,5]); ylim([0,20]);
 xlabel("a Value"); ylabel("Count");
 title("Comparison");
 NiceGraphs(f);
@@ -129,7 +129,7 @@ for g = min(groups):max(groups)
     nexttile
     histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+(1-min(groups))),'FaceAlpha',1);
     xlabel("a Value"); ylabel("Count");
-    xlim([min(validAValRange),max(validAValRange)]);
+    xlim([0 5]);
     NiceGraphs(f);
 end
 

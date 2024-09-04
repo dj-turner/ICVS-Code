@@ -1,7 +1,7 @@
 function [optimalLConeSpectAbsShift, optimalShift] = EstimatingOptimalLConeSpectAbsShift(spectAbs,rgy,device,graphs)
 %% INITIALISATION
 % set constants
-testNum = 41; % number of shifts to test
+testNum = 101; % number of shifts to test
 testStep = 1; % step between tested shifts
 
 testMaxVal = ((testNum-1)/2)*testStep;       % Max. shift to be tested

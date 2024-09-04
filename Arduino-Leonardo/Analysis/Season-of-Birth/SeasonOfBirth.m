@@ -11,8 +11,9 @@ studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
 monthTimeFrame = 8;
 LoadData_old; 
 
-load(strcat('C:\Users\', getenv('USERNAME'), '\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Analysis\Calculating_LM_ratio\My code\LMratioData.mat'));
-data.all = dataTbl;
+dataTbl = load(strcat('C:\Users\', getenv('USERNAME'), '\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Analysis\Calculating_LM_ratio\My code\LMratioData.mat'));
+fn = string(fieldnames(dataTbl));
+data.all = dataTbl.(fn(1));
 data.all.combHFP = log(data.all.combHFP);
 
 %% models

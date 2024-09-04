@@ -110,11 +110,11 @@ for ptpt = 1:length(ptptIDs)
         year = ptptData.Year;
         studyMonth = ptptData.RLM_Date2; if isnan(studyMonth), studyMonth = ptptData.HFP_Date2; end
         studyYear = ptptData.RLM_Date1; if isnan(studyMonth), studyMonth = ptptData.HFP_Date1; end
-        if studyMonth == 0 || studyYear == 0 
-            age = NaN;
-        else
-            age = studyYear - year; if month > studyMonth, age = age - 1; end
+        if studyMonth == 0 || studyYear == 0
+            if study == 1.1, studyMonth = 1; elseif study == 1.2, studyMonth = 3; end
+            studyYear = 2023; 
         end
+        age = studyYear - year; if month > studyMonth, age = age - 1; end
         ethnicity = ptptData.Ethnicity;
         geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
         if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
@@ -166,11 +166,8 @@ for ptpt = 1:length(ptptIDs)
             year = ptptData.("Birth Year")(1);
             studyMonth = ptptData.HFP_DateTime_2(1);
             studyYear = ptptData.HFP_DateTime_1(1);
-            if studyMonth == 0 || studyYear == 0
-                age = NaN;
-            else
-                age = studyYear - year; if month > studyMonth, age = age - 1; end
-            end
+            if studyMonth == 0 || studyYear == 0, studyMonth = 3; studyYear = 2023; end
+            age = studyYear - year; if month > studyMonth, age = age - 1; end
             ethnicity = ptptData.Ethnicity(1);
             country = string(ptptData.("Country of Birth")(1));
             geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
@@ -251,15 +248,13 @@ for ptpt = 3:length(ptptIDs)
         ptptDataRLM = mean(mDataRLM(idx,["Red","Green","Yellow"]),1);
         rg1 = ptptDataRLM.Red ./ ptptDataRLM.Green;
 
-        studyMonth = table2array(mDataRLM(idx,"DateTime"));
-        if isempty(studyMonth) | studyMonth == 0 
-            age = NaN;
+        studyDate = table2array(mDataRLM(idx,"DateTime"));
+        if isempty(studyDate) | studyDate == 0 
+            studyMonth = 2; studyYear = 2024;
         else
-            studyMonth = studyMonth(1,2);
-            studyYear = table2array(mDataRLM(idx,"DateTime"));
-            studyYear = studyYear(1,1);
-            age = studyYear - year; if month > studyMonth, age = age - 1; end
+            studyMonth = studyDate(1,2); studyYear = studyDate(1,1);
         end
+        age = studyYear - year; if month > studyMonth, age = age - 1; end
 
         idx = strcmp(string(mDataHFP.trialID),ptptID)...
               & mDataHFP.trialNum > 1;
