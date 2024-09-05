@@ -1,10 +1,11 @@
 function [optimalLConeSpectAbsShift, optimalShift] = EstimatingOptimalLConeSpectAbsShift(spectAbs,rgy,device,graphs)
 %% INITIALISATION
 % set constants
-maxTestShift = 50; % number of shifts to test in each dir
+testNum = 50; % number of shifts to test in each dir
 testStep = 1; % step between tested shifts
 
-testInts = -maxTestShift:testStep:maxTestShift;  % Array of shift values to be tested
+testMaxVal = ((testNum-1)/2)*testStep;       % Max. shift to be tested
+testInts = -testMaxVal:testStep:testMaxVal;  % Array of shift values to be tested
 
 LEDs = ["red","green","yellow"];   % LEDs
 LEDsChar = ['r','g','y'];          % Character labels for each LED
@@ -13,13 +14,13 @@ wvls = 400:5:700;             % Wavelengths data tested
 
 % normalise cone fundamentals to have equal height
 unnormalisedSpectAbs = spectAbs;
-%spectAbs = CurveNormalisation(spectAbs,"height");
+spectAbs = CurveNormalisation(spectAbs,"height");
 
 %% LOAD DEVICE CALIBRATION DATA
 [primarySpds,~] = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
 
 %% TESTING SHIFTED L-CONES
-lConeSpectAbsFits = NaN(numel(testInts),1);
+lConeSpectAbsFits = NaN(testNum,1);
 auc = struct;
 % Setting up graph
 if strcmp(graphs,"yes")
@@ -31,7 +32,7 @@ if strcmp(graphs,"yes")
     ylabel("Relative Spectral Absorbance");
     NiceGraphs;
 end
-for i = 1:numel(testInts)
+for i = 1:testNum
     % Shifting the l-cone
     testLSpectAbs = (pchip(wvls+testInts(i),spectAbs(:,1),wvls))';
     for led = 1:length(LEDs)
@@ -62,7 +63,7 @@ if strcmp(graphs,"yes")
         'Marker','o','MarkerEdgeColor','w','MarkerSize',3);
     plot(testInts,zeros(height(lConeSpectAbsFits),1),'Color','c',...
         'LineStyle','--','LineWidth',3)
-    xlim([-maxTestShift,maxTestShift])
+    xlim([-testMaxVal,testMaxVal])
     ylim([-max(abs(lConeSpectAbsFits)),max(abs(lConeSpectAbsFits))]);
     xlabel("L-cone Spectral Absorbance shift (nm)");
     ylabel("Excitation of L+M Difference (Y-(R+G))");
@@ -83,7 +84,7 @@ if strcmp(graphs,"yes")
     hold on
     for cone = 1:3, plot(wvls,spectAbs(:,cone),'LineWidth',5,'Color',coneCols(cone)); end
     plot(wvls,normOptimalLConeSensShift,'LineWidth',3,'Color','r');
-    lgdlabs = [repmat("", [1 maxTestShift-1]), "Tested Shifts", "Original L-cone Prediction",...
+    lgdlabs = [repmat("", [1 testNum-1]), "Tested Shifts", "Original L-cone Prediction",...
         "M-cone Prediction", "S-cone Prediction", "Optimal L-Cone Prediction"];
     legend(lgdlabs,'Location','northeastoutside','TextColor','w','FontSize',12);
     hold off

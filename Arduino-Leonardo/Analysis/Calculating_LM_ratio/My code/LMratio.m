@@ -1,3 +1,5 @@
+% function LMratio(validAValRange, rlmAdjustment, defaultAgeMode) 
+
 %%
 clc; clear; close all;
 
@@ -12,11 +14,16 @@ vLambda = table2array(readtable("CIE_sle_photopic.csv"));
 vLambda = vLambda(ismember(vLambda(:,1),400:5:700),2);
 
 %% SET CONSTANTS
-% Sets default age to the rounded mean age, for ptpts where we don't have age data
-defaultAge = round(mean(dataTbl.age,'omitmissing'));
+% Sets default age to the rounded median age, for ptpts where we don't have age data
+defaultAgeMode = "median";
+defaultAge = avg(dataTbl.age,defaultAgeMode);
 
 % Set valid aVal Range
 validAValRange = [0.5,5];
+
+% RLM Adjustment (0/1)
+rlmAdjustment = 1;
+rlmVals = [NaN NaN NaN]; rlmDev = "N/A";
 
 %% CONE RATIO
 rlmShifts = nan(height(dataTbl),1);
@@ -39,8 +46,10 @@ for ptpt = 1:height(dataTbl)
     if isnan(ptptAge), ptptAge = defaultAge; elseif ptptAge < 20, ptptAge = 20; elseif ptptAge > 80, ptptAge = 80; end
 
     % pulls Rayleigh match data
-    rlmVals = [dataTbl.rlmRed(ptpt), dataTbl.rlmGreen(ptpt), dataTbl.rlmYellow(ptpt)];
-    rlmDev = dataTbl.devCombRLM(ptpt);
+    if rlmAdjustment
+        rlmVals = [dataTbl.rlmRed(ptpt), dataTbl.rlmGreen(ptpt), dataTbl.rlmYellow(ptpt)];
+        rlmDev = dataTbl.devCombRLM(ptpt);
+    end
 
     % use participant's age to estimate cone fundamentals (small pupil)
     [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2,... 
@@ -58,7 +67,7 @@ for ptpt = 1:height(dataTbl)
     aValDana = FindLMratioDana(... 
         [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
          hfpDev, coneFuns.(ptptID), g);
-  
+    
     % work out percentage of fovea that is l/m/s-cones based on pred. ratio
     [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValDana);
     
@@ -71,11 +80,12 @@ for ptpt = 1:height(dataTbl)
     dataTbl.foveaDensityM(ptpt) = foveaDensity.m;
 end
 
+%%
 idx = dataTbl.aVal >= min(validAValRange) & dataTbl.aVal <= max(validAValRange);
-validDataTbl = dataTbl(idx,:);
-validAValsDana = validDataTbl.aVal;
+dataTbl.validRatio = idx;
+validAValsDana = dataTbl.aVal(idx);
 
-save("LMratioData.mat", "validDataTbl");
+save("LMratioData.mat", "dataTbl");
 
 disp(newline +... 
     "Dana Valid aVals..." + newline +... 
@@ -85,7 +95,7 @@ disp(newline +...
 
 %% HISTOGRAMS
 idx = ~strcmp(dataTbl.devCombHFP,"");
-vars = ["study","ptptID","aValAllie","aVal","hfpRed","hfpGreen"];
+vars = ["study","ptptID","aValAllie","aVal","validRatio","hfpRed","hfpGreen"];
 aValTbl = dataTbl(idx,vars);
 %disp(aValTbl);
 
@@ -157,7 +167,7 @@ function a = FindLMratioDana(hfpRG, hfpDev, coneFuns, graphs)
 % Use default values is vars have not been entered
 if ~exist("coneFuns",'var'), [coneFuns,~] = ConeFundamentals(normalisation = "area"); end
 if ~exist("graphs",'var'), graphs = "no"; end
-
+ 
 devVals = LoadDeviceValues(hfpDev,hfpRG);
 
 % Set constants

@@ -66,8 +66,7 @@ measuredWavelengths = (400:5:700)';
 % load table
 spectralAbsorbance = table2array(readtable("ssabance_5.csv"));
 % Only include defined wavelengths
-idx = ismember(spectralAbsorbance(:,1), measuredWavelengths);
-spectralAbsorbance = spectralAbsorbance(idx,2:end);
+spectralAbsorbance = spectralAbsorbance(ismember(spectralAbsorbance(:,1), measuredWavelengths),2:end);
 % Raise to the 10th power
 spectralAbsorbance = 10 .^ spectralAbsorbance; 
 
@@ -87,15 +86,15 @@ if rlmAdj
         parameterStruct.rlmDevice, parameterStruct.graphs);
     spectralAbsorbance(:,4) = spectralAbsorbance(:,1);
     spectralAbsorbance(:,1) = optLConeSA;
+else
+    % disp("Variables ""rlmRGY"" and/or ""rlmDevice"" are either default values or have missing data: skipping L-Cone spectral absorbance adjustment...");
 end
 
 %% Lens density and pupil size
-switch lower(parameterStruct.pupilSize)
-    case {"l","large"}
-        lensDensity = lensDensity .* .86207;
-    case {"s","small"}
-    otherwise
-        error("Pupil size must be set as ""small"" or ""large""!");
+if strcmp(parameterStruct.pupilSize, "large")
+    lensDensity = lensDensity .* .86207;
+elseif ~strcmp(parameterStruct.pupilSize, "small")
+    error("Pupil size must be set as ""small"" or ""large""!");
 end
 
 %% 5.3 - Peak optical density & Field Size
@@ -106,15 +105,12 @@ else
 end
 
 %% 5.6 - Spectral optical density & Age
-ageGroup = discretize(parameterStruct.age, [20 60 80]);
-
-switch ageGroup
-    case 1
-        dtOculConstants = [1 .02 32];
-    case 2
-        dtOculConstants = [1.56 .0667 60];
-    otherwise
-        error("Age must be set between 20 and 80!");
+if parameterStruct.age >= 20 && parameterStruct.age <=60
+    dtOculConstants = [1 .02 32];
+elseif parameterStruct.age > 60 && parameterStruct.age <= 80
+    dtOculConstants = [1.56 .0667 60];
+else
+    error("Age must be set between 20 and 80!");
 end
 
 dtOcul = (lensDensity(:,1) * (dtOculConstants(1) + (dtOculConstants(2) *... 
