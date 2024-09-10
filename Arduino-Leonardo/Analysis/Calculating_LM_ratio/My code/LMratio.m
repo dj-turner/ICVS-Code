@@ -1,5 +1,4 @@
 % function LMratio(validAValRange, rlmAdjustment, defaultAgeMode) 
-
 %%
 clc; clear; close all;
 
@@ -15,8 +14,7 @@ vLambda = vLambda(ismember(vLambda(:,1),400:5:700),2);
 
 %% SET CONSTANTS
 % Sets default age to the rounded median age, for ptpts where we don't have age data
-defaultAgeMode = "median";
-defaultAge = avg(dataTbl.age,defaultAgeMode);
+defaultAge = table2array(stat(dataTbl.age,"median","all"));
 
 % Set valid aVal Range
 validAValRange = [0.5,5];
@@ -31,7 +29,7 @@ rlmShifts = nan(height(dataTbl),1);
 for ptpt = 1:height(dataTbl)
     
     % If the participant didn't do the HFP task, skips and continues to next ptpt
-    if strcmp(dataTbl.devCombHFP(ptpt),""), continue; end
+    if isnan(dataTbl.hfpRed(ptpt)), continue; end
 
     % Extract participant code
     ptptID = dataTbl.ptptID(ptpt);
@@ -48,7 +46,7 @@ for ptpt = 1:height(dataTbl)
     % pulls Rayleigh match data
     if rlmAdjustment
         rlmVals = [dataTbl.rlmRed(ptpt), dataTbl.rlmGreen(ptpt), dataTbl.rlmYellow(ptpt)];
-        rlmDev = dataTbl.devCombRLM(ptpt);
+        rlmDev = dataTbl.rlmDevice(ptpt);
     end
 
     % use participant's age to estimate cone fundamentals (small pupil)
@@ -56,17 +54,16 @@ for ptpt = 1:height(dataTbl)
         normalisation = "area", graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev);
 
     % pulls device name to look up values
-    hfpDev = dataTbl.devCombHFP(ptpt);
+    hfpVals = [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)];
+    hfpDev = dataTbl.hfpDevice(ptpt);
 
     % Allie's code to calculate a
     aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.LumMax, deviceVals.(hfpDev).g.LumMax,...
         deviceVals.(hfpDev).r.Lambda, deviceVals.(hfpDev).g.Lambda, coneFuns.(ptptID).wavelengths,...
-        coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.combHFP(ptpt));
+        coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.hfpRed(ptpt));
 
     % My code to calculate a (NOT WORKING YET...)
-    aValDana = FindLMratioDana(... 
-        [dataTbl.hfpRed(ptpt),dataTbl.hfpGreen(ptpt)],...
-         hfpDev, coneFuns.(ptptID), g);
+    aValDana = FindLMratioDana(hfpVals, hfpDev, coneFuns.(ptptID), g);
     
     % work out percentage of fovea that is l/m/s-cones based on pred. ratio
     [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValDana);
@@ -94,7 +91,7 @@ disp(newline +...
     "Std = " + round(std(validAValsDana),2));
 
 %% HISTOGRAMS
-idx = ~strcmp(dataTbl.devCombHFP,"");
+idx = ~strcmp(dataTbl.hfpDevice,"");
 vars = ["study","ptptID","aValAllie","aVal","validRatio","hfpRed","hfpGreen"];
 aValTbl = dataTbl(idx,vars);
 %disp(aValTbl);

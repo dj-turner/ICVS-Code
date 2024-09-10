@@ -11,10 +11,6 @@ LEDsChar = ['r','g','y'];          % Character labels for each LED
 coneCols = ['m','g','b'];
 wvls = 400:5:700;             % Wavelengths data tested
 
-% normalise cone fundamentals to have equal height
-unnormalisedSpectAbs = spectAbs;
-%spectAbs = CurveNormalisation(spectAbs,"height");
-
 %% LOAD DEVICE CALIBRATION DATA
 [primarySpds,~] = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
 
@@ -74,7 +70,7 @@ end
 optimalShift = pchip(lConeSpectAbsFits,testInts',0);
 
 % Generating L-cone spectral sensitivity for optimal shift
-optimalLConeSpectAbsShift = (pchip(wvls+optimalShift,unnormalisedSpectAbs(:,1),wvls))';
+optimalLConeSpectAbsShift = (pchip(wvls+optimalShift,spectAbs(:,1),wvls))';
 
 %% PLOTTING OPTIMISED L-CONE
 if strcmp(graphs,"yes")

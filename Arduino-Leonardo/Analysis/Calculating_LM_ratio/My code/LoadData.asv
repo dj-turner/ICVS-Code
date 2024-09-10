@@ -144,13 +144,9 @@ for ptpt = 1:length(ptptIDs)
         rlmY = ptptData.RLM_Yellow_1 ./ 256;
         hfpR = ptptData.HFP_Leo_Red_1 ./ 256;
         hfpG = ptptData.HFP_Leo_Green_1 ./ 256;
-        if isnan(hfpR) || isnan(hfpG)
-            hfpR = rg4;
-            hfpG = 1;
-            hfpD = "uno"; 
-        else
-            hfpD = "yellow";
-        end
+        if isnan(hfpR) | isnan(hfpG)
+            hfpR = rg4
+            hfpG = hfpD = "uno"; end
         data.Dana(ptpt,:) = [study, ptptID, sex, age, month, year, ethnicity, country, geneOpsin,... 
             rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
     end
