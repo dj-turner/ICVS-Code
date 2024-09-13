@@ -5,23 +5,23 @@ if ~exist("devices",'var'), devices = ["uno","yellow","green"]; else, devices = 
 lumRGY = ones(1,3); try lumRGY(1:length(lumVals)) = lumVals; catch; end
 
 %% MAXWELLIAN-VIEW DEVICE
-if sum(ismember(devices,"uno"))
+if ismember("uno",devices)
 
     load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\CalResultsUno.mat'));
     fns = string(fieldnames(calUno)); 
     cal = calUno.(fns(end)); 
-    %cal.r.Spect = cal.r.Spect';
+    %cal.r.Spect = cal.r.Spect'; 
     %cal.g.Spect = cal.g.Spect';
     idx = ismember(cal.r.Spect(:,1),wavelengths);   
     lights = ['r','g'];
-    allieLums = [962.7570, 594.3295];
+    %allieLums = [962.7570, 594.3295];
     
     for light = 1:length(lights), l = lights(light);
         devVals.uno.(l).Lambda = cal.(l).Peak;
-        %devVals.uno.(l).LumMax = cal.(l).Lum;
-        devVals.uno.(l).LumMax = allieLums(light);
+        devVals.uno.(l).LumMax = cal.(l).Lum;
+        %devVals.uno.(l).LumMax = allieLums(light);
         devVals.uno.(l).Lum = devVals.uno.(l).LumMax .* lumRGY(light);
-        devVals.uno.(l).Spd = cal.(l).Spect(idx,2) .* lumRGY(light);
+        devVals.uno.(l).Spd = cal.(l).Spect(idx,2);
     end
 
 end
@@ -44,7 +44,7 @@ if ~isempty(arduinoDevices)
         for light = 1:length(lights), l = lights(light);
             devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
             devVals.(d).(l).Lum = devVals.(d).(l).LumMax .* lumRGY(light);
-            devVals.(d).(l).Spd = ledLambda.(d).(l) .* lumRGY(light); 
+            devVals.(d).(l).Spd = ledLambda.(d).(l);
         end
     end
 end

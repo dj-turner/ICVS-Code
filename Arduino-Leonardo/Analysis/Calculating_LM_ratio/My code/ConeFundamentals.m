@@ -43,19 +43,36 @@ parameterStruct = struct('age', 32,...
                        'fieldSize', 2,... 
                        'pupilSize', "small",... 
                        'normalisation', "none",...
-                       'graphs', "no",...
+                       'graphs', false,...
                        'rlmRGY', [NaN NaN NaN],...
                        'rlmDevice', "N/A");
 
 % Extract defined parameters from varargin and add to parameter structure
+fns = string(fieldnames(parameterStruct));
 for i = 1:2:length(varargin)-1
-    try
-        val = lower(string(varargin(i+1)));
-    catch
-        val = cell2mat(varargin(i+1));
+    var = string(varargin(i));
+    if ~ismember(var,fns)
+        error('Parameter variable "' + var + '" is not valid!'... 
+        + newline + 'Valid parameter variables include: '...
+        + newline + join('"' + fns + '"', ", ") + '.'...
+        + newline + 'Note: Parameter variables are case-sensitive!'); 
     end
-    if ~isnan(str2double(val)), val = str2double(val); end
-    parameterStruct.(string(varargin(i))) = val;
+    val = varargin(i+1);
+    type = class(parameterStruct.(var));
+    switch type
+        case {'string','char'}
+            val = lower(string(val)); 
+            pat = lettersPattern;
+            val = extract(val,pat);
+            if isempty(val)
+                ClassErrorMessage(var,type)
+            end
+        case 'double'
+            try val = cell2mat(val); catch ClassErrorMessage(var,type); end
+        case 'logical'
+            try val = logical(cell2mat(val)); catch ClassErrorMessage(var,type); end
+    end
+    parameterStruct.(var) = val;
 end
 
 % Set default wavelength range
@@ -140,7 +157,7 @@ coneFunTbl(isnan(coneFunTbl)) = 0;
 coneFunTbl = CurveNormalisation(coneFunTbl, parameterStruct.normalisation);
 
 %% Draw graph
-if strcmp(parameterStruct.graphs,"yes")
+if parameterStruct.graphs
     cones = ['r','g','b','m'];
     NewFigWindow;
     hold on
@@ -164,9 +181,6 @@ if strcmp(parameterStruct.graphs,"yes")
     NiceGraphs
     lgdLabs = ["L-cone", "M-cone", "S-cone", "Unadj. L-Cone"];
     legend(lgdLabs(1:width(coneFunTbl)),'Location','northeastoutside','TextColor','w','FontSize',30);
-elseif ~strcmp(parameterStruct.graphs,"no")
-    disp("Graphs must be set as ""yes"" or ""no""!");
-    disp("For this run, I'll assume you don't want graphs.");
 end
 
 %% Store data in structure
@@ -182,6 +196,22 @@ if rlmAdj
     pssUnadj = measuredWavelengths(coneFunTbl(:,4)==max(coneFunTbl(:,4)));
     pssAdj = measuredWavelengths(coneFunTbl(:,1)==max(coneFunTbl(:,1)));
     coneFunStruct.peakSpectSensShift = pssAdj - pssUnadj;
+end
+
+%% FUNCTIONS
+function ClassErrorMessage(var,type)
+
+switch type
+    case {"string","char"}
+        typeStr = '"string" or "char"';
+    case "logical"
+        typeStr = '"logical" or "double" (0/1)';
+    otherwise
+        typeStr = '"' + type + '"';  
+end
+
+error('Parameter value for variable "' + var + '" is invalid!'...
+    + newline + 'Input should be class ' + typeStr + '.');
 end
 
 end

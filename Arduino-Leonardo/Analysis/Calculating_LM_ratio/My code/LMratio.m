@@ -8,7 +8,7 @@ data = LoadData; dataTbl = data.all;
 % Load Device Values
 deviceVals = LoadDeviceValues;
 
-% Load Vlambda
+% Load xLambda
 vLambda = table2array(readtable("CIE_sle_photopic.csv"));
 vLambda = vLambda(ismember(vLambda(:,1),400:5:700),2);
 
@@ -20,13 +20,13 @@ defaultAge = table2array(stat(dataTbl.age,"median","all"));
 validAValRange = [0.5,5];
 
 % RLM Adjustment (0/1)
-rlmAdjustment = 1;
+rlmAdjustment = false;
 rlmVals = [NaN NaN NaN]; rlmDev = "N/A";
 
 %% CONE RATIO
 rlmShifts = nan(height(dataTbl),1);
 % Calculating cone ratio for each ptpt
-for ptpt = 1:height(dataTbl)
+for ptpt = 1:height(dataTbl) %find(strcmp(dataTbl.ptptID,"JAA")) 
     
     % If the participant didn't do the HFP task, skips and continues to next ptpt
     if isnan(dataTbl.hfpRed(ptpt)), continue; end
@@ -35,9 +35,8 @@ for ptpt = 1:height(dataTbl)
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    if ismember(ptptID,"JAA"), g = "yes"; else, g = "no"; end
-    %g = "no";
-    %g = "yes";
+    if ismember(ptptID,"JAA"), g = true; else, g = false; end
+    %g = false;
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = dataTbl.age(ptpt);
@@ -70,7 +69,7 @@ for ptpt = 1:height(dataTbl)
     
     % save values to data table
     dataTbl.aValAllie(ptpt) = aValAllie;
-    dataTbl.aVal(ptpt) = aValDana;
+    dataTbl.aValDana(ptpt) = aValDana;
     dataTbl.coneProportionL(ptpt) = coneProportion.l;
     dataTbl.coneProportionM(ptpt) = coneProportion.m;
     dataTbl.foveaDensityL(ptpt) = foveaDensity.l;
@@ -78,9 +77,9 @@ for ptpt = 1:height(dataTbl)
 end
 
 %%
-idx = dataTbl.aVal >= min(validAValRange) & dataTbl.aVal <= max(validAValRange);
+idx = dataTbl.aValDana >= min(validAValRange) & dataTbl.aValDana <= max(validAValRange);
 dataTbl.validRatio = idx;
-validAValsDana = dataTbl.aVal(idx);
+validAValsDana = dataTbl.aValDana(idx);
 
 save("LMratioData.mat", "dataTbl");
 
@@ -92,7 +91,7 @@ disp(newline +...
 
 %% HISTOGRAMS
 idx = ~strcmp(dataTbl.hfpDevice,"");
-vars = ["study","ptptID","aValAllie","aVal","validRatio","hfpRed","hfpGreen"];
+vars = ["study","ptptID","aValAllie","aValDana","validRatio","hfpRed","hfpGreen"];
 aValTbl = dataTbl(idx,vars);
 %disp(aValTbl);
 
@@ -107,7 +106,7 @@ title("Allie");
 NiceGraphs(f);
 
 nexttile(3,[1 1])
-histogram(aValTbl.aVal,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
+histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
 xlim([min(validAValRange),max(validAValRange)]);
 xlabel("a Value"); ylabel("Count");
 title("Dana");
@@ -116,7 +115,7 @@ NiceGraphs(f);
 nexttile(2,[2 1])
 hold on
 histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c','FaceAlpha',.5);
-histogram(aValTbl.aVal,'BinWidth',.1,'EdgeColor','w','FaceColor','m','FaceAlpha',.5);
+histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m','FaceAlpha',.5);
 hold off
 xlim([min(validAValRange),max(validAValRange)]);
 xlabel("a Value"); ylabel("Count");
@@ -131,7 +130,7 @@ tiledlayout(2,2);
 groups = unique(floor(aValTbl.study));
 for g = min(groups):max(groups)
     idx = floor(aValTbl.study) == g;
-    groupData = aValTbl.aVal(idx);
+    groupData = aValTbl.aValDana(idx);
 
     nexttile
     histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+(1-min(groups))),'FaceAlpha',1);
@@ -163,7 +162,7 @@ function a = FindLMratioDana(hfpRG, hfpDev, coneFuns, graphs)
 
 % Use default values is vars have not been entered
 if ~exist("coneFuns",'var'), [coneFuns,~] = ConeFundamentals(normalisation = "area"); end
-if ~exist("graphs",'var'), graphs = "no"; end
+if ~exist("graphs",'var'), graphs = false; end
  
 devVals = LoadDeviceValues(hfpDev,hfpRG);
 
@@ -181,7 +180,7 @@ sens.gL = trapz(gSpd .* coneFuns.lCones);
 a = (sens.rM-sens.gM)./(sens.gL-sens.rL);
 
 %graphs
-if strcmpi(graphs, "yes")
+if graphs
     f = NewFigWindow;
 
     hold on
@@ -205,11 +204,11 @@ if strcmpi(graphs, "yes")
     l = legend(["L-Cones", "M-Cones", "S-Cones", "Red LED", "Green LED"]);
     NiceGraphs(f,l);
 end
+
 end
 
 %%
 function [cProp, cDensity] = FindConeProportionsAndDensities(a)
-cProp = struct;
 cProp.s = .05;
 cProp.l = (a/(a+1))*(1-cProp.s);
 cProp.m = (1/(a+1))*(1-cProp.s);
@@ -219,7 +218,6 @@ cProp.m = (1/(a+1))*(1-cProp.s);
 % of foveal cone density (168,162 cones/mm2)
 % (Zhang, Godara, Blanco, Griffin, Wang, Curcio & Zhang, 2015)"
 foveaConeDensityZhang = 168162;
-cDensity = struct;
 cDensity.l = cProp.l * foveaConeDensityZhang;
 cDensity.m = cProp.m * foveaConeDensityZhang;
 cDensity.s = cProp.s * foveaConeDensityZhang;
