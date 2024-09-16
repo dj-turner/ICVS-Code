@@ -8,7 +8,7 @@ data = LoadData; dataTbl = data.all;
 % Load Device Values
 deviceVals = LoadDeviceValues;
 
-% Load xLambda
+% Load vLambda
 vLambda = table2array(readtable("CIE_sle_photopic.csv"));
 vLambda = vLambda(ismember(vLambda(:,1),400:5:700),2);
 
@@ -19,9 +19,8 @@ defaultAge = table2array(stat(dataTbl.age,"median","all"));
 % Set valid aVal Range
 validAValRange = [0.5,5];
 
-% RLM Adjustment (0/1)
-rlmAdjustment = false;
-rlmVals = [NaN NaN NaN]; rlmDev = "N/A";
+% RLM Adjustment (logical)
+rlmAdjustment = true;
 
 %% CONE RATIO
 rlmShifts = nan(height(dataTbl),1);
@@ -35,8 +34,8 @@ for ptpt = 1:height(dataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     ptptID = dataTbl.ptptID(ptpt);
 
     % graphs for some ptpts?
-    if ismember(ptptID,"JAA"), g = true; else, g = false; end
-    %g = false;
+    graphPtpts = "JAA";
+    if ismember(ptptID,graphPtpts), g = true; else, g = false; end
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = dataTbl.age(ptpt);
@@ -46,6 +45,9 @@ for ptpt = 1:height(dataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     if rlmAdjustment
         rlmVals = [dataTbl.rlmRed(ptpt), dataTbl.rlmGreen(ptpt), dataTbl.rlmYellow(ptpt)];
         rlmDev = dataTbl.rlmDevice(ptpt);
+    else
+        rlmVals = NaN(1,3);
+        rlmDev = "N/A";
     end
 
     % use participant's age to estimate cone fundamentals (small pupil)
@@ -74,6 +76,13 @@ for ptpt = 1:height(dataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     dataTbl.coneProportionM(ptpt) = coneProportion.m;
     dataTbl.foveaDensityL(ptpt) = foveaDensity.l;
     dataTbl.foveaDensityM(ptpt) = foveaDensity.m;
+    try
+        dataTbl.shiftSA(ptpt) = coneFuns.(ptptID).spectAbsShift;
+        dataTbl.shiftPSS(ptpt) = coneFuns.(ptptID).peakSpectSensShift;
+    catch
+        dataTbl.shiftSA(ptpt) = 0;
+        dataTbl.shiftPSS(ptpt) = 0;
+    end
 end
 
 %%
@@ -177,7 +186,7 @@ sens.rL = trapz(rSpd .* coneFuns.lCones);
 sens.gM = trapz(gSpd .* coneFuns.mCones);
 sens.gL = trapz(gSpd .* coneFuns.lCones);
 
-a = (sens.rM-sens.gM)./(sens.gL-sens.rL);
+a = (sens.rM-sens.gM)./(sens.gL-sens.rL); 
 
 %graphs
 if graphs

@@ -10,8 +10,6 @@ if ismember("uno",devices)
     load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\CalResultsUno.mat'));
     fns = string(fieldnames(calUno)); 
     cal = calUno.(fns(end)); 
-    %cal.r.Spect = cal.r.Spect'; 
-    %cal.g.Spect = cal.g.Spect';
     idx = ismember(cal.r.Spect(:,1),wavelengths);   
     lights = ['r','g'];
     %allieLums = [962.7570, 594.3295];
@@ -33,13 +31,13 @@ load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-
 
 if ~isempty(arduinoDevices)
     lights = ['r','g','y'];
-    rgEqu = FindRedGreenLedEquation(calibrationTable);
+    lumEqu = FindLedEquations(calibrationTable);
     [ledLambda,lumMax] = LoadPrimarySpds(arduinoDevices);
     for device = 1:length(arduinoDevices), d = arduinoDevices(device);
         % Predicting relative red/green lum using equation
         devVals.(d).r.LumMax = lumMax.(d).r;
-        devVals.(d).g.LumMax = rgEqu.(d).m .* lumMax.(d).r + rgEqu.(d).c;
-        devVals.(d).y.LumMax = lumMax.(d).y;
+        devVals.(d).g.LumMax = lumEqu.(d).g.m .* lumMax.(d).r + lumEqu.(d).g.c;
+        devVals.(d).y.LumMax = lumEqu.(d).y.m .* lumMax.(d).r + lumEqu.(d).y.c;
 
         for light = 1:length(lights), l = lights(light);
             devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
@@ -58,7 +56,7 @@ for device = 1:length(devices), d = devices(device);
     lights = string(fieldnames(devVals.(d)));
     for light = 1:length(lights), l = lights(light);
         devVals.(d).(l).k = devVals.(d).(l).Lum / sum(vLambda .* devVals.(d).(l).Spd);
-        devVals.(d).(l).Rad = devVals.(d).(l).k * sum(devVals.(d).(l).Spd);
+        devVals.(d).(l).Rad = sum(devVals.(d).(l).k .* devVals.(d).(l).Spd);
     end
     devVals.(d).kRG = devVals.(d).r.k / devVals.(d).g.k;
 end

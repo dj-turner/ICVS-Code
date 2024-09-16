@@ -35,7 +35,7 @@
 
 function [coneFunStruct, parameterStruct] = ConeFundamentals(varargin)
 %% INITIATION
-% Add data tables tp path
+% Add data tables to path
 addpath("tables\");
 
 % Sets default parameters
@@ -62,15 +62,22 @@ for i = 1:2:length(varargin)-1
     switch type
         case {'string','char'}
             val = lower(string(val)); 
-            pat = lettersPattern;
-            val = extract(val,pat);
+            val = extract(val,lettersPattern);
             if isempty(val)
                 ClassErrorMessage(var,type)
             end
         case 'double'
-            try val = cell2mat(val); catch ClassErrorMessage(var,type); end
+            try 
+                val = cell2mat(val);
+            catch 
+                ClassErrorMessage(var,type); 
+            end
         case 'logical'
-            try val = logical(cell2mat(val)); catch ClassErrorMessage(var,type); end
+            try 
+                val = logical(cell2mat(val)); 
+            catch 
+                ClassErrorMessage(var,type); 
+            end
     end
     parameterStruct.(var) = val;
 end
@@ -100,7 +107,7 @@ lensDensity = lensDensity(:,2:end);
 rlmAdj = sum(isnan(parameterStruct.rlmRGY)) == 0 & ~strcmpi(parameterStruct.rlmDevice,"N/A");
 
 if rlmAdj
-    [optLConeSA, optLConeShift] = EstimatingOptimalLConeSpectAbsShift(spectralAbsorbance, parameterStruct.rlmRGY,... 
+    [optLConeSA, optLConePSS] = EstimatingOptimalLConeSpectAbsShift(spectralAbsorbance, parameterStruct.rlmRGY,... 
         parameterStruct.rlmDevice, parameterStruct.graphs);
     spectralAbsorbance(:,4) = spectralAbsorbance(:,1);
     spectralAbsorbance(:,1) = optLConeSA;
@@ -191,7 +198,7 @@ coneFunStruct = struct("wavelengths", measuredWavelengths,...
 
 if rlmAdj
     coneFunStruct.unadjLCones = coneFunTbl(:,4);
-    coneFunStruct.spectAbsShift = optLConeShift;
+    coneFunStruct.spectAbsShift = optLConePSS;
 
     pssUnadj = measuredWavelengths(coneFunTbl(:,4)==max(coneFunTbl(:,4)));
     pssAdj = measuredWavelengths(coneFunTbl(:,1)==max(coneFunTbl(:,1)));

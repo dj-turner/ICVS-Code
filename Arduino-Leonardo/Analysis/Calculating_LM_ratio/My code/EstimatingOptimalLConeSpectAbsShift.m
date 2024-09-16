@@ -1,26 +1,26 @@
-% function [optimalLConeSpectAbsShift, optimalShift] = EstimatingOptimalLConeSpectAbsShift(spectAbs,rgy,device,graphs)
-clc; clear; close all;
-data = LoadData; dataTbl = data.all;
-ptptID = "JAA";
-% Spectral absorbance
-% load table
-spectralAbsorbance = table2array(readtable("ssabance_5.csv"));
-% Only include defined wavelengths
-idx = ismember(spectralAbsorbance(:,1), 400:5:700);
-spectralAbsorbance = spectralAbsorbance(idx,2:end);
-% Raise to the 10th power
-spectralAbsorbance = 10 .^ spectralAbsorbance; 
-spectAbs = spectralAbsorbance;
-
-row = find(strcmp(dataTbl.ptptID,ptptID));
-rgy = [dataTbl.rlmRed(row),dataTbl.rlmGreen(row),dataTbl.rlmYellow(row)];
-device = dataTbl.rlmDevice(row);
-graphs = true;
+function [optimalLConeSpectAbsShift, optimalShift] = EstimatingOptimalLConeSpectAbsShift(spectAbs,rgy,device,graphs)
+% clc; clear; close all;
+% data = LoadData; dataTbl = data.all;
+% ptptID = "MAU";
+% % Spectral absorbance
+% % load table
+% spectralAbsorbance = table2array(readtable("ssabance_5.csv"));
+% % Only include defined wavelengths
+% idx = ismember(spectralAbsorbance(:,1), 400:5:700);
+% spectralAbsorbance = spectralAbsorbance(idx,2:end);
+% % Raise to the 10th power
+% spectralAbsorbance = 10 .^ spectralAbsorbance; 
+% spectAbs = spectralAbsorbance;
+% 
+% row = find(strcmp(dataTbl.ptptID,ptptID));
+% rgy = [dataTbl.rlmRed(row),dataTbl.rlmGreen(row),dataTbl.rlmYellow(row)];
+% device = dataTbl.rlmDevice(row);
+% graphs = true;
 
 %% INITIALISATION
 % set constants
-fitVal = 1;
-maxTestShift = 20; % maximum shift to test
+fitVal = 1; % 0
+maxTestShift = 25; % maximum shift to test
 testStep = 1; % step between tested shifts
 testInts = -maxTestShift:testStep:maxTestShift;  % Array of shift values to be tested
 
@@ -30,7 +30,10 @@ LEDs = ['r','g','y'];           % Character labels for each LED
 
 %% LOAD DEVICE CALIBRATION DATA
 %[primarySpds,~] = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
-primarySpds = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
+deviceVals = LoadDeviceValues;
+for light = 1:length(LEDs), l = LEDs(light);
+    primarySpds.(l) = CurveNormalisation(deviceVals.(device).(l).Spd, "height", deviceVals.(device).(l).LumMax);
+end
 
 %% TESTING SHIFTED L-CONES
 testSpectAbs = struct("M",spectAbs(:,2));
@@ -51,8 +54,7 @@ for i = 1:numel(testInts)
     eRatio.RG = (e.L.r + e.L.g)/(e.M.r + e.M.g);
     eRatio.Y = e.L.y/e.M.y;
     lConeSpectAbsFits(i) = eRatio.Y/eRatio.RG; 
-    % lConeSpectAbsFits(i) = (excitation.L.y + excitation.M.y) - ...
-    %     (excitation.L.r + excitation.M.r + excitation.L.g + excitation.M.g);
+    % lConeSpectAbsFits(i) = (e.L.y + e.M.y) - (e.L.r + e.M.r + e.L.g + e.M.g);
 end
 
 %% FINDING OPTIMAL SHIFT VALUE
@@ -108,4 +110,4 @@ if graphs
     hold off
 end
 
-% end
+end
