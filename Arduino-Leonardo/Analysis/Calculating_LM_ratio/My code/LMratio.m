@@ -6,7 +6,7 @@ clc; clear; close all;
 data = LoadData; dataTbl = data.all;
 
 % Load Device Values
-deviceVals = LoadDeviceValues;
+deviceVals = LoadDeviceValues("all");
 
 % wavelengths
 wavelengths = 400:5:700;
@@ -174,7 +174,7 @@ function a = FindLMratioDana(hfpRG, hfpDev, coneFuns, graphs)
 if ~exist("coneFuns",'var'), [coneFuns,~] = ConeFundamentals(normalisation = "area"); end
 if ~exist("graphs",'var'), graphs = false; end
  
-devVals = LoadDeviceValues(hfpDev);
+devVals = LoadDeviceValues(hfpDev,graphs);
 
 % Set constants
 x = coneFuns.wavelengths;

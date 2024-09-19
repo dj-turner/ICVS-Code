@@ -1,9 +1,11 @@
-function devVals = LoadDeviceValues(devices)
+function devVals = LoadDeviceValues(devices,graphs)
+
+if ~exist("graphs",'var'), graphs = false; end
 
 repoPath = FindRepoPath;
 
 wavelengths = 400:5:700;
-if ~exist("devices",'var'), devices = ["uno","yellow","green"]; else, devices = lower(devices); end
+if ~exist("devices",'var') | strcmpi(devices,"all"), devices = ["uno","yellow","green"]; else, devices = lower(devices); end
 
 %% MAXWELLIAN-VIEW DEVICE
 if ismember("uno",devices)
@@ -31,7 +33,7 @@ load(repoPath + "Arduino-Leonardo\Calibration\CalibrationResults.mat")
 
 if ~isempty(arduinoDevices)
     lights = ['r','g','y'];
-    lumEqu = FindLedEquations(calibrationTable);
+    lumEqu = FindLedEquations(calibrationTable,arduinoDevices,graphs);
     [ledLambda,lumMax] = LoadPrimarySpds(arduinoDevices);
     for device = 1:length(arduinoDevices), d = arduinoDevices(device);
         % Predicting relative red/green lum using equation
