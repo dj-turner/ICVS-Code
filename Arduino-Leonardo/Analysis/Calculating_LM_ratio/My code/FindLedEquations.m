@@ -26,16 +26,17 @@ for device = 1:length(devices), d = devices(device);
         fitvars = polyfit(tbl.(l1),tbl.(l),1);
         equ.(d).(col).m = fitvars(1);
         equ.(d).(col).c = fitvars(2);
-        x = tbl.(l1);
-        y = equ.(d).(col).m .* x + equ.(d).(col).c;
         if graphs
+            x = tbl.(l1);
+            y = equ.(d).(col).m .* x + equ.(d).(col).c;
             nexttile
             hold on
             plot(x,tbl.(l),'Color',col,'LineWidth',3);
             plot(x,y,'Color',col,'LineStyle','--');
             title("Device = " + d);
             xlabel(l1); ylabel(l);
-            xlim([min(x),max(x)]); ylim([min(tbl.(l)),max(tbl.(l))]);
+            xlim([min(x),max(x)]); 
+            ylim([min(tbl.(l)),max(tbl.(l))]);
             hold off
             NiceGraphs
         end

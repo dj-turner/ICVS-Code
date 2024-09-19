@@ -23,22 +23,20 @@ defaultAge = table2array(stat(dataTbl.age,"median","all"));
 validAValRange = [0.5,5];
 
 % RLM Adjustment (logical)
-rlmAdjustment = false;
-
-% graphs for some ptpts?
-graphPtpts = "JAA";
+rlmAdjustment = true;
 
 %% CONE RATIO
 % Finds participants with complete HFP data
-completeHfpData = ~isnan(dataTbl.hfpRed) & ~isnan(dataTbl.hfpGreen);
+idx = ~isnan(dataTbl.hfpRed) & ~isnan(dataTbl.hfpGreen);
+ptptRows = find(idx);
 % Calculating cone ratio for each ptpt
 for ptpt = 1:height(dataTbl) %find(strcmp(dataTbl.ptptID,"JAA")) 
-
-    if ~completeHfpData(ptpt), continue; end
 
     % Extract participant code
     ptptID = dataTbl.ptptID(ptpt);
 
+    % graphs for some ptpts?
+    graphPtpts = "TAA";
     if ismember(ptptID,graphPtpts), g = true; else, g = false; end
     
     % pulls age, defaults it or rounds it appropriately

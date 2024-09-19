@@ -123,7 +123,8 @@ switch lower(parameterStruct.pupilSize)
 end
 
 %% 5.3 - Peak optical density & Field Size
-if parameterStruct.fieldSize >= 1 && parameterStruct.fieldSize <= 10
+validFieldSize = parameterStruct.fieldSize >= 1 && parameterStruct.fieldSize <= 10;
+if validFieldSize
     dtMaxMacula = 0.485 .* exp(-parameterStruct.fieldSize / 6.132);
 else
     error("Field size must be set between 1 and 10!");
@@ -203,6 +204,9 @@ if rlmAdj
     pssUnadj = measuredWavelengths(coneFunTbl(:,4)==max(coneFunTbl(:,4)));
     pssAdj = measuredWavelengths(coneFunTbl(:,1)==max(coneFunTbl(:,1)));
     coneFunStruct.peakSpectSensShift = pssAdj - pssUnadj;
+else
+    coneFunStruct.spectAbsShift = 0;
+    coneFunStruct.peakSpectSensShift = 0;
 end
 
 %% FUNCTIONS

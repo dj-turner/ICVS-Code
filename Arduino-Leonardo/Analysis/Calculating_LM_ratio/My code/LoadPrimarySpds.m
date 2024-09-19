@@ -1,8 +1,10 @@
 function [primarySpds, maxLums] = LoadPrimarySpds(devices)
 
+repoPath = FindRepoPath;
+
 % load calibration data
 addpath("data\");
-load(strcat('C:\Users\',getenv('USERNAME'),'\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Calibration\CalibrationResults.mat'));
+load(repoPath + "Arduino-Leonardo\Calibration\CalibrationResults.mat");
 
 LEDs = ["red","green","yellow"];
 LEDlabs = ['r','g','y'];
