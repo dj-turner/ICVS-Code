@@ -63,7 +63,7 @@ for ptpt = 1:height(dataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     hfpDev = dataTbl.hfpDevice(ptpt);
 
     % Allie's code to calculate a
-    aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.LumMax, deviceVals.(hfpDev).g.LumMax,...
+    aValAllie = FindLMratioAllie(deviceVals.(hfpDev).r.Lum, deviceVals.(hfpDev).g.Lum,...
         deviceVals.(hfpDev).r.Lambda, deviceVals.(hfpDev).g.Lambda, coneFuns.(ptptID).wavelengths,...
         coneFuns.(ptptID).lCones, coneFuns.(ptptID).mCones, dataTbl.hfpRed(ptpt));
 
@@ -178,9 +178,12 @@ devVals = LoadDeviceValues(hfpDev,graphs);
 
 % Set constants
 x = coneFuns.wavelengths;
- 
-rSpd = CurveNormalisation(devVals.(hfpDev).r.Spd,"height") .* devVals.(hfpDev).r.Rad .* hfpRG(1);
-gSpd = CurveNormalisation(devVals.(hfpDev).g.Spd,"height") .* devVals.(hfpDev).g.Rad .* hfpRG(2);
+
+rRad = devVals.(hfpDev).r.Rad * hfpRG(1);
+gRad = devVals.(hfpDev).g.Rad * hfpRG(2);
+
+rSpd = CurveNormalisation(devVals.(hfpDev).r.Spd, "area", rRad);
+gSpd = CurveNormalisation(devVals.(hfpDev).g.Spd, "area", gRad);
 
 sens.rM = trapz(rSpd .* coneFuns.mCones);
 sens.rL = trapz(rSpd .* coneFuns.lCones);

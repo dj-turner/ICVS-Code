@@ -15,12 +15,13 @@ if ismember("uno",devices)
     cal = calUno.(fns(end)); 
     idx = ismember(cal.r.Spect(:,1),wavelengths);   
     lights = ['r','g'];
-    %allieLums = [962.7570, 594.3295];
+    %allieLums = [2.39, 2.99; 2.77, 2.77];
     
     for light = 1:length(lights), l = lights(light);
         devVals.uno.(l).Lambda = cal.(l).Peak;
-        devVals.uno.(l).LumMax = cal.(l).Lum;
-        %devVals.uno.(l).LumMax = allieLums(light);
+        devVals.uno.(l).Lum = cal.(l).Lum;
+        %devVals.uno.(l).LumMin = 10 ^ allieLums(light,1);
+        %devVals.uno.(l).LumMax = 10 ^ allieLums(light,2);
         devVals.uno.(l).Spd = cal.(l).Spect(idx,2);
     end
 
@@ -36,10 +37,10 @@ if ~isempty(arduinoDevices)
     lumEqu = FindLedEquations(calibrationTable,arduinoDevices,graphs);
     [ledLambda,lumMax] = LoadPrimarySpds(arduinoDevices);
     for device = 1:length(arduinoDevices), d = arduinoDevices(device);
-        % Predicting relative red/green lum using equation
-        devVals.(d).r.LumMax = lumMax.(d).r;
-        devVals.(d).g.LumMax = lumEqu.(d).g.m .* lumMax.(d).r + lumEqu.(d).g.c;
-        devVals.(d).y.LumMax = lumEqu.(d).y.m .* lumMax.(d).r + lumEqu.(d).y.c;
+        % Predicting relative red/green/yellow lum using equation
+        devVals.(d).r.Lum = lumMax.(d).r;
+        devVals.(d).g.Lum = lumEqu.(d).g.m .* lumMax.(d).r + lumEqu.(d).g.c;
+        devVals.(d).y.Lum = lumEqu.(d).y.m .* lumMax.(d).r + lumEqu.(d).y.c;
 
         for light = 1:length(lights), l = lights(light);
             devVals.(d).(l).Lambda = wavelengths(ledLambda.(d).(l) == max(ledLambda.(d).(l)));
@@ -56,7 +57,7 @@ vLambda = vLambda(ismember(vLambda(:,1),wavelengths),2);
 for device = 1:length(devices), d = devices(device);
     lights = string(fieldnames(devVals.(d)));
     for light = 1:length(lights), l = lights(light);
-        devVals.(d).(l).k = devVals.(d).(l).LumMax / sum(vLambda .* devVals.(d).(l).Spd);
+        devVals.(d).(l).k = devVals.(d).(l).Lum / sum(vLambda .* devVals.(d).(l).Spd);
         devVals.(d).(l).Rad = sum(devVals.(d).(l).k .* devVals.(d).(l).Spd);
     end
     devVals.(d).kRG = devVals.(d).r.k / devVals.(d).g.k;

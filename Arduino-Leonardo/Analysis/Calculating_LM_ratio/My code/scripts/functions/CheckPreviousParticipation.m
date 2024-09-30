@@ -1,4 +1,8 @@
-function participatedBefore = CheckPreviousParticipation(ppID,idList)
+function participatedBefore = CheckPreviousParticipation(ppID,idList,priorityOrder)
+
+if exist("priorityOrder",'var')
+    idList = idList(:,["Name","PtptID"+priorityOrder]);
+end
 
 participatedBefore = 0;
 idList = table2array(idList(:,contains(idList.Properties.VariableNames, "ID")));

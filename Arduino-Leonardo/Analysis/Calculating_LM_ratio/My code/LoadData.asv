@@ -358,8 +358,7 @@ end
 data.all = data.all(~data.all.doneHigherPriorityStudy,:);
 
 % uk terms
-ukTerms = ["United Kingdom                    " + ...
-    "", "UK", "England"];
+ukTerms = ["United Kingdom                    ", "UK", "England"];
 idx = ismember(data.all.country, ukTerms);
 data.all.country(idx) = "UK";
 
