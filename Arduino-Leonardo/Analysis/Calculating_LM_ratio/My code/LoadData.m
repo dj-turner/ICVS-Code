@@ -44,7 +44,6 @@ ptptIDs = unique(string(aData.ptptID));
 
 data.Allie = strings(height(ptptIDs), length(dataVars));
 
-
 study = 0;
 age = NaN;
 rg1 = NaN;
@@ -170,7 +169,7 @@ study = 2;
 rg3 = NaN;
 rg4 = NaN;
 rlmMT = "midpoint";
-hfpMT = "midpoint";
+hfpMT = "best";
 rlmD = "yellow";
 hfpD = "yellow";
 
@@ -181,8 +180,9 @@ for ptpt = 1:length(ptptIDs)
     ptptDemoData = jData(idx,:);
     idx = strcmp(jData.Code, ptptIDs(ptpt))...
         & jData.Trial > 1 ...
-        & ismember(string(jData.("Match Type")), ["Minimum","Maximum"]);
+        & strcmpi(jData.("Match Type"),"Best");
     ptptData = jData(idx,:);
+
     if ~isempty(ptptDemoData)
         idx = strcmp(table2array(ptptDemoData(1, "Plates")), "P");
         if idx
@@ -358,8 +358,7 @@ end
 data.all = data.all(~data.all.doneHigherPriorityStudy,:);
 
 % uk terms
-ukTerms = ["United Kingdom                    " + ...
-    "", "UK", "England"];
+ukTerms = ["United Kingdom", "UK", "England"];
 idx = ismember(data.all.country, ukTerms);
 data.all.country(idx) = "UK";
 

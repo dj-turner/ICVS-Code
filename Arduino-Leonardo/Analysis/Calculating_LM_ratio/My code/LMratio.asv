@@ -20,7 +20,7 @@ vLambda = vLambda(ismember(vLambda(:,1),wavelengths),2);
 defaultAge = table2array(stat(dataTbl.age,"median","all"));
  
 % Set valid aVal Range
-validAValRange = [0.5,10];
+validAValRange = [0.5,5];
 
 % RLM Adjustment (logical)
 rlmAdjustment = false;
@@ -74,36 +74,35 @@ for ptpt = 1:height(completeDataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     [coneProportion, foveaDensity] = FindConeProportionsAndDensities(aValDana);
     
     % save values to data table
-    completeDataTbl.aValAllie(ptpt) = aValAllie;
-    completeDataTbl.aValDana(ptpt) = aValDana;
-    completeDataTbl.coneProportionL(ptpt) = coneProportion.l;
-    completeDataTbl.coneProportionM(ptpt) = coneProportion.m;
-    completeDataTbl.foveaDensityL(ptpt) = foveaDensity.l;
-    completeDataTbl.foveaDensityM(ptpt) = foveaDensity.m;
-    completeDataTbl.shiftSA(ptpt) = coneFuns.(ptptID).spectAbsShift;
-    completeDataTbl.shiftPSS(ptpt) = coneFuns.(ptptID).peakSpectSensShift;
+    completeDataTbl
+.aValAllie(ptpt) = aValAllie;
+    dataTbl.aValDana(ptpt) = aValDana;
+    dataTbl.coneProportionL(ptpt) = coneProportion.l;
+    dataTbl.coneProportionM(ptpt) = coneProportion.m;
+    dataTbl.foveaDensityL(ptpt) = foveaDensity.l;
+    dataTbl.foveaDensityM(ptpt) = foveaDensity.m;
+    dataTbl.shiftSA(ptpt) = coneFuns.(ptptID).spectAbsShift;
+    dataTbl.shiftPSS(ptpt) = coneFuns.(ptptID).peakSpectSensShift;
 
 end
 
 %%
-idx = completeDataTbl.aValDana >= min(validAValRange) & completeDataTbl.aValDana <= max(validAValRange);
-completeDataTbl.validRatio = idx;
-validAValsDana = completeDataTbl.aValDana(idx);
+idx = dataTbl.aValDana >= min(validAValRange) & dataTbl.aValDana <= max(validAValRange);
+dataTbl.validRatio = idx;
+validAValsDana = dataTbl.aValDana(idx);
 
-data.analysis = completeDataTbl;
-
-save("LMratioData.mat", "data");
+save("LMratioData.mat", "dataTbl");
 
 disp(newline +... 
     "Dana Valid aVals..." + newline +... 
-    "Percent Valid = " + round(100*(numel(validAValsDana)/height(completeDataTbl)),1) + "%" + newline +...
+    "Percent Valid = " + round(100*(numel(validAValsDana)/height(dataTbl)),1) + "%" + newline +...
     "Mean = " + round(mean(validAValsDana),2) + newline +...
     "Std = " + round(std(validAValsDana),2));
 
 %% HISTOGRAMS
-idx = ~strcmp(completeDataTbl.hfpDevice,"");
+idx = ~strcmp(dataTbl.hfpDevice,"");
 vars = ["study","ptptID","aValAllie","aValDana","validRatio","hfpRed","hfpGreen"];
-aValTbl = completeDataTbl(idx,vars);
+aValTbl = dataTbl(idx,vars);
 %disp(aValTbl);
 
 f = NewFigWindow; 
@@ -111,14 +110,14 @@ t = tiledlayout(2,2);
 
 nexttile(1,[1 1])
 h=histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c');
-xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
+xlim([min(validAValRange),max(validAValRange)]);
 xlabel("a Value"); ylabel("Count");
 title("Allie");
 NiceGraphs(f);
 
 nexttile(3,[1 1])
 histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m');
-xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
+xlim([min(validAValRange),max(validAValRange)]);
 xlabel("a Value"); ylabel("Count");
 title("Dana");
 NiceGraphs(f);
@@ -128,7 +127,7 @@ hold on
 histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c','FaceAlpha',.5);
 histogram(aValTbl.aValDana,'BinWidth',.1,'EdgeColor','w','FaceColor','m','FaceAlpha',.5);
 hold off
-xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
+xlim([min(validAValRange),max(validAValRange)]);
 xlabel("a Value"); ylabel("Count");
 title("Comparison");
 NiceGraphs(f);
@@ -147,7 +146,7 @@ for g = min(groups):max(groups)
     nexttile
     histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+(1-min(groups))),'FaceAlpha',1);
     xlabel("a Value"); ylabel("Count");
-    xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
+    xlim([min(validAValRange),max(validAValRange)]);
     NiceGraphs(f);
 end
 
@@ -184,17 +183,14 @@ x = coneFuns.wavelengths;
 rSpd = devVals.(hfpDev).r.Spd;
 gSpd = devVals.(hfpDev).g.Spd;
 
-switch hfpDev
-    case "uno"
-        rRad = devVals.(hfpDev).r.Rad * hfpVals.r;
-        gRad = devVals.(hfpDev).g.Rad * hfpVals.g;
-        rSpd = CurveNormalisation(rSpd, "height", rRad);
-        gSpd = CurveNormalisation(gSpd, "height", gRad);
-    case {"yellow", "green"}
-        rSpd = rSpd .* hfpVals.r;
-        gSpd = gSpd .* hfpVals.g;
-    otherwise
-        error("Invalid HFP device name!");
+if strcmpi(hfpDev,"uno")
+    rRad = devVals.(hfpDev).r.Rad * hfpVals.r;
+    gRad = devVals.(hfpDev).g.Rad * hfpVals.g;
+    rSpd = CurveNormalisation(rSpd, "height", rRad);
+    gSpd = CurveNormalisation(gSpd, "height", gRad);
+else
+    rSpd = rSpd .* hfpVals.r;
+    gSpd = gSpd .* hfpVals.g;
 end
 
 sens.rM = trapz(rSpd .* coneFuns.mCones);
