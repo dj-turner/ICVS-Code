@@ -23,7 +23,7 @@ defaultAge = table2array(stat(dataTbl.age,"median","all"));
 validAValRange = [0.5,10];
 
 % RLM Adjustment (logical)
-rlmAdjustment = false;
+rlmAdjustment = true;
 
 % graphs for some ptpts?
 graphPtpts = "JAA";
@@ -46,12 +46,13 @@ for ptpt = 1:height(completeDataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     if isnan(ptptAge), ptptAge = defaultAge; elseif ptptAge < 20, ptptAge = 20; elseif ptptAge > 80, ptptAge = 80; end
 
     % pulls Rayleigh match data
-    if rlmAdjustment
-        rlmVals = [completeDataTbl.rlmRed(ptpt), completeDataTbl.rlmGreen(ptpt), completeDataTbl.rlmYellow(ptpt)];
-        rlmDev = completeDataTbl.rlmDevice(ptpt);
-    else
-        rlmVals = NaN(1,3);
-        rlmDev = "N/A";
+    switch rlmAdjustment
+        case true
+            rlmVals = [completeDataTbl.rlmRed(ptpt), completeDataTbl.rlmGreen(ptpt), completeDataTbl.rlmYellow(ptpt)];
+            rlmDev = completeDataTbl.rlmDevice(ptpt);
+        case false
+            rlmVals = NaN(1,3);
+            rlmDev = "N/A";
     end
 
     % use participant's age to estimate cone fundamentals (small pupil)
@@ -80,8 +81,11 @@ for ptpt = 1:height(completeDataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     completeDataTbl.coneProportionM(ptpt) = coneProportion.m;
     completeDataTbl.foveaDensityL(ptpt) = foveaDensity.l;
     completeDataTbl.foveaDensityM(ptpt) = foveaDensity.m;
-    completeDataTbl.shiftSA(ptpt) = coneFuns.(ptptID).spectAbsShift;
-    completeDataTbl.shiftPSS(ptpt) = coneFuns.(ptptID).peakSpectSensShift;
+    try
+        completeDataTbl.shiftSA(ptpt) = coneFuns.(ptptID).spectAbsShift;
+        completeDataTbl.shiftPSS(ptpt) = coneFuns.(ptptID).peakSpectSensShift;
+    catch
+    end
 
 end
 

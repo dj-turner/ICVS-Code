@@ -25,7 +25,6 @@ testStep = 1; % step between tested shifts
 testInts = -maxTestShift:testStep:maxTestShift;  % Array of shift values to be tested
 
 wvls = (400:5:700)';               % Wavelengths data tested
-LEDs = ['r','g','y'];
 
 %% LOAD DEVICE CALIBRATION DATA
 [primarySpds,~] = LoadPrimarySpds(device); primarySpds = primarySpds.(device);
@@ -34,16 +33,17 @@ LEDs = ['r','g','y'];
 testLSpectAbs = NaN(height(spectAbs(:,1)),numel(testInts));
 lConeSpectAbsFits = NaN(numel(testInts),1);
 
-% M-cone excitation
+% M-cone excitation 
 e.M = CalculateConeExcitations(primarySpds, rgy, spectAbs(:,2));
 
 % Test L-cone excitations
 for i = 1:numel(testInts)
     % Shifting the l-cone
     testLSpectAbs(:,i)  = pchip(wvls+testInts(i),spectAbs(:,1),wvls);
-        % Thomas and mollon method for predicting excitation to L- and M-
-        % cones caused by each LED
+    % Thomas and mollon method for predicting excitation to L- and M-
+    % cones caused by each LED
     e.L = CalculateConeExcitations(primarySpds, rgy, testLSpectAbs(:,i));
+    
     eRatio.RG = (e.L.r + e.L.g)/(e.M.r + e.M.g);
     eRatio.Y = e.L.y/e.M.y;
     lConeSpectAbsFits(i) = eRatio.Y/eRatio.RG; 
@@ -103,14 +103,13 @@ if graphs
     % Presentation
     NiceGraphs(f2);
     hold off
-end
+end  
 
 %% FUNCTIONS
 function e = CalculateConeExcitations(ledSpds, ledVals, spectAbs)
-    ledNames = char(fieldnames(ledSpds));
-    for light = 1:length(ledVals)
-        e.(ledNames(light)) = trapz(ledSpds.(ledNames(light)) .* ledVals(light) .* spectAbs);
-    end
+    e.r = sum(ledSpds.r .* ledVals(1) .* spectAbs);
+    e.g = sum(ledSpds.g .* ledVals(2) .* spectAbs);
+    e.y = sum(ledSpds.y .* ledVals(3) .* spectAbs);
 end
 
 end

@@ -294,5 +294,3 @@ clear a;
 
 end
 
-%%
-function PrepareToExit(arduino)

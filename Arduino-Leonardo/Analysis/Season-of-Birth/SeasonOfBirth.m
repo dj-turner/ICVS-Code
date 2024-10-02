@@ -35,8 +35,8 @@ modelVars.irr_area = ["foveaDensityL",...
                  "sex", "ethnicGroup", "irradiance_area"];
 
 validCats.sex = ["M", "F"];
-validCats.ethnicGroup = ["white", "asian"];
-validCats.country = ["UK", "China"];
+validCats.ethnicGroup = ["white", "asian", "mixed-wa"];
+%validCats.country = ["UK", "China"];
 
 [lmeModels, mdlData] = LMEs(dataTbl, modelVars, validCats);
 

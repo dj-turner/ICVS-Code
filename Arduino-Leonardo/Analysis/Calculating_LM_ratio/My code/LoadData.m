@@ -32,8 +32,8 @@ monthNs = struct;
 seasonMeans = struct;
 seasonNs = struct;
 
-dataVars = ["study", "ptptID", "doneHigherPriorityStudy", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow", "rlmMatchType", "rlmDevice", "hfpRed", "hfpGreen", "hfpMatchType", "hfpDevice"];
-numVars = ["study", "doneHigherPriorityStudy", "age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow", "hfpRed", "hfpGreen"];
+dataVars = ["study", "ptptID", "doneHigherPriorityStudy", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow", "rlmRG", "rlmMatchType", "rlmDevice", "hfpRed", "hfpGreen", "hfpMatchType", "hfpDevice"];
+numVars = ["study", "doneHigherPriorityStudy", "age", "month", "year", "ethnicity", "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG", "rlmRed", "rlmGreen", "rlmYellow", "rlmRG", "hfpRed", "hfpGreen"];
 strVars = ["ptptID", "sex", "country", "geneOpsin", "rlmMatchType", "rlmDevice", "hfpMatchType", "hfpDevice"];
 
 %% Allie's data
@@ -54,6 +54,7 @@ geneOpsin = "";
 rlmR = NaN;
 rlmG = NaN;
 rlmY = NaN;
+rlmRG = NaN;
 rlmMT = "n/a";
 hfpMT = "staircase";
 rlmD = "n/a";
@@ -74,7 +75,7 @@ for ptpt = 1:height(aData)
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
         hfpR = rg4; hfpG = 1;
         data.Allie(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
-            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
+            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
     end
 end
 
@@ -137,6 +138,7 @@ for ptpt = 1:length(ptptIDs)
         rlmR = ptptData.RLM_Red_1 ./ 256;
         rlmG = ptptData.RLM_Green_1 ./ 256;
         rlmY = ptptData.RLM_Yellow_1 ./ 256;
+        rlmRG = ptptData.RLM_Lambda_1;
         hfpR = ptptData.HFP_Leo_Red_1 ./ 256;
         hfpG = ptptData.HFP_Leo_Green_1 ./ 256;
         if isnan(hfpR) || isnan(hfpG)
@@ -147,7 +149,7 @@ for ptpt = 1:length(ptptIDs)
             hfpD = "yellow";
         end
         data.Dana(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
-            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
+            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
     end
 end
 
@@ -198,18 +200,19 @@ for ptpt = 1:length(ptptIDs)
             country = string(ptptDemoData.("Country of Birth")(1));
             geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
             if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
-            vars = ["RLM_Red", "RLM_Green", "RLM_Yellow", "HFP_RedValue", "HFP_GreenValue"];
+            vars = ["RLM_Red", "RLM_Green", "RLM_Yellow", "RLM_Lambda", "HFP_RedValue", "HFP_GreenValue"];
             ptptValueData = mean(ptptData(:,vars),'omitmissing');
             rg1 = ptptValueData.RLM_Red ./ ptptValueData.RLM_Green;
             rg2 = ptptValueData.HFP_RedValue ./ ptptValueData.HFP_GreenValue;
             rlmR = ptptValueData.RLM_Red ./ 256;
             rlmG = ptptValueData.RLM_Green ./ 256;
             rlmY = ptptValueData.RLM_Yellow ./ 256;
+            rlmRG = ptptValueData.RLM_Lambda;
             hfpR = ptptValueData.HFP_RedValue ./ 256;
             hfpG = ptptValueData.HFP_GreenValue ./ 256;
             if isnan(hfpR) || isnan(hfpG), hfpR = rg4; hfpG = 1; end
             data.Josh(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
-            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
+            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
         end
     end
 end
@@ -276,7 +279,7 @@ for ptpt = 3:length(ptptIDs)
         idx = strcmp(string(mDataRLM.ParticipantCode),ptptID)...
               & ismember(string(mDataRLM.MatchType), ["MinLambda","MaxLambda"])...
               & mDataRLM.Trial > 1;
-        ptptDataRLM = mean(mDataRLM(idx,["Red","Green","Yellow"]),'omitmissing');
+        ptptDataRLM = mean(mDataRLM(idx,["Red","Green","Yellow","Lambda"]),'omitmissing');
         rg1 = ptptDataRLM.Red ./ ptptDataRLM.Green;
 
         studyDate = table2array(mDataRLM(idx,"DateTime"));
@@ -294,9 +297,10 @@ for ptpt = 3:length(ptptIDs)
         rlmR = ptptDataRLM.Red ./ 256;
         rlmG = ptptDataRLM.Green ./ 256;
         rlmY = ptptDataRLM.Yellow ./ 256;
+        rlmRG = ptptDataRLM.Lambda;
         hfpR = rg4; hfpG = 1;
         data.Mitch(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
-            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
+            rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD];
     end
 end
 
