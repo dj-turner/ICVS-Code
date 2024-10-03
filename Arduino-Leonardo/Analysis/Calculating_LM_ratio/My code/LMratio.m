@@ -25,6 +25,9 @@ validAValRange = [0.5,10];
 % RLM Adjustment (logical)
 rlmAdjustment = true;
 
+rlmVals = NaN(1,3);
+rlmDev = "N/A";
+
 % graphs for some ptpts?
 graphPtpts = "JAA";
 
@@ -39,20 +42,16 @@ for ptpt = 1:height(completeDataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
     % Extract participant code
     ptptID = completeDataTbl.ptptID(ptpt);
 
-    if ismember(ptptID,graphPtpts), g = true; else, g = false; end
+    g = ismember(ptptID,graphPtpts);
     
     % pulls age, defaults it or rounds it appropriately
     ptptAge = completeDataTbl.age(ptpt);
     if isnan(ptptAge), ptptAge = defaultAge; elseif ptptAge < 20, ptptAge = 20; elseif ptptAge > 80, ptptAge = 80; end
 
     % pulls Rayleigh match data
-    switch rlmAdjustment
-        case true
-            rlmVals = [completeDataTbl.rlmRed(ptpt), completeDataTbl.rlmGreen(ptpt), completeDataTbl.rlmYellow(ptpt)];
-            rlmDev = completeDataTbl.rlmDevice(ptpt);
-        case false
-            rlmVals = NaN(1,3);
-            rlmDev = "N/A";
+    if rlmAdjustment
+        rlmVals = [completeDataTbl.rlmRed(ptpt), completeDataTbl.rlmGreen(ptpt), completeDataTbl.rlmYellow(ptpt)];
+        rlmDev = completeDataTbl.rlmDevice(ptpt);
     end
 
     % use participant's age to estimate cone fundamentals (small pupil)

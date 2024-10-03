@@ -25,7 +25,7 @@ greenAnchor = 350;                              % Green value for lambda = 0
 
 %% m-cone
 testInts = -25:1:25;
-testSteps = 0:.02:1;
+testSteps = 0:.05:1;
 
 f = NewFigWindow;
 diffVals = NaN(numel(testInts),numel(testSteps),numel(testSteps));
@@ -63,7 +63,7 @@ for i = 1:length(testInts)+1
 end
 
 xlim([0 1]); ylim([0 1]);
-xlabel("Lambda Setting"); ylabel("Yellow Setting");
+xlabel("Lambda")
 for ptpt = 1:height(dataTbl)
     plot(dataTbl.rlmRG(ptpt),dataTbl.rlmYellow(ptpt),'Marker','o','MarkerSize',5,'MarkerEdgeColor','w','MarkerFaceColor','w')
 end
