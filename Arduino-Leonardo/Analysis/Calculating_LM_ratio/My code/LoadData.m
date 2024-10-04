@@ -368,6 +368,9 @@ data.all.country(idx) = "UK";
 
 CalculateWeatherData;
 
+dataNums = array2table((1:height(data.all))','VariableNames',"ptptNum");
+data.all = [dataNums data.all];
+
 warning('on','MATLAB:table:ModifiedAndSavedVarnames');
 
 end
