@@ -1,45 +1,35 @@
+function [lmes,data] = LMEs(data,modelVars,validCats)
+
+%% Initialise variables
 lmes = struct;
-modelFields = string(fieldnames(modelVars));
-for model = 1:numel(modelFields)
-    currentVars = modelVars.(modelFields(model));
-    modelStrVars = currentVars(ismember(currentVars, strVars));
-    modelNumVars = currentVars(ismember(currentVars, numVars));
-    idxStr = strcmp(table2array(data.all(:,modelStrVars)), "");
-    idxNum = isnan(table2array(data.all(:,modelNumVars)));
+models = string(fieldnames(modelVars));
+categories = string(fieldnames(validCats));
 
-    catNames = string(fieldnames(validcats));
-    catNum = length(catNames);
-    idxCat = NaN(height(data.all), catNum);
-    for cat = 1:catNum
-        if isstring(validcats.(catNames(cat)))
-            idxCat(:,cat) = ismember(data.all.(catNames(cat)), validcats.(catNames(cat)));
-        else
-            idxCat(:,cat) = data.all.(catNames(cat)) >= validcats.(catNames(cat))(1)... 
-                & data.all.(catNames(cat)) <= validcats.(catNames(cat))(2);
-        end
-    end
-    idxCat = sum(idxCat,2) == width(idxCat);
+%% Filter data based on valid categories
+for category = 1:length(categories), catName = categories(category);
+    idx = ismember(data.(catName), validCats.(catName));
+    data = data(idx,:);
 
-    idx = sum([idxStr,idxNum],2) == 0 & idxCat;
-    modelData = data.all(idx,currentVars);
-    
-    modelStr = char(strjoin(currentVars, " + "));
-    modelStr(regexp(modelStr, '+', 'once')) = "~"; 
-    
-    for var = 1:length(modelStrVars)
-        modelData.(modelStrVars(var)) = categorical(modelData.(modelStrVars(var)));
-        if ismember(modelStrVars(var), catNames)
-            currentValidCats = string(unique(modelData.(modelStrVars(var))));
-            idx = ismember(validcats.(modelStrVars(var)), currentValidCats);
-            modelData.(modelStrVars(var)) = reordercats(modelData.(modelStrVars(var)), validcats.(modelStrVars(var))(idx));
-        end
+    % Filter out blanks
+    dataClass = class(data.(catName));
+    switch dataClass
+        case 'double'
+            idx = ~isnan(data.(catName));
+        case 'string'
+            idx = ~strcmp(data.(catName),"");
+            data.(catName) = categorical(data.(catName));
     end
-    
-    % try
-        lmes.(modelFields(model)) = fitlme(modelData,modelStr);
-        disp(lmes.(modelFields(model)))
-    % catch
-    %     disp("Failed to run lme!")
-    %     lmes.(modelFields(model)) = "error";
-    % end
+    data = data(idx,:);
+end
+
+%% Generate models
+for model = 1:length(models), modelName = models(model);
+
+    modelString = char(strjoin(modelVars.(modelName), " + "));
+    idx = strfind(modelString,'+');
+    modelString(idx(1)) = "~";
+
+    lmes.(modelName) = fitlme(data,modelString);
+end
+
 end

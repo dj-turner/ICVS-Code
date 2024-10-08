@@ -9,7 +9,6 @@ addpath("scripts\functions\");
 addpath("tables\");
 
 studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
-monthTimeFrame = 8;
 
 %%% Link data
 ptptIdTbl = readtable("Ptpt_ID_Links.xlsx");

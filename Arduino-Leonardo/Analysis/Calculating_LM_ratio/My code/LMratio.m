@@ -1,6 +1,7 @@
 % function LMratio(validAValRange, rlmAdjustment, defaultAgeMode) 
 %%
 clc; clear; close all;
+addpath(genpath(pwd)); 
 
 %% LOAD DATA
 data = LoadData; dataTbl = data.all;
@@ -23,7 +24,7 @@ defaultAge = table2array(stat(dataTbl.age,"median","all"));
 validAValRange = [0.5,10];
 
 % RLM Adjustment (logical)
-rlmAdjustment = true;
+rlmAdjustment = false;
 
 rlmVals = NaN(1,3);
 rlmDev = "N/A";

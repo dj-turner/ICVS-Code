@@ -25,7 +25,8 @@ redAnchor = 50;                                 % Red value for lambda = 1
 greenAnchor = 350;                              % Green value for lambda = 0
 
 %% m-cone
-testInts = -5:1:5;
+maxInt = 8;
+testInts = -maxInt:1:maxInt;
 testSteps = 0:.02:1;
 coneNum = 2;
 coneCols = ['r','g'];
