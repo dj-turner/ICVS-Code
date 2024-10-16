@@ -149,12 +149,14 @@ for light = 1:length(lights)
     plot(x, y, 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
     xlim([0, max(x)]);
     xlabel("Time (seconds)");
-    ylim([0, max(y)]);
+    ylim([min(y), max(y)]);
     ylabel("Luminance (cd/m2)");
     title(strcat("Luminance: ", upper(lights(light))));
 
     %----------------------------------------------------------------------
-    % ENDING MESSAGE
+    % ENDING MESSAGES
+    disp(strcat(upper(lights(light)), " light finished! Measurements taken = ", string(sum(idx)),... 
+        ", Total time = ", string(round(totalTime,1)), " seconds!"));
     if light < length(lights), disp("Next light starting!..."); else, disp("All finished!"); end
 end
 
@@ -163,10 +165,8 @@ end
 % trimming NaNs
 sumNaN = sum(isnan(luminanceValues),2);
 idx = sumNaN < length(lights);
-timeValues = timeValues(idx,:);
-luminanceValues = luminanceValues(idx,:);
-outputTbl = array2table([timeValues, luminanceValues],...
-    "RowNames", string(1:height(luminanceValues)),...
+outputTbl = array2table([timeValues(idx,:), luminanceValues(idx,:)],...
+    "RowNames", string(1:sum(idx)),...
     "VariableNames", ["Time_" + lights, "Luminance_" + lights]);
 
 saveFilePath = pwd + "\CalibrationStabilityResults\Cal_" + dtString + ".mat";
