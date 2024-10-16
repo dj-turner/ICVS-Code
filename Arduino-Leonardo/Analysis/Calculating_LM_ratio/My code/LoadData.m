@@ -2,11 +2,7 @@ function data = LoadData
 
 warning('off','MATLAB:table:ModifiedAndSavedVarnames')
 
-addpath("data\");
-addpath("data\dataHFP-MT");
-addpath("scripts\");
-addpath("scripts\functions\");
-addpath("tables\");
+AddAllToPath;
 
 studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
 

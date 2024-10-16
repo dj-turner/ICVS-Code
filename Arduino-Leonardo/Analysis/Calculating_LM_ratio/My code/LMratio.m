@@ -1,8 +1,8 @@
-% function LMratio(validAValRange, rlmAdjustment, defaultAgeMode) 
+function completeDataTbl = LMratio(validAValRange, rlmAdjustment, defaultAgeMode, graphPtpts) 
 %%
-clc; clear; close all;
-addpath(genpath(pwd)); 
-
+%clc; clear; close all;
+AddAllToPath; 
+ 
 %% LOAD DATA
 data = LoadData; dataTbl = data.all;
 
@@ -10,27 +10,35 @@ data = LoadData; dataTbl = data.all;
 deviceVals = LoadDeviceValues("all");
 
 % wavelengths
-wavelengths = 400:5:700;
+%wavelengths = 400:5:700;
 
 % Load vLambda
-vLambda = table2array(readtable("CIE_sle_photopic.csv"));
-vLambda = vLambda(ismember(vLambda(:,1),wavelengths),2);
+%vLambda = table2array(readtable("CIE_sle_photopic.csv"));
+%vLambda = vLambda(ismember(vLambda(:,1),wavelengths),2);
 
 %% SET CONSTANTS
 % Sets default age to the rounded median age, for ptpts where we don't have age data
-defaultAge = table2array(stat(dataTbl.age,"median","all"));
+if ~exist("defaultAgeMode",'var'), defaultAgeMode = "median"; end
+defaultAge = table2array(stat(dataTbl.age,defaultAgeMode,"all"));
  
 % Set valid aVal Range
-validAValRange = [0.5,10];
+if ~exist("validAValRange",'var'), validAValRange = [0.5,10]; end
 
 % RLM Adjustment (logical)
-rlmAdjustment = false;
-
+if ~exist("rlmAdjustment",'var')
+    rlmAdjustment = false; 
+elseif ~islogical(rlmAdjustment)
+    rlmAdjustment = logical(rlmAdjustment); 
+end
 rlmVals = NaN(1,3);
 rlmDev = "N/A";
 
 % graphs for some ptpts?
-graphPtpts = "JAA";
+if ~exist("graphPtpts",'var')
+    graphPtpts = "NONE";
+elseif strcmpi(graphPtpts,"all")
+    graphPtpts = dataTbl.ptptID';
+end
 
 %% CONE RATIO
 % Finds participants with complete HFP data
@@ -94,9 +102,13 @@ idx = completeDataTbl.aValDana >= min(validAValRange) & completeDataTbl.aValDana
 completeDataTbl.validRatio = idx;
 validAValsDana = completeDataTbl.aValDana(idx);
 
-data.analysis = completeDataTbl;
+data.analysis = completeDataTbl;%(idx,:);
 
-save("LMratioData.mat", "data");
+switch rlmAdjustment
+    case false, fileName = "LMratioData.mat";
+    case true, fileName = "LMratioData_rlmAdj.mat";
+end
+save(fileName, "data");
 
 disp(newline +... 
     "Dana Valid aVals..." + newline +... 
@@ -111,10 +123,10 @@ aValTbl = completeDataTbl(idx,vars);
 %disp(aValTbl);
 
 f = NewFigWindow; 
-t = tiledlayout(2,2);
+tiledlayout(2,2);
 
 nexttile(1,[1 1])
-h=histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c');
+histogram(aValTbl.aValAllie,'BinWidth',.1,'EdgeColor','w','FaceColor','c');
 xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
 xlabel("a Value"); ylabel("Count");
 title("Allie");
@@ -153,6 +165,8 @@ for g = min(groups):max(groups)
     xlabel("a Value"); ylabel("Count");
     xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
     NiceGraphs(f);
+end
+
 end
 
 %% ALLIE'S FUNCTION

@@ -3,10 +3,11 @@ clc; clear; close all;
 addpath(genpath(pwd)); 
 
 %% load data
-d = load('LMratioData.mat');
-data = d.data;
-dataTbl = data.analysis;
-dataTbl.season = categorical(dataTbl.season);
+dataTbl = LMratio;
+
+seasons = ["spring","summer","autumn","winter"];
+seasonCols = ['g','y','r','b'];
+dataTbl.season = categorical(dataTbl.season,seasons,Ordinal=true);
 
 %% models
 clc;
@@ -58,7 +59,7 @@ pVals = array2table(pVals,"VariableNames",weatherVars,"RowNames",string(1:12));
 
 %% graphs
 cols = ['c','y','m','g','r'];
-f = NewFigWindow;
+f1 = NewFigWindow;
 hold on
 for var = 1:width(pVals)
     plot(pVals.(weatherVars(var)),'MarkerSize',8,'Marker','x','MarkerEdgeColor','w','LineWidth',3,'Color',cols(var));
@@ -90,7 +91,7 @@ lgdLabs(end-2) = "Optimal Month Marker";
 lgdLabs(end-1) = "Significant Month Marker";
 lgdLabs(end) = "Significance Line"; 
 l = legend(lgdLabs);
-NiceGraphs(f,l);
+NiceGraphs(f1,l);
 grid on
 
 %% correlations
@@ -107,3 +108,17 @@ for month = 1:12
         end
     end
 end
+
+%%
+f2 = NewFigWindow;
+hold on
+for i = 1:length(seasons)
+    idx = strcmp(string(dataTbl.season),seasons(i));
+    y = dataTbl.foveaDensityL(idx);
+    x = repmat(i, [height(y) 1]);
+    scatter(x,y,'Marker','o','MarkerEdgeColor','k','MarkerFaceColor',seasonCols(i));
+end
+xlim([0,length(seasons)+1]);
+ylim([min(dataTbl.foveaDensityL),max(dataTbl.foveaDensityL)]);
+l = legend(seasons);
+NiceGraphs(f2,l);

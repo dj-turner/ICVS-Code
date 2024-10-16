@@ -1,5 +1,5 @@
 clc; clear; close all;
-addpath("tables\");
+AddAllToPath;
 
 % wavelengths
 wvls = 400:5:700;
@@ -59,14 +59,14 @@ for cone = 1:coneNum
         end
         rgb = cone==1:3;
         if testInts(i) == 0
-            plot(testSteps,optY,'Marker','none','MarkerEdgeColor','w','LineStyle','--','Color',[rgb,1],'LineWidth',3)
+            plot(testSteps,optY,'Marker','none','MarkerEdgeColor','w','Color',[rgb,1],'LineWidth',3)
         else
             plot(testSteps,optY,'Marker','none','Color',[rgb,.5])
         end
     end
 end
 
-xlim([.5 .7]); ylim([.4 .6]);
+xlim([0 1]); ylim([0 1]);
 xlabel("Lambda Setting"); ylabel("Yellow Setting");
 studies = floor(dataTbl.study);
 for study = 0:3
@@ -77,7 +77,7 @@ for study = 0:3
         case 3, colour = 'g';
     end
     idx = studies == study;
-
+    
     x = dataTbl.rlmRG(idx);
     y = dataTbl.rlmYellow(idx);
     textShift = .001;
@@ -89,6 +89,7 @@ hold off
 l = legend([repmat("",[1,numel(testInts)*coneNum]),... 
     ["Allie","Dana","Josh","Mitch"] + "'s Data"]);
 NiceGraphs(f,l);
+grid on
 
 %%
 lambdaVals = 0:.01:1;
