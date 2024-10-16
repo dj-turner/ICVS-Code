@@ -1,4 +1,4 @@
-function ArduinoStabilityCalibration(lights,timePerLightinSeconds)
+function ArduinoStabilityCalibration(lights,timePerLightSeconds)
 %--------------------------------------------------------------------------
 % MATLAB RESET
 warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
@@ -8,7 +8,7 @@ close all;
 %--------------------------------------------------------------------------
 % SET CONSTANTS
 if ~exist("lights", 'var'), lights = "yellow"; end                 % LEDs to calibrate (in order!)
-if ~exist("timePerLightinSeconds", 'var'), timePerLightinSeconds = 300; end
+if ~exist("timePerLightSeconds", 'var'), timePerLightSeconds = 300; end
 
 %--------------------------------------------------------------------------
 % ADD PATHS
@@ -84,7 +84,7 @@ for light = 1:length(lights)
     %----------------------------------------------------------------------
     % LED SETUP AND ALIGNMENT
     % Set all light values to 0 in the LED value structure
-    for i = 1:length(lights), LEDs.(lights(i)) = 0; end
+    LEDs.red = 0; LEDs.green = 0; LEDs.yellow = 0;
     % Display which light we're currently calibrating
     disp(" ");
     disp(strcat("Current testing light: ", lights(light)));
@@ -94,15 +94,24 @@ for light = 1:length(lights)
     WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
     % Wait for user to press RETURN to continue (for light alignment) if
     % positions either haven't been set or if it changes
-    input("Current testing light is on! Please press RETURN when you are ready to start.");
+    pauseTime = 0;
+    if light == 1
+        pauseTime = input("First testing light is on! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
+    elseif ~isequal(sort([lights(light),lights(light-1)]),["green","red"])
+        pauseTime = input("Need to move the Arduino! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
+    end
+    if isempty(pauseTime), pauseTime = 0; end
+    pause(pauseTime);
     %------------------------------------------------------------------
     totalTime = 0;
     measurementNum = 0;
-    while totalTime < timePerLightinSeconds
+
+    % Turns off the monitor
+    MonitorPower('off', debugMode)
+
+    while totalTime < timePerLightSeconds
         tic;
         % PR670 MEASUREMENTS
-        % Turns off the monitor
-        MonitorPower('off', debugMode)
         % Tries to take PR670 measurements using defined port
         try
             [luminance,~,~] = MeasurePR670(portPR670,"lum");
@@ -114,9 +123,6 @@ for light = 1:length(lights)
             PrepareToExit(arduino);
             return
         end
-        % turns monitor back on
-        MonitorPower('on', debugMode);
-    
         %------------------------------------------------------------------
         % SAVE RESULTS
         measurementNum = measurementNum + 1;
@@ -134,9 +140,12 @@ for light = 1:length(lights)
         %------------------------------------------------------------------
         % TIME CHECK
         time = toc;
-        timeValues(measurementNum,light) = time;
         totalTime = totalTime + time;
+        timeValues(measurementNum,light) = totalTime;
     end
+
+    % turns monitor back on
+    MonitorPower('on', debugMode);
 
     %----------------------------------------------------------------------
     % DRAWING GRAPHS
@@ -146,12 +155,16 @@ for light = 1:length(lights)
     idx = ~isnan(luminanceValues(:,light));
     x = timeValues(idx,light);
     y = luminanceValues(idx,light);
-    plot(x, y, 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
-    xlim([0, max(x)]);
+    plot(x,y,... 
+        'Color','w','LineWidth',3,...
+        'Marker','x','MarkerEdgeColor',lights(light),'MarkerSize',20)
+    xlim([0 max(x)]);
     xlabel("Time (seconds)");
-    ylim([min(y), max(y)]);
+    ylim([min(y) max(y)]);
     ylabel("Luminance (cd/m2)");
     title(strcat("Luminance: ", upper(lights(light))));
+    NiceGraphs;
+    grid on
 
     %----------------------------------------------------------------------
     % ENDING MESSAGES
