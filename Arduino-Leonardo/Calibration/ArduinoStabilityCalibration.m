@@ -8,11 +8,11 @@ close all;
 %--------------------------------------------------------------------------
 % SET CONSTANTS
 if ~exist("lights", 'var'), lights = "yellow"; end                 % LEDs to calibrate (in order!)
-if ~exist("timePerLightSeconds", 'var'), timePerLightSeconds = 300; end
+if ~exist("timePerLightSeconds", 'var'), timePerLightSeconds = 600; end
 
 %--------------------------------------------------------------------------
 % ADD PATHS
-addpath(strcat(pwd, '\functions\'));
+addpath(strcat(pwd,'\functions\'));
  
 %--------------------------------------------------------------------------
 % SETTING UP DEVICES
@@ -56,9 +56,11 @@ deviceNum = NaN;
 while ~ismember(deviceNum, validDeviceNums)
     deviceNum = input("Which Arduino? (1 = Josh's yellow band device, 2 = Mitch's green band device, 0 = Other): ");
     % Assigns correct device label depending on entered number
-    if deviceNum == 0, deviceLabel = string(input("Input Device Label: ", 's'));
-    elseif deviceNum == 1, deviceLabel = "Yellow Band";
-    elseif deviceNum == 2, deviceLabel = "Green Band";
+    switch deviceNum
+        case 1, deviceLabel = "Yellow Band";
+        case 2, deviceLabel = "Green Band";
+        case 0, deviceLabel = string(input("Input Device Label: ", 's'));
+        otherwise, disp("Invalid input! Please read the options and try again.")
     end
 end
 
@@ -67,7 +69,7 @@ end
 % Initialise graphs
 % Graph window
 fig = figure('WindowState', 'minimized');
-tiledGraph = tiledlayout(1, length(lights));
+tiledGraph = tiledlayout(1,length(lights));
 % Calculate date and time
 dtString = string(datetime);
 % Reformat into valid file name
@@ -96,9 +98,11 @@ for light = 1:length(lights)
     % positions either haven't been set or if it changes
     pauseTime = 0;
     if light == 1
+        beep
         pauseTime = input("First testing light is on! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
     elseif ~isequal(sort([lights(light),lights(light-1)]),["green","red"])
-        pauseTime = input("Need to move the Arduino! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
+        beep
+        pauseTime = input("Need to realign the Arduino! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
     end
     if isempty(pauseTime), pauseTime = 0; end
     pause(pauseTime);
@@ -131,9 +135,9 @@ for light = 1:length(lights)
         %------------------------------------------------------------------
         % EXITING PROGRAM (DEBUG MODE ONLY)
         % if on test mode, gives option to exit program (otherwise automatically continues)
-        if debugMode == 1
+        if debugMode
             % asks for input
-            i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
+            i = input("Press RETURN to continue (or type ""exit"" to exit the program): ", 's');
             % if exit is typed, exits program
             if strcmpi(i, "exit"), PrepareToExit(arduino); return; end
         end
@@ -156,14 +160,13 @@ for light = 1:length(lights)
     x = timeValues(idx,light);
     y = luminanceValues(idx,light);
     plot(x,y,... 
-        'Color','w','LineWidth',3,...
+        'Color','k','LineWidth',3,...
         'Marker','x','MarkerEdgeColor',lights(light),'MarkerSize',20)
-    xlim([0 max(x)]);
+    xlim([min(x) max(x)]);
     xlabel("Time (seconds)");
     ylim([min(y) max(y)]);
     ylabel("Luminance (cd/m2)");
-    title(strcat("Luminance: ", upper(lights(light))));
-    NiceGraphs;
+    title(strcat("Luminance: ", upper(lights(light))))k
     grid on
 
     %----------------------------------------------------------------------
@@ -190,8 +193,12 @@ save(saveFilePath,"outputTbl");
 % maximises figure
 fig.WindowState = 'maximized';
 % saves graphs as .JPG file
-if debugMode == 0, graphPrefix = "Graph"; elseif debugMode == 1, graphPrefix = "TestGraph"; end
+switch debugMode 
+    case 0, graphPrefix = "Graph"; 
+    case 1, graphPrefix = "TestGraph"; 
+end
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_Stability_", deviceLabel, "_", dtString, ".JPG"))
+
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished

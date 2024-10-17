@@ -1,4 +1,4 @@
-function ArduinoCalibration
+function ArduinoStabilityCalibration(lights,timePerLightSeconds)
 %--------------------------------------------------------------------------
 % MATLAB RESET
 warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
@@ -7,14 +7,12 @@ close all;
 
 %--------------------------------------------------------------------------
 % SET CONSTANTS
-% levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
-levels = [255, 192, 128, 64, 0];
-lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
-lightPositions = ["test", "test", "ref"];            % Position of LEDs in the device (in order!)
+if ~exist("lights", 'var'), lights = "yellow"; end                 % LEDs to calibrate (in order!)
+if ~exist("timePerLightSeconds", 'var'), timePerLightSeconds = 600; end
 
 %--------------------------------------------------------------------------
 % ADD PATHS
-addpath(strcat(pwd, '\functions\'));
+addpath(strcat(pwd,'\functions\'));
  
 %--------------------------------------------------------------------------
 % SETTING UP DEVICES
@@ -41,7 +39,8 @@ disp(strjoin(["Using port", portPR670, "for the PR670!"]));
 % Creates empty structure to store LED input values
 LEDs = struct;
 % Creates empty array for current LED for luminance values - to use in figures
-plotLuminance = NaN(length(levels), length(lights));
+luminanceValues = NaN(1000, length(lights));
+timeValues = NaN(1000, length(lights));
 
 %--------------------------------------------------------------------------
 % USER INPUTS
@@ -70,7 +69,7 @@ end
 % Initialise graphs
 % Graph window
 fig = figure('WindowState', 'minimized');
-tiledGraph = tiledlayout(2, length(lights));
+tiledGraph = tiledlayout(1,length(lights));
 % Calculate date and time
 dtString = string(datetime);
 % Reformat into valid file name
@@ -87,7 +86,7 @@ for light = 1:length(lights)
     %----------------------------------------------------------------------
     % LED SETUP AND ALIGNMENT
     % Set all light values to 0 in the LED value structure
-    for i = 1:length(lights), LEDs.(lights(i)) = 0; end
+    LEDs.red = 0; LEDs.green = 0; LEDs.yellow = 0;
     % Display which light we're currently calibrating
     disp(" ");
     disp(strcat("Current testing light: ", lights(light)));
@@ -97,31 +96,27 @@ for light = 1:length(lights)
     WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
     % Wait for user to press RETURN to continue (for light alignment) if
     % positions either haven't been set or if it changes
-    if ~exist("lightPositions", 'var') || length(lights) ~= length(lightPositions)...
-        || light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
-        beep
-        input("Alignment light on! Please press RETURN when you are ready to start.");
+    pauseTime = 0;
+    if light == 1
+        pauseTime = input("First testing light is on! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
+    elseif ~isequal(sort([lights(light),lights(light-1)]),["green","red"])
+        pauseTime = input("Need to move the Arduino! Please enter pause time (in seconds), then press RETURN when you are ready to start: ");
     end
-    % For each input level...
-    for level = 1:length(levels)
-        %------------------------------------------------------------------
-        % LED SETUP
-        % Set the current testing light to the current level value in in the struct
-        LEDs.(lights(light)) = levels(level);
-        % Write defined LED values to the device
-        WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
-        % Tells the user which LED and level we're currently testing
-        disp(strcat("Current ", lights(light), " value: ", num2str(levels(level))));
-        % Pauses to make sure the LEDs have had time to change
-        pause(.5);
+    if isempty(pauseTime), pauseTime = 0; end
+    pause(pauseTime);
+    %------------------------------------------------------------------
+    totalTime = 0;
+    measurementNum = 0;
 
-        %------------------------------------------------------------------
+    % Turns off the monitor
+    MonitorPower('off', debugMode)
+
+    while totalTime < timePerLightSeconds
+        tic;
         % PR670 MEASUREMENTS
-        % Turns off the monitor
-        MonitorPower('off', debugMode)
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
+            [luminance,~,~] = MeasurePR670(portPR670,"lum");
         % if this doesn't work, displays error and quits
         catch
             %turns on the monitor
@@ -130,18 +125,11 @@ for light = 1:length(lights)
             PrepareToExit(arduino);
             return
         end
-        % turns monitor back on
-        MonitorPower('on', debugMode);
-
         %------------------------------------------------------------------
-        % SAVE RESULTS 
-        % Saves results to .mat file
-        SaveCalibrationResults(debugMode, deviceLabel, lights(light), levels(level), luminance, spectrum, spectrumPeak);
+        % SAVE RESULTS
+        measurementNum = measurementNum + 1;
         % saves luminance values for plotting
-        plotLuminance(level, light) = luminance;
-        % saves spectrum data if this is the max luminance in the list to plot
-        if levels(level) == max(levels), plotSpectrum = spectrum; end
-
+        luminanceValues(measurementNum,light) = luminance;
         %------------------------------------------------------------------
         % EXITING PROGRAM (DEBUG MODE ONLY)
         % if on test mode, gives option to exit program (otherwise automatically continues)
@@ -151,34 +139,53 @@ for light = 1:length(lights)
             % if exit is typed, exits program
             if strcmpi(i, "exit"), PrepareToExit(arduino); return; end
         end
+        %------------------------------------------------------------------
+        % TIME CHECK
+        time = toc;
+        totalTime = totalTime + time;
+        timeValues(measurementNum,light) = totalTime;
     end
+
+    % turns monitor back on
+    MonitorPower('on', debugMode);
 
     %----------------------------------------------------------------------
     % DRAWING GRAPHS
     % Luminance
     % ROW 1: x = input value, y = luminance
     nexttile(light)
-    plot(levels, plotLuminance(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
-    xlim([0, max(levels)]);
-    xlabel("Input Value");
-    ylim([0, max(plotLuminance(:,light))]);
-    ylabel("Luminance");
+    idx = ~isnan(luminanceValues(:,light));
+    x = timeValues(idx,light);
+    y = luminanceValues(idx,light);
+    plot(x,y,... 
+        'Color','w','LineWidth',3,...
+        'Marker','x','MarkerEdgeColor',lights(light),'MarkerSize',20)
+    xlim([min(x) max(x)]);
+    xlabel("Time (seconds)");
+    ylim([min(y) max(y)]);
+    ylabel("Luminance (cd/m2)");
     title(strcat("Luminance: ", upper(lights(light))));
-
-    % Spectrum
-    % ROW 2: x = wavelengths, y = spectral sensitivity at final input value
-    nexttile(light + length(lights))
-    plot(plotSpectrum(1,:), plotSpectrum(2,:), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
-    xlim([min(plotSpectrum(1,:)), max(plotSpectrum(1,:))]);
-    xlabel("Lambda (nm)");
-    ylim([0, max(plotSpectrum(2,:))]);
-    ylabel("Spectral Sensitivity");
-    title(strcat("Spectrum: ", upper(lights(light))));
+    NiceGraphs;
+    grid on
 
     %----------------------------------------------------------------------
-    % ENDING MESSAGE
+    % ENDING MESSAGES
+    disp(strcat(upper(lights(light)), " light finished! Measurements taken = ", string(sum(idx)),... 
+        ", Total time = ", string(round(totalTime,1)), " seconds!"));
     if light < length(lights), disp("Next light starting!..."); else, disp("All finished!"); end
 end
+
+%--------------------------------------------------------------------------
+% SAVING DATA
+% trimming NaNs
+sumNaN = sum(isnan(luminanceValues),2);
+idx = sumNaN < length(lights);
+outputTbl = array2table([timeValues(idx,:), luminanceValues(idx,:)],...
+    "RowNames", string(1:sum(idx)),...
+    "VariableNames", ["Time_" + lights, "Luminance_" + lights]);
+
+saveFilePath = pwd + "\CalibrationStabilityResults\Cal_" + dtString + ".mat";
+save(saveFilePath,"outputTbl");
 
 %--------------------------------------------------------------------------
 % SAVING GRAPHS
@@ -189,9 +196,8 @@ switch debugMode
     case 0, graphPrefix = "Graph"; 
     case 1, graphPrefix = "TestGraph"; 
 end
-exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
-% generates and saves "over time" graph
-if ~debugMode, CalibrationOverTime(deviceLabel,dtString); end
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_Stability_", deviceLabel, "_", dtString, ".JPG"))
+
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
