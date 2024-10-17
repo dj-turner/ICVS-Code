@@ -97,8 +97,7 @@ for light = 1:length(lights)
     WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
     % Wait for user to press RETURN to continue (for light alignment) if
     % positions either haven't been set or if it changes
-    if ~exist("lightPositions", 'var') || length(lights) ~= length(lightPositions)...
-        || light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
+    if light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
         beep
         input("Alignment light on! Please press RETURN when you are ready to start.");
     end
