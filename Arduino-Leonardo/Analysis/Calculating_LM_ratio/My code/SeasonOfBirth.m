@@ -9,7 +9,7 @@ seasons = ["spring","summer","autumn","winter"];
 seasonCols = ['g','y','r','b'];
 dataTbl.season = categorical(dataTbl.season,seasons,Ordinal=true);
 
-%% models
+%% models 
 clc;
 modelVars = struct;
 validCats = struct;
