@@ -63,9 +63,12 @@ for ptpt = 1:height(completeDataTbl) %find(strcmp(dataTbl.ptptID,"JAA"))
         rlmDev = completeDataTbl.rlmDevice(ptpt);
     end
 
+    % pulls gene opsin
+    l180Opsin = completeDataTbl.geneOpsin(ptpt);
+
     % use participant's age to estimate cone fundamentals (small pupil)
     [coneFuns.(ptptID), ~] = ConeFundamentals(age = ptptAge, fieldSize = 2,... 
-        normalisation = "area", graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev);
+        normalisation = "area", graphs = g, rlmRGY = rlmVals, rlmDevice = rlmDev, geneOpsin = l180Opsin);
 
     % pulls device name to look up values
     hfpVals = struct("r",completeDataTbl.hfpRed(ptpt),"g",completeDataTbl.hfpGreen(ptpt));

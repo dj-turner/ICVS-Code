@@ -2,10 +2,19 @@ clc; clear; close all;
 
 filePath = "C:\Users\" + getenv('USERNAME') +... 
     "\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Saved-Data\RLM\RLM_JAA2.xlsx";
-data = readtable(filePath);
-data.Yellow = data.Yellow ./ 255;
+data.Dana = readtable(filePath);
+filePath = "C:\Users\" + getenv('USERNAME') +... 
+    "\Documents\GitHub\Arduino-Colour-Vision-Genetics\Saved-Data\RLM\RLM_tab_1.xlsx";
+data.Hannah = readtable(filePath);
+filePath = strrep(filePath,"tab","tac");
+data.Takuma = readtable(filePath);
 
-idxBest = find(strcmp(string(data.MatchType),"Best"));
+ptpts = string(fieldnames(data));
+%%
+for ptpt = 1:length(ptpts), fn = ptpts(ptpt);
+data.(fn).Yellow = data.(fn).Yellow ./ 255;
+
+idxBest = find(strcmp(string(data.(fn).MatchType),"Best"));
 
 vars = ["Lambda","Yellow"];
 f = NewFigWindow;
@@ -14,9 +23,9 @@ t = tiledlayout(1,2);
 x = 1:numel(idxBest);
 nexttile
 hold on
-y = data.Lambda(idxBest);
-yMin = data.Lambda(idxBest+1);
-yMax = data.Lambda(idxBest+2);
+y = data.(fn).Lambda(idxBest);
+yMin = data.(fn).Lambda(idxBest+1);
+yMax = data.(fn).Lambda(idxBest+2);
 errorbar(x, y, y - yMin, yMax - y,...
     "Marker",'x',"MarkerSize",20,"MarkerEdgeColor",'w',...
     "LineWidth",3,"Color",'r');
@@ -43,7 +52,7 @@ l.Location = 'northeast';
 l.FontSize = 12;
 
 nexttile
-y = data.Yellow(idxBest);
+y = data.(fn).Yellow(idxBest);
 hold on
 plot(x, y,...
     "Marker",'x',"MarkerSize",20,"MarkerEdgeColor",'w',...
@@ -64,17 +73,18 @@ xlabel("Trial Number");
 ylabel("Yellow");
 xticks(1:numel(idxBest));
 yticks(0:.1:1);
+title(fn);
 l = legend(["Yellow Settings",...
     "Best Match Mean", "Min/Max Yellow Setting", ""]);
 NiceGraphs(f,l);
 l.Location = 'northeast';
 l.FontSize = 12;
 
-[r,p] = corr(data.Lambda(idxBest),data.Yellow(idxBest));
+[r,p] = corr(data.(fn).Lambda(idxBest),data.(fn).Yellow(idxBest));
 
 x = 0:.0001:1;
-yLambda = CurveNormalisation(normpdf(x,mean(data.Lambda(idxBest)),std(data.Lambda(idxBest))),"height");
-yYellow = CurveNormalisation(normpdf(x,mean(data.Yellow(idxBest)),std(data.Yellow(idxBest))),"height");
+yLambda = CurveNormalisation(normpdf(x,mean(data.(fn).Lambda(idxBest)),std(data.(fn).Lambda(idxBest))),"height");
+yYellow = CurveNormalisation(normpdf(x,mean(data.(fn).Yellow(idxBest)),std(data.(fn).Yellow(idxBest))),"height");
 
 f2 = NewFigWindow;
 hold on
@@ -91,8 +101,10 @@ xlabel("Input Value");
 ylim([0 1]);
 yticks(0:1);
 ylabel("Relative Probability Density");
-title("Normal Distributions of Dana's Lambda & Yellow Settings");
+title("Normal Distributions of " + fn + "'s Lambda & Yellow Settings");
 l2 = legend(vars);
 NiceGraphs(f2,l2);
 grid on
+
+end
 

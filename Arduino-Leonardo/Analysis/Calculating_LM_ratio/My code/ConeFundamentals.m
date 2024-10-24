@@ -15,6 +15,9 @@
 % vector. Default = NaN
 % - rlmDevice: Device used to conduct Rayleigh match. Options include
 % "yellow" and "green". Default = "N/A"
+% - geneOpsin: Genetically tested gene opsin for spectral absorbance shift.
+% Will only be used if rlmAdjustment isa not used. values = "A180", "S180",
+% or "Both".
 %   NOTE: If either rlmRGY or rlmDevice are not defined, this function will
 %   skip Rayleigh match adjustment of the L-cone spectral sensitivity.
 % - graphs: Whether a graph displaying the outputted cone fundamentals is
@@ -45,6 +48,7 @@ parameterStruct = struct('age', 32,...
                        'normalisation', "none",...
                        'graphs', false,...
                        'rlmRGY', [NaN NaN NaN],...
+                       'geneOpsin', "",...
                        'rlmDevice', "N/A");
 
 % Extract defined parameters from varargin and add to parameter structure
@@ -63,9 +67,9 @@ for i = 1:2:length(varargin)-1
         case {'string','char'}
             val = lower(string(val)); 
             val = extract(val,lettersPattern);
-            if isempty(val)
-                ClassErrorMessage(var,type)
-            end
+            % if isempty(val)
+            %     ClassErrorMessage(var,type)
+            % end
         case 'double'
             try 
                 val = cell2mat(val);
@@ -88,7 +92,7 @@ measuredWavelengths = (400:5:700)';
 %% Importing density tables
 % Spectral absorbance
 % load table
-spectralAbsorbance = table2array(readtable("ssabance_5.csv"));
+spectralAbsorbance = table2array(readtable("spectAbsCie2006.xlsx",Sheet="Corrected"));
 % Only include defined wavelengths
 idx = ismember(spectralAbsorbance(:,1), measuredWavelengths);
 spectralAbsorbance = spectralAbsorbance(idx,2:end);
@@ -111,6 +115,8 @@ if rlmAdj
         parameterStruct.rlmDevice, parameterStruct.graphs);
     spectralAbsorbance(:,4) = spectralAbsorbance(:,1);
     spectralAbsorbance(:,1) = optLConeSA;
+else
+    spectralAbsorbance(:,1) = GeneOpsinConeFunShift(spectralAbsorbance(:,1),parameterStruct.geneOpsin);
 end
 
 %% Lens density and pupil size
