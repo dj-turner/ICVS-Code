@@ -3,7 +3,8 @@ clc; clear; close all;
 addpath(genpath(pwd)); 
 
 %% load data
-dataTbl = LMratio;
+dataTbl = LMratio([.5,8]);
+dataTbl = dataTbl(dataTbl.validRatio,:);
 
 seasons = ["spring","summer","autumn","winter"];
 seasonCols = ['g','y','r','b'];
@@ -15,32 +16,45 @@ modelVars = struct;
 validCats = struct;
 
 modelVars.control = ["foveaDensityL",... 
-                 "sex", "ethnicGroup", "RLM_Leo_RG"];
-
+                 "sex", "ethnicGroup"];
+% 
 modelVars.month = ["foveaDensityL",... 
                "sex", "ethnicGroup", "monthSin", "monthCos"];
 
 modelVars.seasonCat = ["foveaDensityL",... 
                "sex", "ethnicGroup", "season"];
-
+% 
 weatherVars = ["daylightHours","sunshineHours","irradiancePop","irradianceArea"];
+% 
+% for weather = 1:length(weatherVars)
+%     for month = 81:12
+%         var = weatherVars(weather) + "_" + month;
+%         modelVars.(var) = ["foveaDensityL",... 
+%                        "sex", "ethnicGroup", var];
+%     end
+% end
 
-for weather = 1:length(weatherVars)
-    for month = 1:12
-        var = weatherVars(weather) + "_" + month;
-        modelVars.(var) = ["foveaDensityL",... 
-                       "sex", "ethnicGroup", var];
-    end
-end
+modelVars.daylight8 = ["foveaDensityL",... 
+                        "sex", "ethnicGroup", "daylightHours_8"];
+
+modelVars.time = ["foveaDensityL",... 
+               "sex", "ethnicGroup",... 
+               "hfpDaySin", "hfpDayCos", "hfpMinuteSin", "hfpMinuteCos"];
 
 validCats.sex = ["M", "F"];
 validCats.ethnicGroup = ["white", "asian", "mixed-wa"];
-validCats.country = ["UK", "China"];
+%validCats.country = "UK";%["UK", "China"];
 
 [lmeModels, mdlData] = LMEs(dataTbl, modelVars, validCats);
 
-disp(lmeModels.month)
-disp(lmeModels.seasonCat)
+% disp(lmeModels.month)
+% disp(lmeModels.seasonCat)
+
+cats = string(fieldnames(lmeModels));
+
+for i = 1:length(cats), cat = cats(i);
+    disp((lmeModels.(cat)));
+end
 
 
 %% pvals
@@ -71,12 +85,12 @@ for var = 1:width(pVals)
         'MarkerEdgeColor','w','MarkerFaceColor',cols(end),...
         'LineWidth',3,'LineStyle','none')
     % significant p vals
-    sigPVals = pVals.(weatherVars(var))(pVals.(weatherVars(var)) < .05);
-    sigPVals = sigPVals(sigPVals ~= optPVal);
-    sigMonths = find(ismember(pVals.(weatherVars(var)),sigPVals));
-    if ~isempty(sigMonths)
-        plot(sigMonths,sigPVals,'MarkerSize',8,'Marker','x','MarkerEdgeColor',cols(end), 'LineWidth',3, 'LineStyle','none')  
-    end
+    % sigPVals = pVals.(weatherVars(var))(pVals.(weatherVars(var)) < .05);
+    % sigPVals = sigPVals(sigPVals ~= optPVal);
+    % sigMonths = find(ismember(pVals.(weatherVars(var)),sigPVals));
+    % if ~isempty(sigMonths)
+    %     plot(sigMonths,sigPVals,'MarkerSize',8,'Marker','x','MarkerEdgeColor',cols(end), 'LineWidth',3, 'LineStyle','none')  
+    % end
 end
 plot(repmat(.05,[height(pVals) 1]),'LineStyle','--','LineWidth',3,'Color',cols(end));
 xticks(1:12); yticks(0:.1:1);
@@ -85,10 +99,10 @@ xlabel("Number of months after birth considered");
 ylabel("P-value of weather variable in LME Model");
 hold off
 
-lgdLabs = repmat("", [1 3*numel(weatherVars)+1]); 
-lgdLabs(1:3:end-2) = weatherVars;
-lgdLabs(end-2) = "Optimal Month Marker";
-lgdLabs(end-1) = "Significant Month Marker";
+lgdLabs = repmat("", [1 2*numel(weatherVars)+1]); 
+lgdLabs(1:2:end-2) = weatherVars;
+lgdLabs(end-1) = "Optimal Month Marker";
+%lgdLabs(end-1) = "Significant Month Marker";
 lgdLabs(end) = "Significance Line"; 
 l = legend(lgdLabs);
 NiceGraphs(f1,l);

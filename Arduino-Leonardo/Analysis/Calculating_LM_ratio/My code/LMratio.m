@@ -153,20 +153,27 @@ title("Comparison");
 NiceGraphs(f);
 
 %% Group Comparison
-cols = ['b','m','r','g'];
+cols = ['b','m','r', 'y','g', 'c'];
 
 f = NewFigWindow;
-tiledlayout(2,2);
-groups = unique(floor(aValTbl.study));
+IDs = char(aValTbl.ptptID); IDs = IDs(:,1);
+groups = unique(IDs);
+%groups = unique(floor(aValTbl.study));
 
-for g = min(groups):max(groups)
-    idx = floor(aValTbl.study) == g;
+tiledlayout(2,numel(groups)/2);
+
+%for g = min(groups):max(groups)
+for group = 1:length(groups), g = groups(group);
+    idx = startsWith(aValTbl.ptptID,g);
+    %idx = floor(aValTbl.study) == g;
     groupData = aValTbl.aValDana(idx);
-
     nexttile
-    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(g+(1-min(groups))),'FaceAlpha',1);
+    hold on
+    histogram(groupData,'BinWidth',.1,'EdgeColor','w','FaceColor',cols(group),'FaceAlpha',1);
+    hold off
     xlabel("a Value"); ylabel("Count");
     xlim([floor(min(validAValRange)),ceil(max(validAValRange))]);
+    title(string(g));
     NiceGraphs(f);
 end
 
