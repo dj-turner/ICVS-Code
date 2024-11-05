@@ -37,6 +37,7 @@ f = NewFigWindow;
 hold on
 for ptpt = 1:height(valueArray)
     x = [valueArray(ptpt,1), valueArray(ptpt,3)];
+    x = x .* 11 + 1;
     y = [valueArray(ptpt,2), valueArray(ptpt,4)];
     plot(x,y,...
         'LineWidth',1,'Color','w',...
@@ -47,18 +48,22 @@ for ptpt = 1:height(valueArray)
         'Marker','o','MarkerSize',10,...
         'MarkerEdgeColor','w','MarkerFaceColor','c');
 end
-text(valueArray(:,3),valueArray(:,4),string(1:height(validTbl)),'Color','r','FontWeight','bold','FontSize',20);
+xlabel("Time of Year");
+ylabel("HFP settings (log(R/G))");
+text((valueArray(:,3).*11+1)+.08,valueArray(:,4)+.01,...
+    validTbl.PtptIDDana,...
+    'Color','r','FontWeight','bold','FontSize',12);
 
-lgdStr = [(string(1:height(validTbl))' + " = " + validTbl.Name)'; repmat("", [1, height(validTbl)])];
-ldgStr = reshape(lgdStr, [numel(ldgStr) 1]);
-l = legend(lgdStr);
+xlim([1 13]);
+xticks(1:1:13);
+xticklabels("1st "+GetLabels("months"));
 
-xlim([0 .4]);
-NiceGraphs(f,l);
+NiceGraphs(f);
 %%
 idx = abs(grads) < 10;
 validGrads = grads(idx);
 
-[h,p,ci,stats] = ttest(valueArray(:,2),valueArray(:,4))
+[h,p,ci,stats] = ttest(valueArray(:,2),valueArray(:,4));
 
-[h,p,ci,stats] = ttest(validGrads,0)
+[h,p,ci,stats] = ttest(validGrads,0);
+
