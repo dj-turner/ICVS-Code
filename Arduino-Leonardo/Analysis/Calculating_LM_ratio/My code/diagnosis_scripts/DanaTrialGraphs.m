@@ -1,4 +1,4 @@
-lc; clear; close all;
+clc; clear; close all;
 
 filePath = "C:\Users\" + getenv('USERNAME') +... 
     "\Documents\GitHub\ICVS-Code\Arduino-Leonardo\Saved-Data\RLM\RLM_JAA2.xlsx";
