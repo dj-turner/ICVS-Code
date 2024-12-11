@@ -1,6 +1,7 @@
 clc; clear; close all;
 
-AddAllToPath;
+%AddAllToPath;
+addpath(genpath(pwd));
 
 data = readtable("data\data-B.xlsx",Sheet='Matlab_Data');
 
@@ -43,9 +44,14 @@ sessionData(idx,hfpLeoVars) = array2table(NaN(sum(idx),sum(hfpLeoVars)));
 
 %% Session correlations
 corrs = struct;
+anovas = struct;
 
 sessionFig = NewFigWindow;
 chart = tiledlayout(3, length(tasks));
+
+barChart = NewFigWindow;
+bChart = tiledlayout(2,3);
+warning('off','stats:boxplot:BadObjectType');
 
 for t = 1:length(tasks), task = tasks(t);
     corrs.(task) = NaN(3,3,3);
@@ -65,6 +71,7 @@ for t = 1:length(tasks), task = tasks(t);
 
             % graph
             if s1 < s2
+                figure(sessionFig)
                 nexttile
                 hold on
                 scatter(sessionData.(var1), sessionData.(var2));
@@ -74,18 +81,33 @@ for t = 1:length(tasks), task = tasks(t);
                 xlabel(var1,Interpreter='none');
                 ylabel(var2,Interpreter='none');
                 title(task + ": sessions " + s1 + "&" + s2,Interpreter='none');
-                subtitle("R = " + round(r,2) + ", P = " + round(p,3) + ", N = " + n);
+                astNum = 4 - discretize(p,[0 .001 .01 .05 1]);
+                asterisks = join(repmat("*", [1 astNum]),'');
+                if ismissing(asterisks), asterisks = ""; end
+                
+                subtitle("R = " + round(r,2) + ", P = " + round(p,3) + asterisks + ", N = " + n);
             end
         end
+        
     end
+    % bar chart
+    figure(barChart)
+    nexttile
+    tVars = startsWith(sessionData.Properties.VariableNames, task);
+    sessionTbl = table2array(sessionData(:,tVars));
+    boxplot(sessionTbl);
+    title(task, Interpreter = 'none');
+
+    anovas.(task) = anova(sessionTbl);
 end
+warning('on','stats:boxplot:BadObjectType');
 
 %% Device correlations
 meanData = NaN(ptptNum,length(tasks));
 meanData = array2table(meanData,"VariableNames",tasks,"RowNames",string(1:ptptNum));
 
 for t = 1:length(tasks), task = tasks(t);
-    idx = startsWith(vars,task);
+    idx = startsWith(vars,task) & ~contains(vars, "2");
     taskData = sessionData(:,idx);
     meanData(:,t) = mean(taskData,2,'omitmissing');
 end
@@ -112,3 +134,9 @@ for t1 = 1:2:length(tasks), t2 = t1+1;
     title(var1 + " & " + var2,Interpreter='none');
     subtitle("N = " + n + ", R = " + r + ", P = " + p);
 end
+
+%%
+
+data2 = readtable("data\data-DJ.xlsx")
+
+

@@ -2,7 +2,7 @@ function data = LoadData
 
 warning('off','MATLAB:table:ModifiedAndSavedVarnames')
 
-AddAllToPath;
+addpath(genpath(pwd));
 
 studyPriorityOrder = ["Josh", "Mitch", "Dana", "Allie"];
 

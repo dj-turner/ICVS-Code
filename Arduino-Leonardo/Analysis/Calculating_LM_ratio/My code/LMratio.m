@@ -1,7 +1,7 @@
 function completeDataTbl = LMratio(validAValRange, rlmAdjustment, defaultAgeMode, graphPtpts) 
 %%
 %clc; clear; close all;
-AddAllToPath; 
+addpath(genpath(pwd)); 
  
 %% LOAD DATA
 data = LoadData; dataTbl = data.all;
