@@ -19,28 +19,22 @@ data(:,unoVars) = data(:,unoVars) ./ 1024;
 yellowVars = contains(data.Properties.VariableNames,"RLM_Yellow");
 data(:,yellowVars) = data(:,yellowVars) ./ 255;
 
-
 sessionData = NaN(ptptNum,length(vars));
 sessionData = array2table(sessionData,"VariableNames",vars,"RowNames",string(1:ptptNum));
 
-
 for ptpt = 1:ptptNum
-    idx = data.PPno==ptpt & data.Match_Type == 1;
+    idx = data.PPno == ptpt & data.Match_Type == 1;
     ptptData = data(idx,:);
 
     if ~ptptData.HRR_Pass(1), continue; end
     if height(ptptData) ~= 5, disp("Error for ptpt "+ptpt); continue; end
 
-    ptptData = mean(ptptData(2:end,vars));
-
-    sessionData(ptpt,:) = ptptData;
-
+    sessionData(ptpt,:) = mean(ptptData(2:end,vars));
 end
 
 idx = str2double(string(sessionData.Properties.RowNames)) == 8;
 hfpLeoVars = startsWith(string(sessionData.Properties.VariableNames),"HFP_Leo_RG");
 sessionData(idx,hfpLeoVars) = array2table(NaN(sum(idx),sum(hfpLeoVars)));
-
 
 %% Session correlations
 corrs = struct;
@@ -69,26 +63,39 @@ for t = 1:length(tasks), task = tasks(t);
             corrs.(task)(s1,s2,2) = r;
             corrs.(task)(s1,s2,3) = p;
 
-            % graph
             if s1 < s2
+                % graph
                 figure(sessionFig)
                 nexttile
                 hold on
-                scatter(sessionData.(var1), sessionData.(var2));
-                text(sessionData.(var1)(nIdx),sessionData.(var2)(nIdx),string(sessionData.Properties.RowNames(nIdx)))
+                x = sessionData.(var1);
+                y = sessionData.(var2);
+                scatter(x,y);
+                plot(0:100, 0:100, 'Color', 'r', 'LineStyle', '-', 'LineWidth', .5, 'Marker', 'none');
+                text(x(nIdx), y(nIdx), string(sessionData.Properties.RowNames(nIdx)))
                 lsline;
                 hold off
+                xlim([min([x;y],[],'omitmissing'),max([x;y],[],'omitmissing')])
+                ylim([min([x;y],[],'omitmissing'),max([x;y],[],'omitmissing')])
                 xlabel(var1,Interpreter='none');
                 ylabel(var2,Interpreter='none');
                 title(task + ": sessions " + s1 + "&" + s2,Interpreter='none');
-                astNum = 4 - discretize(p,[0 .001 .01 .05 1]);
-                asterisks = join(repmat("*", [1 astNum]),'');
-                if ismissing(asterisks), asterisks = ""; end
-                
-                subtitle("R = " + round(r,2) + ", P = " + round(p,3) + asterisks + ", N = " + n);
+                subtitle("N = " + n + ", R = " + round(r,2) + ", P = " + round(p,3) + SigSymbol(p));
+                grid on
+
+                if rem(t,2) == 0
+                    r1 = corrs.(tasks(t-1))(s1,s2,2);
+                    r2 = corrs.(tasks(t))(s1,s2,2);
+                    n1 = corrs.(tasks(t-1))(s1,s2,1);
+                    n2 = corrs.(tasks(t))(s1,s2,1);
+                    pVal = compare_correlation_coefficients(r1,r2,n1,n2);
+                    disp("Tasks " + tasks(t-1) + " & " + tasks(t)...
+                        + newline + "Sessions " + s1 + " & " + s2...
+                        + newline + "P = " + pVal + SigSymbol(pVal)...
+                        + newline);
+                end
             end
         end
-        
     end
     % bar chart
     figure(barChart)
@@ -97,6 +104,7 @@ for t = 1:length(tasks), task = tasks(t);
     sessionTbl = table2array(sessionData(:,tVars));
     boxplot(sessionTbl);
     title(task, Interpreter = 'none');
+
 
     anovas.(task) = anova(sessionTbl);
 end
@@ -107,7 +115,7 @@ meanData = NaN(ptptNum,length(tasks));
 meanData = array2table(meanData,"VariableNames",tasks,"RowNames",string(1:ptptNum));
 
 for t = 1:length(tasks), task = tasks(t);
-    idx = startsWith(vars,task) & ~contains(vars, "2");
+    idx = startsWith(vars,task); %& ~contains(vars, "2");
     taskData = sessionData(:,idx);
     meanData(:,t) = mean(taskData,2,'omitmissing');
 end
@@ -121,7 +129,6 @@ for t1 = 1:2:length(tasks), t2 = t1+1;
     [r,p] = corr(meanData.(var1),meanData.(var2),'Rows','pairwise');
 
     nIdx = ~isnan(meanData.(var1)) & ~isnan(meanData.(var2));
-    n = sum(nIdx);
 
     nexttile
     hold on
@@ -132,11 +139,25 @@ for t1 = 1:2:length(tasks), t2 = t1+1;
     xlabel(var1,Interpreter='none');
     ylabel(var2,Interpreter='none');
     title(var1 + " & " + var2,Interpreter='none');
-    subtitle("N = " + n + ", R = " + r + ", P = " + p);
+
+    subtitle("N = " + sum(nIdx) + ", R = " + r + ", P = " + p + SigSymbol(p));
 end
 
 %%
+vars = startsWith(data.Properties.VariableNames, "RLM_Yellow");
+mus = nan(ptptNum,sum(vars)); 
+sigmas = mus;
+ranges = mus;
+for ptpt = 1:ptptNum
+    sData = table2array(data(data.PPno == ptpt,vars));
+    mus(ptpt,:) = mean(sData,"omitmissing");
+    sigmas(ptpt,:) = std(sData,"omitmissing");
+    ranges(ptpt,:) = max(sData,[],"omitmissing") - min(sData,[],"omitmissing");
+end
 
-data2 = readtable("data\data-DJ.xlsx")
+anova(sigmas)
+anova(ranges)
+    
+
 
 
