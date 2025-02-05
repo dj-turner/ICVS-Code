@@ -212,6 +212,5 @@ plot(0:11,pSin,Color='r',LineWidth=3);
 plot(0:11,pCos,Color='b',LineWidth=3);
 hold off
 xlim([0 11]); ylim([0 1]);
-xlabel("Month Shift"); ylabel("P-Value");
-l6 = legend(["Sin","Cos"]);
+l6 = legend(["Sin",""]);
 NiceGraphs(f6,l6);
