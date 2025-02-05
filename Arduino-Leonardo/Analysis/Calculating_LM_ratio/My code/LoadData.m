@@ -27,7 +27,7 @@ monthNs = struct;
 seasonMeans = struct;
 seasonNs = struct;
 
-dataVars = ["study", "ptptID", "doneHigherPriorityStudy", "sex", "age", "month", "year", "ethnicity", "country", "geneOpsin",... 
+dataVars = ["study", "ptptID", "doneHigherPriorityStudy", "sex", "age", "month", "year", "ethnicity", "country", "continent", "hemisphere", "geneOpsin",... 
     "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG",... 
     "rlmRed", "rlmGreen", "rlmYellow", "rlmRG", "rlmMatchType", "rlmDevice", "hfpRed", "hfpGreen", "hfpMatchType", "hfpDevice",...
     "hfpDay", "hfpMinute"];
@@ -35,7 +35,7 @@ numVars = ["study", "doneHigherPriorityStudy", "age", "month", "year", "ethnicit
     "RLM_Leo_RG", "HFP_Leo_RG", "RLM_Anom_RG", "HFP_Uno_RG",... 
     "rlmRed", "rlmGreen", "rlmYellow", "rlmRG", "hfpRed", "hfpGreen",...
     "hfpDay", "hfpMinute"];
-strVars = ["ptptID", "sex", "country", "geneOpsin", "rlmMatchType", "rlmDevice", "hfpMatchType", "hfpDevice"];
+strVars = ["ptptID", "sex", "country", "continent", "hemisphere", "geneOpsin", "rlmMatchType", "rlmDevice", "hfpMatchType", "hfpDevice"];
 
 %% Allie's data
 aData = load("data-A.mat"); aData = aData.hfpTable;
@@ -51,6 +51,8 @@ rg1 = NaN;
 rg2 = NaN;
 rg3 = NaN;
 country = "";
+continent = "";
+hemisphere = "";
 geneOpsin = "";
 rlmR = NaN;
 rlmG = NaN;
@@ -77,7 +79,8 @@ for ptpt = 1:height(aData)
         ethnicity = table2array(aDataDemo(idx1,"Ethnicity"));
         rg4 = table2array(aData(ptpt,"meanTestAmp") ./ 1024);
         hfpR = rg4; hfpG = 1;
-        data.Allie(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
+        data.Allie(ptpt,:) = [study, ptptID, doneHigherPriorityStudy,... 
+            sex, age, month, year, ethnicity, country, continent, hemisphere, geneOpsin,... 
             rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD, hfpDay, hfpMinute];
     end
 end
@@ -95,6 +98,8 @@ ptptIDs = unique(string(dData.PPcode));
 data.Dana = strings(length(ptptIDs), length(dataVars));
 
 country = "";
+continent = "";
+hemisphere = "";
 rlmD = "yellow";
 
 for ptpt = 1:length(ptptIDs)
@@ -159,7 +164,8 @@ for ptpt = 1:length(ptptIDs)
         hfpMinute = hour(hfpDate) * 60 + minute(hfpDate);
         if hfpMinute == 0, hfpMinute = NaN; else, hfpMinute = hfpMinute / (60*24); end
 
-        data.Dana(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
+        data.Dana(ptpt,:) = [study, ptptID, doneHigherPriorityStudy,... 
+            sex, age, month, year, ethnicity, country, continent, hemisphere, geneOpsin,... 
             rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD, hfpDay, hfpMinute];
     end
 end
@@ -209,6 +215,16 @@ for ptpt = 1:length(ptptIDs)
             age = studyYear - year; if month > studyMonth, age = age - 1; end
             ethnicity = ptptDemoData.Ethnicity(1);
             country = string(ptptDemoData.("Country of Birth")(1));
+            continent = FindContinentFromCountry(country);
+            hemisphere = FindHemisphereFromCountry(country);
+            switch hemisphere
+                case "nothern"
+                case "southern"
+                    month = month + 6;
+                    if month > 12, month = month - 12; end
+                case "equitorial"
+                    month = NaN;
+            end
             geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
             if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
             vars = ["RLM_Red", "RLM_Green", "RLM_Yellow", "RLM_Lambda", "HFP_RedValue", "HFP_GreenValue"];
@@ -234,7 +250,8 @@ for ptpt = 1:length(ptptIDs)
             hfpMinute = hour(hfpDate) * 60 + minute(hfpDate);
             if hfpMinute == 0, hfpMinute = NaN; else, hfpMinute = hfpMinute / (60*24); end
 
-            data.Josh(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
+            data.Josh(ptpt,:) = [study, ptptID, doneHigherPriorityStudy,... 
+            sex, age, month, year, ethnicity, country, continent, hemisphere, geneOpsin,... 
             rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD, hfpDay, hfpMinute];
         end
     end
@@ -295,6 +312,16 @@ for ptpt = 1:length(ptptIDs)
             year = ptptDataDemo.BirthYear;
             ethnicity = ptptDataDemo.Ethnicity;
             country = string(ptptDataDemo.CountryOfBirth);
+            continent = FindContinentFromCountry(country);
+            hemisphere = FindHemisphereFromCountry(country);
+            switch hemisphere
+                case "nothern"
+                case "southern"
+                    month = month + 6;
+                    if month > 12, month = month - 12; end
+                case "equitorial"
+                    month = NaN;
+            end
         end
         geneRow = find(strcmpi(geneTbl.ptptID, ptptID));
         if ~isempty(geneRow), geneOpsin = geneTbl.OPN1LW180Prediction(geneRow); else, geneOpsin = ""; end
@@ -340,7 +367,8 @@ for ptpt = 1:length(ptptIDs)
             hfpMinute = NaN;
         end
 
-        data.Mitch(ptpt,:) = [study, ptptID, doneHigherPriorityStudy, sex, age, month, year, ethnicity, country, geneOpsin,... 
+        data.Mitch(ptpt,:) = [study, ptptID, doneHigherPriorityStudy,... 
+            sex, age, month, year, ethnicity, country, continent, hemisphere, geneOpsin,... 
             rg1, rg2, rg3, rg4, rlmR, rlmG, rlmY, rlmRG, rlmMT, rlmD, hfpR, hfpG, hfpMT, hfpD, hfpDay, hfpMinute];
     end
 end

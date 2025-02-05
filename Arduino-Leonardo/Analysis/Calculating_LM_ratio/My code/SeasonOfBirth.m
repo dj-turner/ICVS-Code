@@ -3,12 +3,20 @@ clc; clear; close all;
 addpath(genpath(pwd)); 
 
 %% load data
-dataTbl = LMratio([.5,8]);
+dataTbl = LMratio([.4,13]);
 dataTbl = dataTbl(dataTbl.validRatio,:);
 
 seasons = ["spring","summer","autumn","winter"];
 seasonCols = ['g','y','r','b'];
 dataTbl.season = categorical(dataTbl.season,seasons,Ordinal=true);
+
+%%
+for shift = 0:11
+    dataTbl.("monthShift_" + shift) = dataTbl.month + shift;
+    idx = dataTbl.("monthShift_" + shift) > 12;
+    dataTbl.("monthShift_" + shift)(idx) = dataTbl.("monthShift_" + shift)(idx) - 12;
+    [dataTbl.("monthSin_" + shift), dataTbl.("monthCos_" + shift)] = SinCosMonth(dataTbl.("monthShift_" + shift));
+end
 
 %% models 
 clc;
@@ -18,24 +26,25 @@ validCats = struct;
 modelVars.control = ["foveaDensityL",... 
                  "sex", "ethnicGroup"];
 % 
-modelVars.month = ["foveaDensityL",... 
-               "sex", "ethnicGroup", "monthSin", "monthCos"];
+for shift = 0:11
+    modelVars.("month_" + shift) = ["foveaDensityL",... 
+                   "sex", "ethnicGroup", "monthSin_"+shift, "monthCos_"+shift];
+end
 
 modelVars.seasonCat = ["foveaDensityL",... 
                "sex", "ethnicGroup", "season"];
 % 
 weatherVars = ["daylightHours","sunshineHours","irradiancePop","irradianceArea"];
 % 
-% for weather = 1:length(weatherVars)
-%     for month = 81:12
-%         var = weatherVars(weather) + "_" + month;
-%         modelVars.(var) = ["foveaDensityL",... 
-%                        "sex", "ethnicGroup", var];
-%     end
-% end
+for weather = 1:length(weatherVars)
+    for month = 1:12
+        var = weatherVars(weather) + "_" + month;
+        modelVars.(var) = ["foveaDensityL", "sex", "ethnicGroup", var];
+    end
+end
 
-modelVars.daylight8 = ["foveaDensityL",... 
-                        "sex", "ethnicGroup", "daylightHours_8"];
+% modelVars.daylight8 = ["foveaDensityL",... 
+%                         "sex", "ethnicGroup", "daylightHours_8"];
 
 modelVars.time = ["foveaDensityL",... 
                "sex", "ethnicGroup",... 
@@ -43,7 +52,7 @@ modelVars.time = ["foveaDensityL",...
 
 validCats.sex = ["M", "F"];
 validCats.ethnicGroup = ["white", "asian", "mixed-wa"];
-%validCats.country = "UK";%["UK", "China"];
+%validCats.country = ["UK", "China"];
 
 [lmeModels, mdlData] = LMEs(dataTbl, modelVars, validCats);
 
@@ -59,6 +68,7 @@ end
 
 %% pvals
 pVals = NaN(12,length(weatherVars));
+ns = NaN(1,length(weatherVars));
 
 for weather = 1:length(weatherVars)
     for month = 1:12
@@ -67,6 +77,7 @@ for weather = 1:length(weatherVars)
         idx = find(strcmp(string(mdl.Coefficients.Name),var));
         pVals(month,weather) = mdl.Coefficients.pValue(idx);
     end
+    ns(weather) = lmeModels.(var).NumObservations;
 end
 
 pVals = array2table(pVals,"VariableNames",weatherVars,"RowNames",string(1:12));
@@ -100,7 +111,7 @@ ylabel("P-value of weather variable in LME Model");
 hold off
 
 lgdLabs = repmat("", [1 2*numel(weatherVars)+1]); 
-lgdLabs(1:2:end-2) = weatherVars;
+lgdLabs(1:2:end-2) = weatherVars + " (n = " + string(ns) + ")";
 lgdLabs(end-1) = "Optimal Month Marker";
 %lgdLabs(end-1) = "Significant Month Marker";
 lgdLabs(end) = "Significance Line"; 
@@ -134,5 +145,55 @@ for i = 1:length(seasons)
 end
 xlim([0,length(seasons)+1]);
 ylim([min(dataTbl.foveaDensityL),max(dataTbl.foveaDensityL)]);
-l = legend(seasons);
-NiceGraphs(f2,l);
+l2 = legend(seasons);
+NiceGraphs(f2,l2);
+
+%%
+f3 = NewFigWindow;
+colMap = colorcet('C7');
+monthMeans = NaN(1,12);
+monthStes = NaN(1,12);
+hold on
+for month = 1:12
+    idx = dataTbl.month == month;
+    x = dataTbl.month(idx);
+    y = dataTbl.foveaDensityL(idx);
+    monthMeans(month) = mean(y);
+    monthStes(month) = std(y) / sqrt(numel(y));
+    %colourmap
+    num = round((month+5) / 12 * height(colMap),0);
+    if num > 256, num = num - 256; end
+    col = colMap(num,:);
+    scatter(x,y,...
+        Marker='o',MarkerEdgeColor='w',MarkerFaceColor=col);
+end
+errorbar(1:12,monthMeans,monthStes,monthStes,...
+    Marker='x',MarkerEdgeColor='w',MarkerSize=20,...
+    LineStyle='-',LineWidth=3,Color='w');
+
+xticks(1:12);
+xticklabels(["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]);
+NiceGraphs(f3);
+hold off
+
+%%
+f4 = NewFigWindow;
+y = dataTbl.foveaDensityL;
+hold on
+scatter(dataTbl.hfpDaySin, y,...
+    'Marker', 'o','MarkerEdgeColor', 'w', 'MarkerFaceColor', 'm');
+scatter(dataTbl.hfpDayCos, y,...
+    'Marker', 'o','MarkerEdgeColor', 'w', 'MarkerFaceColor', 'c');
+l4 = legend(["Sin","Cos"]);
+NiceGraphs(f4,l4);
+xlim([-1 1]);
+hold off
+
+%%
+f5 = NewFigWindow;
+hold on
+scatter(dataTbl.month, -dataTbl.monthSin_5, 'LineWidth', 2, 'Marker', 'x');
+scatter(dataTbl.month, -dataTbl.monthCos_0, 'LineWidth', 2, 'Marker', '+');
+hold off
+l5 = legend(["Results", "Sunlight"]);
+NiceGraphs(f5,l5);
