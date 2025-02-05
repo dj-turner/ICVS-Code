@@ -1,14 +1,16 @@
+function ArduinoCalibration
 %--------------------------------------------------------------------------
 % MATLAB RESET
 warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
-delete(instrfindall)
-clc; clear; close all; 
+delete(instrfindall); %#ok<INSTFA>
+close all; 
 
 %--------------------------------------------------------------------------
 % SET CONSTANTS
-levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
+% levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
+levels = [255, 192, 128, 64, 0];
 lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
-lightPositions = ["right", "right", "left"];            % Position of LEDs in the device (in order!)
+lightPositions = ["test", "test", "ref"];            % Position of LEDs in the device (in order!)
 
 %--------------------------------------------------------------------------
 % ADD PATHS
@@ -55,15 +57,18 @@ deviceNum = NaN;
 while ~ismember(deviceNum, validDeviceNums)
     deviceNum = input("Which Arduino? (1 = Josh's yellow band device, 2 = Mitch's green band device, 0 = Other): ");
     % Assigns correct device label depending on entered number
-    if deviceNum == 0, deviceLabel = string(input("Input Device Label: ", 's'));
-    elseif deviceNum == 1, deviceLabel = "Yellow Band";
-    elseif deviceNum == 2, deviceLabel = "Green Band";
+    switch deviceNum
+        case 1, deviceLabel = "Yellow Band";
+        case 2, deviceLabel = "Green Band";
+        case 0, deviceLabel = string(input("Input Device Label: ", 's'));
+        otherwise, disp("Invalid input! Please read the options and try again.")
     end
 end
 
 %--------------------------------------------------------------------------
 % GRAPH SETUP
 % Initialise graphs
+% Graph window
 fig = figure('WindowState', 'minimized');
 tiledGraph = tiledlayout(2, length(lights));
 % Calculate date and time
@@ -92,8 +97,7 @@ for light = 1:length(lights)
     WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
     % Wait for user to press RETURN to continue (for light alignment) if
     % positions either haven't been set or if it changes
-    if ~exist("lightPositions", 'var') || length(lights) ~= length(lightPositions)...
-        || light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
+    if light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
         beep
         input("Alignment light on! Please press RETURN when you are ready to start.");
     end
@@ -121,7 +125,7 @@ for light = 1:length(lights)
         catch
             %turns on the monitor
             MonitorPower('on', debugMode);
-            disp(lasterror);
+            disp(lasterror); %#ok<LERR>
             PrepareToExit(arduino);
             return
         end
@@ -140,9 +144,9 @@ for light = 1:length(lights)
         %------------------------------------------------------------------
         % EXITING PROGRAM (DEBUG MODE ONLY)
         % if on test mode, gives option to exit program (otherwise automatically continues)
-        if debugMode == 1
+        if debugMode
             % asks for input
-            i = input("Press RETURN to continue (or type ""exit"" to exit the program)", 's');
+            i = input("Press RETURN to continue (or type ""exit"" to exit the program): ", 's');
             % if exit is typed, exits program
             if strcmpi(i, "exit"), PrepareToExit(arduino); return; end
         end
@@ -176,15 +180,20 @@ for light = 1:length(lights)
 end
 
 %--------------------------------------------------------------------------
-% SAVING GRAPHS & EXITING
+% SAVING GRAPHS
 % maximises figure
 fig.WindowState = 'maximized';
 % saves graphs as .JPG file
-if debugMode == 0, graphPrefix = "Graph"; elseif debugMode == 1, graphPrefix = "TestGraph"; end
+switch debugMode 
+    case 0, graphPrefix = "Graph"; 
+    case 1, graphPrefix = "TestGraph"; 
+end
 exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
 % generates and saves "over time" graph
-if debugMode == 0, CalibrationOverTime(deviceLabel, dtString); end
+if ~debugMode, CalibrationOverTime(deviceLabel,dtString); end
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
 beep
+
+end

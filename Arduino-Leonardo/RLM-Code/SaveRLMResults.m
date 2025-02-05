@@ -1,4 +1,5 @@
-function SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType, red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating)
+function SaveRLMResults(ptptID, sessionNumber, trialNumber, matchType,... 
+    red, green, yellow, lambda, lambdaDelta, yellowDelta, confidenceRating)
 
 % Define constants
 % record current date and time
@@ -31,6 +32,5 @@ ParticipantMatchesRLM=[ParticipantMatchesRLM; newResults];
 
 %% save file
 save(saveFilePath, 'ParticipantMatchesRLM');
-clear;
 
 end

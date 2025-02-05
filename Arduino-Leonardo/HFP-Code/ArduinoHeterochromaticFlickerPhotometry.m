@@ -22,12 +22,13 @@ disp(" ");
 %Turns on character capture
 ListenChar(2);
 
-% Set reversal number
-reversalNumber = 9;
-
 % Arduino inputs depending on reversal and direction
 changeInputs = ['q', 'q', 'w', 'w', 'e', 'e', 'e', 'e', 'e';...
                 'r', 'r', 't', 't', 'y', 'y', 'y', 'y', 'y'];
+
+% Calculate reversal number
+reversalNumber = width(changeInputs);
+
 % Green level inputs
 greenInputs = ['z', 'x', 'c', 'v'];
 greenInputsNum = 1:length(greenInputs);
