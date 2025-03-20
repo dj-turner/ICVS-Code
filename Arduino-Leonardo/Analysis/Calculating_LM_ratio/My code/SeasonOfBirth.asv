@@ -47,12 +47,13 @@ modelVars.control = ["foveaDensityL",...
 % %                         "sex", "ethnicGroup", "daylightHours_8"];
 
 modelVars.time = ["foveaDensityL",... 
-               "sex", "ethnicGroup", "season", "hfpDaySin", "hfpDayCos"];
+               "sex", "ethnicGroup", "monthSin", "monthCos",... 
+               "hfpDaySin", "hfpDayCos"];
 
 validCats.sex = ["M", "F"];
 validCats.ethnicGroup = ["white","asian"];
 
-%validCats.hemisphere = ["Northern"];
+validCats.country = ["UK"];
 
 [lmeModels, mdlData] = LMEs(dataTbl, modelVars, validCats);
 

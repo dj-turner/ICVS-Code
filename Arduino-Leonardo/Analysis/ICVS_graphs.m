@@ -36,19 +36,19 @@ hfpData = dataMeans(:,[8,9,10,16,17]);
 % RLM
 hfpData(8,:) = [];
 dataAllSEs(8,:) = [];
-[r,p] = corr(hfpData(:,4), hfpData(:,5), 'Rows','pairwise')
+[r,p] = corr(hfpData(:,4), hfpData(:,5), 'Rows','pairwise');
 
 hold on
 plot(0:.01:1, 0:.01:1, 'LineStyle', '--', 'LineWidth', 3, 'Color', 'k')
-errorbar(rlmData(:,4), rlmData(:,5), dataAllSEs(:,2), dataAllSEs(:,2), dataAllSEs(:,1), dataAllSEs(:,1),... 
-    'Marker','none','LineStyle','none', 'LineWidth', 3, 'Color','r')
+% errorbar(rlmData(:,4), rlmData(:,5), dataAllSEs(:,2), dataAllSEs(:,2), dataAllSEs(:,1), dataAllSEs(:,1),... 
+%     'Marker','none','LineStyle','none', 'LineWidth', 3, 'Color','r')
 plot(rlmData(:,4), rlmData(:,5), 'Marker', 'o', 'MarkerEdgeColor', 'k', 'MarkerFaceColor', 'm',...
     'MarkerSize', 10, 'LineStyle', 'none')
 xlim([.54, .64]);
 ylim([44, 54]);
-set(gca,'FontSize',40,'XTick', [.54:.02:.64], 'YTick', [44:2:54])
+set(gca,'FontSize',40,'XTick', .54:.02:.64, 'YTick', 44:2:54);
 xlabel("uPPD")
-ylabel("Oculus HMC Anomaloscope")
+ylabel("Oculus HMC Anomaloscope");
 l = lsline;
 l.LineWidth = 3;
 l.Color = 'k';

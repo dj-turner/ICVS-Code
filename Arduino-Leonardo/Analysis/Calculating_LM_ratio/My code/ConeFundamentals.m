@@ -182,17 +182,17 @@ if parameterStruct.graphs
     end
     xlim([min(measuredWavelengths), max(measuredWavelengths)]);
     ylim([0,max(coneFunTbl,[],"all")]);
-    xlabel("Wavelength (nm)");
-    ylabel("Relative Spectral Sensitivities");
     title("Cone Fundamentals");
-    text(.9*max(measuredWavelengths), .9*max(coneFunTbl,[],"all"), strjoin([...
+    text(.85*max(measuredWavelengths), .9*max(coneFunTbl,[],"all"), strjoin([...
                  "Age = ", parameterStruct.age, ","... 
         newline, "Field Size = ", parameterStruct.fieldSize, "°,",...
         newline, "Pupil Size = ", parameterStruct.pupilSize, ",",...
         newline, "Normalisation = ", parameterStruct.normalisation
-        ],''));
+        ],''),Color='w');
     hold off
     NiceGraphs
+    xlabel("Wavelength (nm)");
+    ylabel("Relative Spectral Sensitivities",FontSize=18);
     lgdLabs = ["L-cone", "M-cone", "S-cone", "Unadj. L-Cone"];
     legend(lgdLabs(1:width(coneFunTbl)),'Location','northeastoutside','TextColor','w','FontSize',30);
 end
