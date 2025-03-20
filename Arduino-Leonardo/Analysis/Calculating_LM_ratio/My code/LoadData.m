@@ -11,7 +11,7 @@ ptptIdTbl = readtable("Ptpt_ID_Links.xlsx");
 ptptIdTbl = convertvars(ptptIdTbl, ptptIdTbl.Properties.VariableNames, 'string');
 
 %% Key data
-keyTbl = readtable("KeyData.xlsx");
+keyTbl = readtable("Demographic-Data-Key.xlsx");
 keyTbl = convertvars(keyTbl, ["Type", "Category"], 'string');
 
 %% Genetics Data
@@ -39,7 +39,7 @@ strVars = ["ptptID", "sex", "country", "continent", "hemisphere", "geneOpsin", "
 
 %% Allie's data
 aData = load("data-A.mat"); aData = aData.hfpTable;
-aDataDemo = readtable("newDataDemo-A.xlsx");
+aDataDemo = readtable("Allie-Demographic-Cleanedup.xlsx");
 
 ptptIDs = unique(string(aData.ptptID));
 
@@ -93,7 +93,7 @@ data.Allie = convertvars(data.Allie, numVars, 'double');
 [monthMeans,monthNs] = MonthMeansAndNs(monthMeans, monthNs, data.Allie, taskNames, "Allie");
 
 %% Dana's data
-dData = readtable("data-B.xlsx", 'Sheet','Matlab_Data');
+dData = readtable("data-Validation.xlsx", 'Sheet','Matlab_Data');
 ptptIDs = unique(string(dData.PPcode));
 data.Dana = strings(length(ptptIDs), length(dataVars));
 
@@ -266,20 +266,20 @@ data.Josh = convertvars(data.Josh, numVars, 'double');
 
 %% Mitch's data
 % Mitch's RLM data
-mDataRLM = load("dataRLM-MT.mat","ParticipantMatchesRLM");
+mDataRLM = load("Rayleigh-Mitch.mat","ParticipantMatchesRLM");
 mDataRLM = mDataRLM.ParticipantMatchesRLM;
 mDataRLM = mDataRLM(~contains(string(mDataRLM.ParticipantCode), "TEST"),:);
 
-mDataDemo = readtable("dataDemo-MT.xlsx");
+mDataDemo = readtable("dataDemographic-Mitch.xlsx");
 
 ptptIDs = unique(string(mDataDemo.ParticipantCode));
 ptptIDs = ptptIDs(strlength(ptptIDs) == 3);
 
 % Mitch's HFP data
-mDataHFP_files=dir(fullfile('data\dataHFP-MT','*.mat'));
+mDataHFP_files=dir(fullfile('data\Mitch-Large-N\dataHFP-Mitch','*.mat'));
 for file = 1:length(mDataHFP_files)
     fileName = mDataHFP_files(file).name;
-    currentFile = load(strcat(pwd, '\data\dataHFP-MT\', fileName));
+    currentFile = load(strcat(pwd, '\data\Mitch-Large-N\dataHFP-Mitch\', fileName));
     currentFile = currentFile.hfpData;
     currentFile = convertvars(currentFile, "trialID", 'string');
     currentID = extractBefore(extractAfter(fileName, 'HFP_'), '_');

@@ -39,7 +39,7 @@ weatherVars = ["daylightHours","sunshineHours","irradiancePop","irradianceArea"]
 for weather = 1:length(weatherVars)
     for month = 1:12
         var = weatherVars(weather) + "_" + month;
-        modelVars.(var) = ["foveaDensityL", "sex", "ethnicGroup", var];
+        modelVars.(var) = ["foveaDensityL", "sex", "ethnicGroup", var, "hfpDaySin", "hfpDayCos"];
     end
 end
 
@@ -47,12 +47,13 @@ end
 %                         "sex", "ethnicGroup", "daylightHours_8"];
 
 modelVars.time = ["foveaDensityL",... 
-               "sex", "ethnicGroup",... 
-               "hfpDaySin", "hfpDayCos", "hfpMinuteSin", "hfpMinuteCos"];
+               "sex", "ethnicGroup", "season",... 
+               "hfpDaySin", "hfpDayCos"];%, "hfpMinuteSin", "hfpMinuteCos"];
 
 validCats.sex = ["M", "F"];
-validCats.ethnicGroup = ["white", "asian", "mixed-wa"];
-%validCats.country = ["UK", "China"];
+validCats.ethnicGroup = ["white", "asian"];
+
+validcats.continent = ["Europe","Asia"];
 
 [lmeModels, mdlData] = LMEs(dataTbl, modelVars, validCats);
 

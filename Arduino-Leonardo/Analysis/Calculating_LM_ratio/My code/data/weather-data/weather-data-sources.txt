@@ -1,0 +1,8 @@
+%% daylight hours
+% worlddata.info for respective capital cities
+
+%% sunshine hours
+% https://www.metoffice.gov.uk/pub/data/weather/uk/climate/datasets/Sunshine/date/UK.txt
+
+% irradiance data
+% https://www.renewables.ninja/news/raw-weather-data
