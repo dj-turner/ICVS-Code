@@ -8,9 +8,9 @@ d = dir('*.xlsx');
 
 tbl = readtable(d.name, "Sheet", "Matlab_Data");
 %%
-indexTbl = ["RLM_Lambda", "RLM_MixLight";... 
-            "RLM_Yellow", "RLM_RefLight";...
-            "HFP_Leo_RG", "HFP_Uno_Red"];
+indexTbl = ["RLM_Lambda", "RLM_MixLight";...
+    "RLM_Yellow", "RLM_RefLight";...
+    "HFP_Leo_RG", "HFP_Uno_Red"];
 
 s = struct;
 r = NaN(height(indexTbl),1);
@@ -38,12 +38,12 @@ for pair = 1:height(indexTbl)
 
         t = tiledlayout(1,sessionNum-1);
         title(t, strcat(indexTbl(pair,device)), 'Interpreter','none');
-        
+
         for ySession = 2:sessionNum
             x = s.(indexTbl(pair,device)).sMean(:,1);
             y = s.(indexTbl(pair,device)).sMean(:,ySession);
             l = 1:height(x);
-            
+
             [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
 
             nexttile
@@ -57,11 +57,11 @@ for pair = 1:height(indexTbl)
     t = tiledlayout(1, sessionNum);
     for session = 1:sessionNum
         x = s.(indexTbl(pair,1)).sMean(:,session);
-        y = s.(indexTbl(pair,2)).sMean(:,session); 
+        y = s.(indexTbl(pair,2)).sMean(:,session);
         l = 1:height(x);
 
         [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
-        
+
         gTit = strcat(extractAfter(indexTbl(pair,1),"_"), " & ", extractAfter(indexTbl(pair,2),"_"), ", session ", num2str(session));
         nexttile
         DrawGraph(xRank,yRank,gTit,"Leonardo Device","Lab-Based Device",lRank);
@@ -69,31 +69,34 @@ for pair = 1:height(indexTbl)
 end
 
 function DrawGraph(xVar,yVar,gTitle,xLab,yLab,scatterLabels)
-    
-    if isequal(sort(xVar)', 1:length(xVar)) || isequal(sort(yVar)', 1:length(yVar))
-        corrType = 'Spearman';
-        repType = "Rho";
-    else
-        corrType = 'Pearson';
-        repType = "R";
-    end
-    
-    [c, p] = corr(xVar, yVar, 'rows', 'pairwise', 'type', corrType);
-    scatter(xVar, yVar, 'Marker', 'x', 'MarkerEdgeColor', 'b', 'LineWidth', 1)
-    
-    % hold on
-    % errorbar(x, y, ySD, ySD, xSD, xSD, '.', 'Color', 'k');
-    % hold off
 
-    line = lsline;
-    line.Color = 'r';
-    line.LineWidth = 1;
+% if isequal(sort(xVar)', 1:length(xVar)) || isequal(sort(yVar)', 1:length(yVar))
+%     corrType = 'Spearman';
+%     repType = "Rho";
+% else
+%     corrType = 'Pearson';
+%     repType = "R";
+% end
 
-    xlabel(xLab);
-    ylabel(yLab);
-    text(max(xVar), max(yVar), strjoin([corrType, "'s ", repType, " = ", num2str(round(c,2)), ",", newline, "P = ", num2str(round(p,3))],''));
-    text(xVar+.005*max(xVar), yVar+.005*max(yVar), scatterLabels);
-    title(gTitle, 'Interpreter','none');
+corrType = 'Pearson';
+repType = "R";
+
+[c, p] = corr(xVar, yVar, 'rows', 'pairwise', 'type', corrType);
+scatter(xVar, yVar, 'Marker', 'x', 'MarkerEdgeColor', 'b', 'LineWidth', 1)
+
+% hold on
+% errorbar(x, y, ySD, ySD, xSD, xSD, '.', 'Color', 'k');
+% hold off
+
+line = lsline;
+line.Color = 'r';
+line.LineWidth = 1;
+
+xlabel(xLab);
+ylabel(yLab);
+text(max(xVar), max(yVar), strjoin([corrType, "'s ", repType, " = ", num2str(round(c,2)), ",", newline, "P = ", num2str(round(p,3))],''));
+text(xVar+.005*max(xVar), yVar+.005*max(yVar), scatterLabels);
+title(gTitle, 'Interpreter','none');
 
 end
 
