@@ -1,20 +1,23 @@
-function ArduinoCalibration
+function ArduinoCalibration(prDeviceName,arduinoDeviceLabel)
 %--------------------------------------------------------------------------
 % MATLAB RESET
-warning('off', 'instrument:instrfindall:FunctionToBeRemoved');
+warning('off','instrument:instrfindall:FunctionToBeRemoved');
 delete(instrfindall); %#ok<INSTFA>
 close all; 
 
 %--------------------------------------------------------------------------
 % SET CONSTANTS
-% levels = [255, 224, 192, 160, 128, 96, 64, 32, 0];      % Input values to test (in order!)
-levels = [255, 192, 128, 64, 0];
-lights = ["red", "green", "yellow"];                    % LEDs to calibrate (in order!)
-lightPositions = ["test", "test", "ref"];            % Position of LEDs in the device (in order!)
+levelSteps = 8;
+lights = ["red","green","yellow"];                    % LEDs to calibrate (in order!)
+lightPositions = ["test","test","ref"];            % Position of LEDs in the device (in order!)
+prDeviceName = string(prDeviceName);
+
+levels = linspace(0,256,levelSteps+1);
+levels(levels>255) = 255;
 
 %--------------------------------------------------------------------------
 % ADD PATHS
-addpath(strcat(pwd, '\functions\'));
+addpath(genpath(pwd));
  
 %--------------------------------------------------------------------------
 % SETTING UP DEVICES
@@ -22,48 +25,42 @@ addpath(strcat(pwd, '\functions\'));
 % Loading and setting up the arduino device - Do not touch this code!
 arduino = OpenArduinoPort;
 % Display the arduino port
-disp(strjoin(["Using port", arduino.Port, "for the Arduino device!"]));
+disp(strjoin(["Using port",arduino.Port,"for the Arduino device!"]));
 % Reset all lights to off (in case the arduino previously crashed)
-WriteLEDs(arduino, [0,0,0]);
+WriteLEDs(arduino,[0,0,0]);
 
-% PR670
+%% PR
 % Find all available ports
 availablePorts = serialportlist;
 % Remove the arduino port from the list
 availablePorts = availablePorts(~strcmp(availablePorts,arduino.Port));
-% Set the PR670 port as the last on the list
-portPR670 = char(availablePorts(end));
+% Set the PR port as the last on the list
+portPRdevice = char(availablePorts(end));
 % Display the pr670 port
-disp(strjoin(["Using port", portPR670, "for the PR670!"]));
+disp(strjoin(["Using port ",portPRdevice," for the ",prDeviceName,"!"],''));
 
 %--------------------------------------------------------------------------
 % CREATING VARIABLES
 % Creates empty structure to store LED input values
 LEDs = struct;
 % Creates empty array for current LED for luminance values - to use in figures
-plotLuminance = NaN(length(levels), length(lights));
+luminanceData4Graph = NaN(length(levels), length(lights));
 
 %--------------------------------------------------------------------------
 % USER INPUTS
 % Debug Mode
 debugMode = NaN;
-while debugMode ~= 0 && debugMode ~= 1
+while ~ismember(debugMode,[0 1])
     debugMode = input("Debug mode? (0 = off, 1 = on): ");
 end
 
 % Arduino Device Label
-validDeviceNums = [0 1 2];
-deviceNum = NaN;
-while ~ismember(deviceNum, validDeviceNums)
-    deviceNum = input("Which Arduino? (1 = Josh's yellow band device, 2 = Mitch's green band device, 0 = Other): ");
-    % Assigns correct device label depending on entered number
-    switch deviceNum
-        case 1, deviceLabel = "Yellow Band";
-        case 2, deviceLabel = "Green Band";
-        case 0, deviceLabel = string(input("Input Device Label: ", 's'));
-        otherwise, disp("Invalid input! Please read the options and try again.")
-    end
+if ~exist("arduinoDeviceLabel",'var')
+    arduinoDeviceLabel = "SxPurpleBand";
+else
+    arduinoDeviceLabel = string(arduinoDeviceLabel);
 end
+disp("Arduino Device Label: " + arduinoDeviceLabel);
 
 %--------------------------------------------------------------------------
 % GRAPH SETUP
@@ -77,7 +74,7 @@ dtString = string(datetime);
 charRep = [":", "."; "-", "."; " ", "_"];
 for rep = 1:height(charRep), dtString = strrep(dtString, charRep(rep,1), charRep(rep,2)); end
 % Set device and date and time as tiled chart title
-title(tiledGraph, deviceLabel, 'Interpreter', 'none');
+title(tiledGraph, arduinoDeviceLabel, 'Interpreter', 'none');
 subtitle(tiledGraph, dtString, 'Interpreter', 'none');
 
 %--------------------------------------------------------------------------
@@ -97,7 +94,7 @@ for light = 1:length(lights)
     WriteLEDs(arduino, [LEDs.red, LEDs.green, LEDs.yellow]);
     % Wait for user to press RETURN to continue (for light alignment) if
     % positions either haven't been set or if it changes
-    if light == 1 || ~strcmp(lightPositions(light), lightPositions(light-1))
+    if light==1 || ~strcmp(lightPositions(light),lightPositions(light-1))
         beep
         input("Alignment light on! Please press RETURN when you are ready to start.");
     end
@@ -120,7 +117,7 @@ for light = 1:length(lights)
         MonitorPower('off', debugMode)
         % Tries to take PR670 measurements using defined port
         try
-            [luminance, spectrum, spectrumPeak] = MeasurePR670(portPR670);
+            [luminance, spectrum, spectrumPeak] = MeasurePRdevice(portPRdevice,prDeviceName);
         % if this doesn't work, displays error and quits
         catch
             %turns on the monitor
@@ -135,9 +132,11 @@ for light = 1:length(lights)
         %------------------------------------------------------------------
         % SAVE RESULTS 
         % Saves results to .mat file
-        SaveCalibrationResults(debugMode, deviceLabel, lights(light), levels(level), luminance, spectrum, spectrumPeak);
+        SaveCalibrationResults(debugMode, arduinoDeviceLabel,... 
+            lights(light), levels(level),... 
+            luminance, spectrum, spectrumPeak);
         % saves luminance values for plotting
-        plotLuminance(level, light) = luminance;
+        luminanceData4Graph(level,light) = luminance;
         % saves spectrum data if this is the max luminance in the list to plot
         if levels(level) == max(levels), plotSpectrum = spectrum; end
 
@@ -148,7 +147,7 @@ for light = 1:length(lights)
             % asks for input
             i = input("Press RETURN to continue (or type ""exit"" to exit the program): ", 's');
             % if exit is typed, exits program
-            if strcmpi(i, "exit"), PrepareToExit(arduino); return; end
+            if strcmpi(i,"exit"), PrepareToExit(arduino); return; end
         end
     end
 
@@ -157,10 +156,10 @@ for light = 1:length(lights)
     % Luminance
     % ROW 1: x = input value, y = luminance
     nexttile(light)
-    plot(levels, plotLuminance(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
+    plot(levels, luminanceData4Graph(:,light), 'Color', 'k', 'Marker', 'x', 'MarkerEdgeColor', lights(light))
     xlim([0, max(levels)]);
     xlabel("Input Value");
-    ylim([0, max(plotLuminance(:,light))]);
+    ylim([0, max(luminanceData4Graph(:,light))]);
     ylabel("Luminance");
     title(strcat("Luminance: ", upper(lights(light))));
 
@@ -188,9 +187,9 @@ switch debugMode
     case 0, graphPrefix = "Graph"; 
     case 1, graphPrefix = "TestGraph"; 
 end
-exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", deviceLabel, "_", dtString, ".JPG"))
+exportgraphics(tiledGraph, strcat(pwd, "\graphs\", graphPrefix, "_", arduinoDeviceLabel, "_", dtString, ".JPG"))
 % generates and saves "over time" graph
-if ~debugMode, CalibrationOverTime(deviceLabel,dtString); end
+if ~debugMode, CalibrationOverTime(arduinoDeviceLabel,dtString); end
 % prepares to exit
 PrepareToExit(arduino);
 % beeps to let user know the program has finished
