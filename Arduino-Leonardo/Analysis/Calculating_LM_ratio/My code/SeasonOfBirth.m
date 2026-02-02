@@ -3,7 +3,9 @@ clc; clear; close all;
 addpath(genpath(pwd)); 
 
 %% load data
-dataTbl = LMratio([.4,13]);
+%dataTbl = LMratio([.4,13]);
+dataTbl = load("LMratioData.mat"); dataTbl = dataTbl.data.analysis;
+
 dataTbl = dataTbl(dataTbl.validRatio,:);
 
 seasons = ["spring","summer","autumn","winter"];
@@ -49,6 +51,11 @@ end
 modelVars.time = ["foveaDensityL",... 
                "sex", "ethnicGroup",... 
                "hfpDaySin", "hfpDayCos", "hfpMinuteSin", "hfpMinuteCos"];
+
+modelVars.day = ["foveaDensityL", "hfpDaySin", "hfpDayCos"];
+
+modelVars.day2 = ["foveaDensityL", "daylightHours_8", "hfpDaySin", "hfpDayCos"];
+
 
 validCats.sex = ["M", "F"];
 validCats.ethnicGroup = ["white", "asian", "mixed-wa"];

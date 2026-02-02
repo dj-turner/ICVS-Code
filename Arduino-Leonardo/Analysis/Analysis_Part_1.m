@@ -44,11 +44,23 @@ for pair = 1:height(indexTbl)
             y = s.(indexTbl(pair,device)).sMean(:,ySession);
             l = 1:height(x);
 
-            [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
+            % [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
 
             nexttile
-            DrawGraph(xRank,yRank,strcat("Sessions 1 & ", num2str(ySession)),"Session 1", strcat("Session ", num2str(ySession)),lRank);
+            DrawGraph(x,y,strcat("Sessions 1 & ", num2str(ySession)),"Session 1", strcat("Session ", num2str(ySession)),string(l));
         end
+
+        if device == width(indexTbl)
+            fig = fig + 1;
+            figure(fig);
+    
+            x = s.(indexTbl(pair,1)).mean;
+            y = s.(indexTbl(pair,2)).mean;
+            
+            DrawGraph(x,y,strjoin(indexTbl(pair,:)," & "),indexTbl(pair,1),indexTbl(pair,2),string(l));
+        end
+
+
     end
 
     fig = fig + 1;
@@ -62,9 +74,9 @@ for pair = 1:height(indexTbl)
 
         [xRank, yRank, lRank] = ContinuousToRanked(x,y,l);
 
-        gTit = strcat(extractAfter(indexTbl(pair,1),"_"), " & ", extractAfter(indexTbl(pair,2),"_"), ", session ", num2str(session));
+        gTit = strcat("Session ", num2str(session));
         nexttile
-        DrawGraph(xRank,yRank,gTit,"Leonardo Device","Lab-Based Device",lRank);
+        DrawGraph(x,y,gTit,"Leonardo Device","Lab-Based Device",string(l));
     end
 end
 
@@ -82,7 +94,7 @@ corrType = 'Pearson';
 repType = "R";
 
 [c, p] = corr(xVar, yVar, 'rows', 'pairwise', 'type', corrType);
-scatter(xVar, yVar, 'Marker', 'x', 'MarkerEdgeColor', 'b', 'LineWidth', 1)
+scatter(xVar, yVar, 'Marker', 'x', 'MarkerEdgeColor', 'c', 'LineWidth', 1)
 
 % hold on
 % errorbar(x, y, ySD, ySD, xSD, xSD, '.', 'Color', 'k');
@@ -97,6 +109,8 @@ ylabel(yLab);
 text(max(xVar), max(yVar), strjoin([corrType, "'s ", repType, " = ", num2str(round(c,2)), ",", newline, "P = ", num2str(round(p,3))],''));
 text(xVar+.005*max(xVar), yVar+.005*max(yVar), scatterLabels);
 title(gTitle, 'Interpreter','none');
+
+NiceGraphs;
 
 end
 
