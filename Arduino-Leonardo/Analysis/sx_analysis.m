@@ -9,7 +9,7 @@ idx2 = data.("Match_Type")==1;
 lambdaData = data(idx2,idx1);
 
 ptptMean = zeros(height(lambdaData)/5,2);
-ptptSte = ptptMean;
+ptptStd = ptptMean;
 
 for ptpt = 1:height(lambdaData)/5
     row1idx = (ptpt-1)*5 + 1;
